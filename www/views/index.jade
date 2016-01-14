@@ -1,0 +1,83 @@
+extends layout
+
+block content
+  div.container-fluid
+    div.row-fluid
+      div(class="col-sm-12")
+        div(class="panel panel-primary")
+          div(class="panel-heading") <span class="glyphicon glyphicon-stats"></span> CI status
+          div(class="panel-body")
+            div(class="col-sm-8")
+              a(class="btn btn-md btn-primary" href="#")
+                i(class="fa fa-coffee fa-lg") 
+                <br>Idle
+              | &nbsp&nbsp
+              i(class="fa fa-arrow-circle-right fa-lg")
+              | &nbsp&nbsp              
+              a(class="btn btn-md btn-primary" href="#")
+                i(class="fa fa-download fa-lg") 
+                <br>Preparing
+              | &nbsp&nbsp
+              i(class="fa fa-arrow-circle-right fa-lg")
+              | &nbsp&nbsp
+              a(class="btn btn-md btn-success" href="#")
+                i(class="fa fa-refresh fa-spin fa-lg")
+                <br>Building
+              | &nbsp&nbsp
+              i(class="fa fa-arrow-circle-right fa-lg")
+              | &nbsp&nbsp
+              a(class="btn btn-md btn-default" href="#")                
+                i(class="fa fa-flask fa-lg") 
+                <br>Testing
+              | &nbsp&nbsp
+              i(class="fa fa-arrow-circle-right fa-lg")
+              | &nbsp&nbsp
+              a(class="btn btn-md btn-default" href="#")
+                i(class="fa fa-check-square-o fa-lg") 
+                <br>Releasing              
+            div(class="col-sm-4")
+              //p test 4
+    div.row-fluid
+      div(class="col-sm-6")
+        div(class="panel panel-primary")
+          div(class="panel-heading") <span class="glyphicon glyphicon-envelope"></span> Release Notes
+          div(class="panel-body")
+            - var n=0
+            while n<4
+              h3 Release Note #{n}
+              p note 1
+              p note 2
+              p note 3
+              - n++
+      div(class="col-sm-6")
+        div(class="panel panel-primary")
+          div(class="panel-heading")
+            p <span class="glyphicon glyphicon-edit"></span> Feedback
+          div(class="panel-body")
+            form(id="feedback_form" role="form")
+              div(class="form-group")
+                label you opinion about Git:
+                label(style="padding-left:20px;" class="radio")   
+                  input(type="radio" name="GitUsage" value="Git_Excellent")
+                  Git is much better than clearcase<br>
+                label(style="padding-left:20px;" class="radio")
+                  input(type="radio" name="GitUsage" value="Git_Not_Bad")
+                  Git is good to use<br>   
+                label(style="padding-left:20px;" class="radio")
+                  input(type="radio" name="GitUsage" value="Git_Poor")
+                  Git disappoint me<br>  
+              
+              div(class="form-group")
+                label(for="comment") Welcome your voice:
+                textarea(class="form-control" rows="5" id="comment")
+                
+              div(class="form-group")
+                label core id(Good Suggest have Motocoin):
+                input(type="text" class="form-control" id="Feedback_coreId")
+                
+              
+              <button id="submit_btn" type="submit" class="btn btn-info">Submit</button>
+    
+
+  
+

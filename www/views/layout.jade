@@ -1,0 +1,39 @@
+doctype html
+html
+  head
+    title= title
+    link(rel="stylesheet" href="/bootstrap-3.3.5-dist/css/bootstrap.min.css")
+    link(rel="stylesheet" href="/font-awesome-4.5.0/css/font-awesome.min.css")    
+  
+  body
+ 
+    // Fixed navbar
+    nav(class="navbar navbar-default navbar-fixed-top")
+      div(class="container-fluid")
+        div(class="navbar-header")
+          a(class="navbar-brand" href="#")        
+            i(class="fa fa-paper-plane-o fa-lg") 
+        
+        ul(class="nav navbar-nav")
+          li(class="active")
+            a(href="#") Home
+          li
+            a(href="http://booster:8051" target="_blank") Gitlab
+  
+    - var n=0
+    while n<3
+      br
+      - n++
+
+    
+    block content
+    
+    hr(border-color=black)
+    
+    div#footer
+      p © Copyright 2016 Motorola Solutions, Inc. All rights reserved.
+      
+    script(src="/javascripts/jquery.min.js")
+    script(src="/bootstrap-3.3.5-dist/js/bootstrap.min.js")
+    script(src="/javascripts/userDefinedAction.js")    
+    
