@@ -1,7 +1,7 @@
 var exports = module.exports = {};
-var feedbackDbModel = require('./db').feebackDbModel;
+var feedbackDB = require('./db.js');
 
-function feedbackDbInterface(date,author,gitRate,detailComment)
+var feedbackDbInterface =  function(date,author,gitRate,detailComment)
 {
   if(date)
     this.date = date;
@@ -22,13 +22,12 @@ function feedbackDbInterface(date,author,gitRate,detailComment)
   
 };
 
-exports = feedbackDbInterface;
+exports.dbInterface = feedbackDbInterface;
 
 feedbackDbInterface.prototype.save = function save(callback)
 {
-  console.log("enter feedbackDbInterface.prototype.save");  
-  var pFeedBackDbItem = new feedbackDbModel({ author: this.author ,raiseDate:this.date,gitRating:this.gitRate,detailComments:this.detailComment,adminComments:''}); 
+  var pFeedBackDbItem = new feedbackDB.feebackDbModel({ author: this.author ,raiseDate:this.date,gitRating:this.gitRate,detailComments:this.detailComment,adminComments:''}); 
   pFeedBackDbItem.save(function (err) {
     if (err) return callback(err);
   });  
-}
+};
