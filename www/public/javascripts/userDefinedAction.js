@@ -20,6 +20,7 @@ var main = function()
       {
         alert(err.message)
       }
+  return false;
   });  
 };
 
