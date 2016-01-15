@@ -20,7 +20,13 @@ var main = function()
       {
         alert(err.message)
       }
-  return false;
+      
+      $("#comment").val("")
+      $("#feedback_form input[type='radio']").attr("checked",false)
+      $("#Feedback_coreId").val("")
+      $("#feedback_status").text("Thanks for your feedback")
+      
+      return false;
   });  
 };
 
