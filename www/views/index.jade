@@ -8,6 +8,9 @@ block content
           div(class="panel-heading") <span class="glyphicon glyphicon-stats"></span> CI status
           div(class="panel-body")
             div(class="col-sm-8")
+              h4(class="text-primary") Emerlad CI Status:
+              br
+              br
               a(class="btn btn-md btn-primary" href="#")
                 i(class="fa fa-coffee fa-lg") 
                 <br>Idle
@@ -35,6 +38,38 @@ block content
               a(class="btn btn-md btn-default" href="#")
                 i(class="fa fa-check-square-o fa-lg") 
                 <br>Releasing              
+
+              h4(class="text-primary") NonEmerlad CI Status:
+              br
+              br
+              a(class="btn btn-md btn-primary" href="#")
+                i(class="fa fa-coffee fa-lg") 
+                <br>Idle
+              | &nbsp&nbsp
+              i(class="fa fa-arrow-circle-right fa-lg")
+              | &nbsp&nbsp              
+              a(class="btn btn-md btn-primary" href="#")
+                i(class="fa fa-download fa-lg") 
+                <br>Preparing
+              | &nbsp&nbsp
+              i(class="fa fa-arrow-circle-right fa-lg")
+              | &nbsp&nbsp
+              a(class="btn btn-md btn-success" href="#")
+                i(class="fa fa-refresh fa-spin fa-lg")
+                <br>Building
+              | &nbsp&nbsp
+              i(class="fa fa-arrow-circle-right fa-lg")
+              | &nbsp&nbsp
+              a(class="btn btn-md btn-default" href="#")                
+                i(class="fa fa-flask fa-lg") 
+                <br>Testing
+              | &nbsp&nbsp
+              i(class="fa fa-arrow-circle-right fa-lg")
+              | &nbsp&nbsp
+              a(class="btn btn-md btn-default" href="#")
+                i(class="fa fa-check-square-o fa-lg") 
+                <br>Releasing              
+                
             div(class="col-sm-4")
               //p test 4
     div.row-fluid
