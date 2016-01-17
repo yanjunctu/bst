@@ -28,6 +28,6 @@ feedbackDbInterface.prototype.save = function save(callback)
 {
   var pFeedBackDbItem = new feedbackDB.feebackDbModel({ author: this.author ,raiseDate:this.date,gitRating:this.gitRate,detailComments:this.detailComment,adminComments:''}); 
   pFeedBackDbItem.save(function (err) {
-    if (err) return callback(err);
+    return callback(err);
   });  
 };
