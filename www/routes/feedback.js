@@ -4,7 +4,7 @@ var dB = require('../models/feedbackDb.js');
 
 
 /* GET users listing. */
-router.post('/', function(req, res, next) {
+router.post('/gitnew', function(req, res, next) {
   
   var saveItem = new dB.dbInterface(Date.now(),req.body.coreid,req.body.rateOfGit,req.body.selfAdvise);
   
@@ -17,6 +17,12 @@ router.post('/', function(req, res, next) {
       res.send('saved');
     })
   
+});
+
+
+/* GET feedback about git page. */
+router.get('/gitall', function(req, res, next) {
+  res.render('feedbackSummary', { category: 'Git' });
 });
 
 module.exports = router;

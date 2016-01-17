@@ -109,10 +109,13 @@ block content
                 input(type="text" class="form-control" id="Feedback_coreId")
                 
               
-              <button id="submit_btn" type="submit" class="btn btn-info">Submit</button>
+              button(id="submit_btn" type="submit" class="btn btn-info") Submit
+              | &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+              a(href="/feedback/gitall" class="text-info") Show All              
               h3(id="feedback_status",class="text-primary")
               
     
-
+block userdefinejs
+  script(src="/javascripts/index.js")   
   
 
