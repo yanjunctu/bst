@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 var dB = require('../models/feedbackDb.js');
 
-
 /* GET users listing. */
 router.post('/gitnew', function(req, res, next) {
   var saveItem = new dB.dbInterface(Date.now(),req.body.coreid,req.body.rateOfGit,req.body.selfAdvise);
@@ -22,6 +21,7 @@ router.post('/gitnew', function(req, res, next) {
 
 /* GET feedback about git page. */
 router.get('/gitall', function(req, res, next) {
+
   dB.dbInterface.getall(function(err,feedbacks)
   {
     if(err)

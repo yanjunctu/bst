@@ -1,3 +1,7 @@
+var acquireJenkinsAllInfo = function(){
+  alert("Boom!");
+};
+
 var main = function()
 {
   var $subBtn = $("#submit_btn");
@@ -28,6 +32,8 @@ var main = function()
       
       return false;
   });  
+  
+  setInterval(acquireJenkinsAllInfo, 2000);  
 };
 
 $(document).ready(main);
