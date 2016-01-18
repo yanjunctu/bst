@@ -31,3 +31,17 @@ feedbackDbInterface.prototype.save = function save(callback)
     return callback(err);
   });  
 };
+
+feedbackDbInterface.getall = function getall(callback)
+{
+  feedbackDB.feebackDbModel.find(function (err, feedbacks) {
+    
+    var all = [];
+    feedbacks.forEach(function(feedback, index) {
+      var onefeedback = new feedbackDbInterface(feedback.raiseDate, feedback.author,feedback.gitRating,feedback.detailComments);
+      all.push(onefeedback);
+    });
+        
+    return callback(err,all);
+  })
+};

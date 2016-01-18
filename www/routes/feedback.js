@@ -22,7 +22,15 @@ router.post('/gitnew', function(req, res, next) {
 
 /* GET feedback about git page. */
 router.get('/gitall', function(req, res, next) {
-  res.render('feedbackSummary', { category: 'Git' });
+  dB.dbInterface.getall(function(err,feedbacks)
+  {
+    if(err)
+      return console.log("err in router.get");
+    
+    //console.log(feedbacks);
+    res.render('feedbackSummary', { category: 'Git',feedbackCollection:feedbacks });
+  })
+
 });
 
 module.exports = router;

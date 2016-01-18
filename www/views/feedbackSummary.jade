@@ -1,7 +1,21 @@
 extends layout
 
 block content
-  p hello summary            
+  p totally #{feedbackCollection.length} feedbacks
+  
+  each fdbk in feedbackCollection
+    div
+      span date:#{fdbk.date}
+      | &nbsp&nbsp&nbsp&nbsp
+      span submitter:#{fdbk.author}
+      
+    p opinion about git:
+    p #{fdbk.gitRate} 
+    
+    p comments:
+    p #{fdbk.detailComment}
+    
+    hr(border-color=black)
     
 block userdefinejs
   script(src="/javascripts/feedbackSummary.js")   
