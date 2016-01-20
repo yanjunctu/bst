@@ -16,65 +16,75 @@ block content
                     a(href="#tab2" data-toggle="tab") Non-Emerlad CI
                 div(class="tab-content")
                   div(class="tab-pane active" id="tab1")
-                    h4(class="text-primary") Emerlad CI Status:
-                    a(class="btn btn-md btn-primary" href="#")
-                      i(class="fa fa-coffee fa-lg") 
-                      <br>Idle
-                    | &nbsp&nbsp
+                    - var escapseRow=0
+                    while escapseRow<2
+                      br
+                      - escapseRow++
+                    
+                    - var escapseSpace=0
+                    while escapseSpace<90
+                      &nbsp
+                      - escapseSpace++
+                      
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp              
-                    a(class="btn btn-md btn-primary" href="#")
-                      i(class="fa fa-download fa-lg") 
-                      <br>Preparing
+                    a(class="btn btn-md btn-primary" href="#" style="width: 150px")
+                      i(class="fa fa-building fa-lg")
+                      p(class="text-center" style="margin-bottom:0px") Phase : build fw
+                      p(class="text-center" style="margin-bottom:0px") Status: not start 
                     | &nbsp&nbsp
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
-                    a(class="btn btn-md btn-success" href="#")
-                      i(class="fa fa-refresh fa-spin fa-lg")
-                      <br>Building
+                    a(class="btn btn-md btn-primary" href="#" style="width: 150px")
+                      i(class="fa fa-flask fa-lg")
+                      p(class="text-center" style="margin-bottom:0px") Phase : test fw
+                      p(class="text-center" style="margin-bottom:0px") Status: not start
+                    br
+                    br
+                    | &nbsp&nbsp              
+                    a(class="btn btn-md btn-primary" href="#" style="width: 150px")
+                      i(class="fa fa-coffee fa-lg")
+                      p(class="text-center" style="margin-bottom:0px") Phase : idle
+                      p(class="text-center" style="margin-bottom:0px") Status: not start 
                     | &nbsp&nbsp
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
-                    a(class="btn btn-md btn-default" href="#")                
-                      i(class="fa fa-flask fa-lg") 
-                      <br>Testing
-                    | &nbsp&nbsp
+                    a(class="btn btn-md btn-primary" href="#" style="width: 150px")
+                      i(class="fa fa-download fa-lg")
+                      p(class="text-center" style="margin-bottom:0px") Phase : pre check
+                      p(class="text-center" style="margin-bottom:0px") Status: not start
+                    
+                    - escapseSpace=0
+                    while escapseSpace<100
+                      &nbsp
+                      - escapseSpace++
+                      
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
-                    a(class="btn btn-md btn-default" href="#")
-                      i(class="fa fa-check-square-o fa-lg") 
-                      <br>Releasing              
+                    a(class="btn btn-md btn-primary" href="#" style="width: 150px")
+                      i(class="fa fa-check-square-o fa-lg")
+                      p(class="text-center" style="margin-bottom:0px") Phase : pre release
+                      p(class="text-center" style="margin-bottom:0px") Status: not start 
                     br
-                    br
-                    br
-                    h4(class="text-primary") NonEmerlad CI Status:
-                    a(class="btn btn-md btn-primary" href="#")
-                      i(class="fa fa-coffee fa-lg") 
-                      <br>Idle
-                    | &nbsp&nbsp
+                    br        
+                    - escapseSpace=0
+                    while escapseSpace<90
+                      &nbsp
+                      - escapseSpace++
+                      
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp              
-                    a(class="btn btn-md btn-primary" href="#")
-                      i(class="fa fa-download fa-lg") 
-                      <br>Preparing
+                    a(class="btn btn-md btn-primary" href="#" style="width: 150px")
+                      i(class="fa fa-building fa-lg")
+                      p(class="text-center" style="margin-bottom:0px") Phase : build win32
+                      p(class="text-center" style="margin-bottom:0px") Status: not start 
                     | &nbsp&nbsp
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
-                    a(class="btn btn-md btn-success" href="#")
-                      i(class="fa fa-refresh fa-spin fa-lg")
-                      <br>Building
-                    | &nbsp&nbsp
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="btn btn-md btn-default" href="#")                
-                      i(class="fa fa-flask fa-lg") 
-                      <br>Testing
-                    | &nbsp&nbsp
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="btn btn-md btn-default" href="#")
-                      i(class="fa fa-check-square-o fa-lg") 
-                      <br>Releasing              
+                    a(class="btn btn-md btn-primary" href="#" style="width: 150px")
+                      i(class="fa fa-flask fa-lg")
+                      p(class="text-center" style="margin-bottom:0px") Phase : test win32
+                      p(class="text-center" style="margin-bottom:0px") Status: not start
                   
                   div(class="tab-pane" id="tab2" )   
                     h4(class="text-primary") None-Emerlad CI Status:
