@@ -1,3 +1,5 @@
+var indexArray = ["idleState","preCheckState","buildFwState","testFwState","buildWin32State","testWin32State","preReleaseState"];
+var statusArray = ["not start","running","done"]
 var CIStateLookup = {
   "idleState": {
     "icon":{
@@ -9,7 +11,9 @@ var CIStateLookup = {
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
-    }
+    },
+    "curIcon":"fa fa-coffee fa-lg",
+    "curBtn":"btn btn-md btn-default"
   },
   "preCheckState": {
     "icon":{
@@ -21,7 +25,9 @@ var CIStateLookup = {
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
-    }    
+    },
+    "curIcon":"fa fa-download fa-lg",
+    "curBtn":"btn btn-md btn-default"    
   },  
   "buildFwState": {
     "icon":{
@@ -33,7 +39,9 @@ var CIStateLookup = {
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
-    }        
+    },
+    "curIcon":"fa fa-building fa-lg",
+    "curBtn":"btn btn-md btn-default"        
   },
   "testFwState": {
     "icon":{
@@ -45,7 +53,9 @@ var CIStateLookup = {
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
-    }       
+    },
+    "curIcon":"fa fa-flask fa-lg",
+    "curBtn":"btn btn-md btn-default"       
   },
   "buildWin32State": {
     "icon":{
@@ -57,7 +67,9 @@ var CIStateLookup = {
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
-    }        
+    },
+    "curIcon":"fa fa-building fa-lg",
+    "curBtn":"btn btn-md btn-default"        
   },
   "testWin32State": {
     "icon":{
@@ -69,7 +81,9 @@ var CIStateLookup = {
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
-    }         
+    },
+    "curIcon":"fa fa-flask fa-lg",
+    "curBtn":"btn btn-md btn-default"         
   },
   "preReleaseState": {
     "icon":{
@@ -81,23 +95,58 @@ var CIStateLookup = {
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
-    }        
+    },
+    "curIcon":"fa fa-check-square-o fa-lg",
+    "curBtn":"btn btn-md btn-default"        
   },
 };
 
 
 var refreshCi = function(status)
 {
-  
-}
+  $.each(status,function(i){
+    var key = i;
+    var value = status[i];
+    
+    if (-1 != $.inArray(key,indexArray) && -1 != $.inArray(value.status,statusArray))
+    {
+      //console.log(key);
+      
+      var sel = ".tab-pane.active a."+key;
+      //console.log($(sel))
+     
+      $(sel).removeClass(CIStateLookup[key].curBtn);
+      CIStateLookup[key].curBtn = CIStateLookup[key].btn[value.status];
+      $(sel).addClass(CIStateLookup[key].curBtn);
+      
+      sel = ".tab-pane.active a."+key+" i";
+      $(sel).removeClass(CIStateLookup[key].curIcon);
+      CIStateLookup[key].curIcon = CIStateLookup[key].icon[value.status];
+      $(sel).addClass(CIStateLookup[key].curIcon);  
+      
+      
+    }
+    
+  });
+};
+
 var acquireJenkinsAllInfo = function(){
       try
       {
-          $.get("/jenkins/getCurrent", function (result) {
-            refreshCi(result);
-            console.log(result.onTgtTst.duration);
+          var getSource=undefined;
+          var id = $(".tab-pane.active").attr("id");
+          if (id == "ciTabEmer")
+            getSource = "/jenkins/getEmerState" 
+          else if (id == "ciTabNonEmer")
+            getSource = "/jenkins/getNonEmerState"     
+          if (getSource!=undefined)
+          {
+              $.get(getSource, function (result) {
+                refreshCi(result);
+              
+            })
+          }
           
-        })
       }
       catch(err)
       {
@@ -137,7 +186,7 @@ var main = function()
       return false;
   });  
   
-  setInterval(acquireJenkinsAllInfo, 2000);  
+  setTimeout(acquireJenkinsAllInfo, 2000);  
 };
 
 $(document).ready(main);
