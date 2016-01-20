@@ -31,28 +31,36 @@ block content
                     a(class="buildFwState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-building fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : build fw
-                      p(class="text-center" style="margin-bottom:0px") Status: not start 
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start 
                     | &nbsp&nbsp
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
                     a(class="testFwState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-flask fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : test fw
-                      p(class="text-center" style="margin-bottom:0px") Status: not start
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start
                     br
                     br
                     | &nbsp&nbsp              
                     a(class="idleState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-coffee fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : idle
-                      p(class="text-center" style="margin-bottom:0px") Status: not start 
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start 
                     | &nbsp&nbsp
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
                     a(class="preCheckState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-download fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : pre check
-                      p(class="text-center" style="margin-bottom:0px") Status: not start
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start
                     
                     - escapseSpace=0
                     while escapseSpace<100
@@ -64,7 +72,9 @@ block content
                     a(class="preReleaseState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-check-square-o fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : pre release
-                      p(class="text-center" style="margin-bottom:0px") Status: not start 
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start 
                     br
                     br        
                     - escapseSpace=0
@@ -77,14 +87,18 @@ block content
                     a(class="buildWin32State btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-building fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : build win32
-                      p(class="text-center" style="margin-bottom:0px") Status: not start 
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start 
                     | &nbsp&nbsp
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
                     a(class="testWin32State btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-flask fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : test win32
-                      p(class="text-center" style="margin-bottom:0px") Status: not start
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start
                   
                   div(class="tab-pane" id="ciTabNonEmer" )   
                     - var escapseRow=0
@@ -102,28 +116,36 @@ block content
                     a(class="buildFwState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-building fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : build fw
-                      p(class="text-center" style="margin-bottom:0px") Status: not start 
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start 
                     | &nbsp&nbsp
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
                     a(class="testFwState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-flask fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : test fw
-                      p(class="text-center" style="margin-bottom:0px") Status: not start
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start
                     br
                     br
                     | &nbsp&nbsp              
                     a(class="idleState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-coffee fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : idle
-                      p(class="text-center" style="margin-bottom:0px") Status: not start 
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start 
                     | &nbsp&nbsp
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
                     a(class="preCheckState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-download fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : pre check
-                      p(class="text-center" style="margin-bottom:0px") Status: not start
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start
                     
                     - escapseSpace=0
                     while escapseSpace<100
@@ -135,7 +157,9 @@ block content
                     a(class="preReleaseState btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-check-square-o fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : pre release
-                      p(class="text-center" style="margin-bottom:0px") Status: not start 
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start 
                     br
                     br        
                     - escapseSpace=0
@@ -148,14 +172,18 @@ block content
                     a(class="buildWin32State btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-building fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : build win32
-                      p(class="text-center" style="margin-bottom:0px") Status: not start 
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start 
                     | &nbsp&nbsp
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp
                     a(class="testWin32State btn btn-md btn-default" href="#" style="width: 150px")
                       i(class="fa fa-flask fa-lg")
                       p(class="text-center" style="margin-bottom:0px") Phase : test win32
-                      p(class="text-center" style="margin-bottom:0px") Status: not start
+                      p(class="text-center" style="margin-bottom:0px") 
+                        | Status:
+                        span(class="statusStr") not start
                   
           
                 

@@ -124,6 +124,10 @@ var refreshCi = function(status)
       CIStateLookup[key].curIcon = CIStateLookup[key].icon[value.status];
       $(sel).addClass(CIStateLookup[key].curIcon);  
       
+      sel = ".tab-pane.active a."+key+" .statusStr";
+      //console.log($(sel));
+      $(sel).text(value.status);
+      
       
     }
     
