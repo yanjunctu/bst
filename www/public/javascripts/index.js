@@ -190,7 +190,7 @@ var main = function()
       return false;
   });  
   
-  setTimeout(acquireJenkinsAllInfo, 2000);  
+  setInterval(acquireJenkinsAllInfo, 2000);  
 };
 
 $(document).ready(main);
