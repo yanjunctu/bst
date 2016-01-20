@@ -1,20 +1,100 @@
-var stateName = {
-  "idleIndex":"&nbsp&nbsp&nbsp&nbspidle&nbsp&nbsp&nbsp&nbsp",
-  "precheckIndex":"&nbsppre-check&nbsp&nbsp",  
-  "fwbuildIndex":"&nbsp&nbspbuild-fw&nbsp&nbsp",  
-  "fwtestIndex":"&nbsp&nbsp&nbsptest-fw&nbsp&nbsp", 
-  "win32buildIndex":"build-win32&nbsp",  
-  "win32testIndex":"&nbsptest-win32&nbsp",   
-  "preRlsIndex":"pre-release&nbsp",    
-}
-var localCIState = {
-  "idle": {}
-}
+var CIStateLookup = {
+  "idleState": {
+    "icon":{
+      "not start":"fa fa-coffee fa-lg",
+      "running":"fa fa-refresh fa-spin fa-lg",
+      "done":"fa fa-coffee fa-lg"
+    },
+    "btn":{
+      "not start":"btn btn-md btn-default",
+      "running":"btn btn-md btn-success",
+      "done":"btn btn-md btn-primary"      
+    }
+  },
+  "preCheckState": {
+    "icon":{
+      "not start":"fa fa-download fa-lg",
+      "running":"fa fa-refresh fa-spin fa-lg",
+      "done":"fa fa-download fa-lg"
+    },
+    "btn":{
+      "not start":"btn btn-md btn-default",
+      "running":"btn btn-md btn-success",
+      "done":"btn btn-md btn-primary"      
+    }    
+  },  
+  "buildFwState": {
+    "icon":{
+      "not start":"fa fa-building fa-lg",
+      "running":"fa fa-refresh fa-spin fa-lg",
+      "done":"fa fa-building fa-lg"
+    },
+    "btn":{
+      "not start":"btn btn-md btn-default",
+      "running":"btn btn-md btn-success",
+      "done":"btn btn-md btn-primary"      
+    }        
+  },
+  "testFwState": {
+    "icon":{
+      "not start":"fa fa-flask fa-lg",
+      "running":"fa fa-refresh fa-spin fa-lg",
+      "done":"fa fa-flask fa-lg"
+    },
+    "btn":{
+      "not start":"btn btn-md btn-default",
+      "running":"btn btn-md btn-success",
+      "done":"btn btn-md btn-primary"      
+    }       
+  },
+  "buildWin32State": {
+    "icon":{
+      "not start":"fa fa-building fa-lg",
+      "running":"fa fa-refresh fa-spin fa-lg",
+      "done":"fa fa-building fa-lg"
+    },
+    "btn":{
+      "not start":"btn btn-md btn-default",
+      "running":"btn btn-md btn-success",
+      "done":"btn btn-md btn-primary"      
+    }        
+  },
+  "testWin32State": {
+    "icon":{
+      "not start":"fa fa-flask fa-lg",
+      "running":"fa fa-refresh fa-spin fa-lg",
+      "done":"fa fa-flask fa-lg"
+    },
+    "btn":{
+      "not start":"btn btn-md btn-default",
+      "running":"btn btn-md btn-success",
+      "done":"btn btn-md btn-primary"      
+    }         
+  },
+  "preReleaseState": {
+    "icon":{
+      "not start":"fa fa-check-square-o fa-lg",
+      "running":"fa fa-refresh fa-spin fa-lg",
+      "done":"fa fa-check-square-o fa-lg"
+    },
+    "btn":{
+      "not start":"btn btn-md btn-default",
+      "running":"btn btn-md btn-success",
+      "done":"btn btn-md btn-primary"      
+    }        
+  },
+};
 
+
+var refreshCi = function(status)
+{
+  
+}
 var acquireJenkinsAllInfo = function(){
       try
       {
           $.get("/jenkins/getCurrent", function (result) {
+            refreshCi(result);
             console.log(result.onTgtTst.duration);
           
         })
