@@ -3,6 +3,17 @@ var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var cnt=0;
 
+var ciStatus = {
+  "idleState":{"status":"not start","duration":0},
+  "preCheckState":{"status":"not start","duration":2},
+  "buildFwState":{"status":"not start","duration":3},
+  "testFwState":{"status":"not start","duration":4},
+  "buildWin32State":{"status":"not start","duration":5},
+  "testWin32State":{"status":"not start","duration":0},
+  "preReleaseState":{"status":"not start","duration":0}
+
+};  
+  
 var getJobLastBuild = function(job,callback)
 {
   var result;
@@ -12,40 +23,20 @@ var getJobLastBuild = function(job,callback)
 
 };
 
-/* GET feedback about git page. */
-router.get('/getCurrentStatus', function(req, res, next) {
-
-  /*
-  jenkins.job_info('PCR-REPT-0-Trigger', function(err, data) {
-    if (err){ return console.log(err); }
-    console.log(data)
-  });
-  */
-  var stubStatus = "not start";
-  /*
-  if (++cnt%2==0)
-    stubStatus = "running"
-  else
-    stubStatus = "done"
-  */
-
-   var ciStatus = {
-    "idleState":{"status":"running","duration":0},
-    "preCheckState":{"status":stubStatus,"duration":2},
-    "buildFwState":{"status":stubStatus,"duration":3},
-    "testFwState":{"status":stubStatus,"duration":4},
-    "buildWin32State":{"status":stubStatus,"duration":5},
-    "testWin32State":{"status":stubStatus,"duration":0},
-    "preReleaseState":{"status":stubStatus,"duration":0}
-    
-  };  
-
-  
+setInterval(function(){
     getJobLastBuild('PCR-REPT-0-MultiJob',function(err,data){
     if(err) return;
     if (data.building==false){
-      return res.json(ciStatus);
+      //return res.json(ciStatus);
+      ciStatus.idleState.status="running";
+      ciStatus.preCheckState.status="not start";
+      ciStatus.buildFwState.status="not start";
+      ciStatus.testFwState.status="not start";
+      ciStatus.buildWin32State.status="not start";
+      ciStatus.testWin32State.status="not start";
+      ciStatus.preReleaseState.status="not start";      
     }else {
+      ciStatus.idleState.status="done";
       data.subBuilds.forEach(function(element, index, array){
         if(element.jobName =='PCR-REPT-Git-Integration'){
           if (element.result==null){
@@ -133,16 +124,19 @@ router.get('/getCurrentStatus', function(req, res, next) {
           }
         }
       })
-    return res.json(ciStatus);
     }
       
 
   });
+},2000);
+/* GET feedback about git page. */
+router.get('/getCurrentStatus', function(req, res, next) {
+
+    return res.json(ciStatus);
+
+  });
   
-  //console.log(ciStatus);
 
-
-});
 
 router.get('/getNonEmerState', function(req, res, next) {
 
