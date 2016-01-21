@@ -191,6 +191,8 @@ var main = function()
       return false;
   });  
   
+  acquireJenkinsAllInfo();
+  
   setInterval(acquireJenkinsAllInfo, 5000);  
 };
 

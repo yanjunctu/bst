@@ -5,7 +5,8 @@ block content
     div.row-fluid
       div(class="col-sm-12")
         div(class="panel panel-primary")
-          div(class="panel-heading") <span class="glyphicon glyphicon-stats"></span> CI status
+          div(class="panel-heading") 
+            h3 <span class="glyphicon glyphicon-stats"></span> CI status
           div(class="panel-body")
             div(class="col-sm-12")
               div(class="tabbable tabs-below")
@@ -190,7 +191,8 @@ block content
     div.row-fluid
       div(class="col-sm-6")
         div(class="panel panel-primary")
-          div(class="panel-heading") <span class="glyphicon glyphicon-envelope"></span> Release Notes
+          div(class="panel-heading") 
+            h3 <span class="glyphicon glyphicon-envelope"></span> Release Notes
           div(class="panel-body")
             - var n=0
             while n<4
@@ -202,7 +204,7 @@ block content
       div(class="col-sm-6")
         div(class="panel panel-primary")
           div(class="panel-heading")
-            p <span class="glyphicon glyphicon-edit"></span> Feedback
+            h3 <span class="glyphicon glyphicon-edit"></span> Feedback
           div(class="panel-body")
             form(id="feedback_form" role="form")
               div(class="form-group")
