@@ -104,6 +104,7 @@ var CIStateLookup = {
 
 var refreshCi = function(status)
 {
+  console.log(status);
   $.each(status,function(i){
     var key = i;
     var value = status[i];
@@ -137,15 +138,15 @@ var refreshCi = function(status)
 var acquireJenkinsAllInfo = function(){
       try
       {
-          var getSource=undefined;
+          var whichCI=undefined;
           var id = $(".tab-pane.active").attr("id");
           if (id == "ciTabEmer")
-            getSource = "/jenkins/getEmerState" 
+            whichCI = "emerald" 
           else if (id == "ciTabNonEmer")
-            getSource = "/jenkins/getNonEmerState"     
-          if (getSource!=undefined)
+            whichCI = "nonEmerald"     
+          if (whichCI!=undefined)
           {
-              $.get(getSource, function (result) {
+              $.get("/jenkins/getCurrentStatus",{"whichCI":whichCI},function (result) {
                 refreshCi(result);
               
             })
@@ -190,7 +191,7 @@ var main = function()
       return false;
   });  
   
-  setInterval(acquireJenkinsAllInfo, 2000);  
+  setInterval(acquireJenkinsAllInfo, 5000);  
 };
 
 $(document).ready(main);
