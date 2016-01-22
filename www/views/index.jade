@@ -210,13 +210,48 @@ block content
           div(class="panel-heading") 
             h3 <span class="glyphicon glyphicon-envelope"></span> Major updates
           div(class="panel-body")
-            - var n=0
-            while n<4
-              h3 Release Note #{n}
-              p note 1
-              p note 2
-              p note 3
-              - n++
+            h3(class="text-primary") V1.0:
+            h4(class="text-primary") highlight
+            ol
+              li
+                dt CI based on Git
+                dd -for 2.7 firmware integration, with the similar experience as 2.6
+              li
+                dt CI web for status query
+                dd -And comment/suggestion submission
+              li
+                dt Server migrates to Gitlab
+                dd -which is the formal server on linux
+              
+            h4(class="text-primary") Note
+            ol
+              li
+                span 
+                  | Prepare the environment (do it once for all),
+                  | Refer this docoument                  
+                  i(class="fa fa-hand-o-right fa-3x")
+                  a(href="#")
+                    |click me
+
+                  ul
+                    li Active your account as section 1 in the doc
+                    li Prepare Git repo with the new server
+                      ul
+                        li If you want a new Git repo; then go to section 2.1
+                        li if you already have the works in the old Git repo; then go to section 2.2
+              li
+                | Step to submit CI, refer to below
+                ul
+                  li
+                    | If you from Emerald,remote branch name prefix with IR_Emerald to trigger the CI:
+                    div(class="well well-sm")
+                      | git push origin DEV_BRANCH_NAME:IR_Emerald_xxx
+                  li  
+                    | If you from NonEmrald,remote branch name prefix with IR_NonEmerald to trigger the CI:
+                    div(class="well well-sm")
+                      | git push origin DEV_BRANCH_NAME:IR_nonEmerald_xxx
+                        
+                 
       div(class="col-sm-6")
         div(class="panel panel-primary")
           div(class="panel-heading")
