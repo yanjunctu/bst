@@ -158,17 +158,22 @@ var acquireJenkinsAllInfo = function(){
       {
           var whichCI=undefined;
           var id = $(".tab-pane.active").attr("id");
+          console.log(id);
           if (id == "ciTabEmer")
-            whichCI = "emerald" 
-          else if (id == "ciTabNonEmer")
-            whichCI = "nonEmerald"     
-          if (whichCI!=undefined)
           {
-              $.get("/jenkins/getCurrentStatus",{"whichCI":whichCI},function (result) {
+              $.get("/jenkins/getEmerStatus",function (result) {
                 refreshCi(result);
               
             })
           }
+          else if (id == "ciTabNonEmer")
+          {
+              $.get("/jenkins/getNonEmerStatus",function (result) {
+                refreshCi(result);
+              
+            })
+          }            
+
           
       }
       catch(err)

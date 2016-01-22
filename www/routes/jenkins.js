@@ -3,7 +3,19 @@ var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var cnt=0;
 
-var ciStatus = {
+var emeraldStatus = {
+  "idleState":{"status":"not start","duration":0},
+  "preCheckState":{"status":"not start","duration":2},
+  "buildFwState":{"status":"not start","duration":3},
+  "testFwState":{"status":"not start","duration":4},
+  "buildWin32State":{"status":"not start","duration":5},
+  "testWin32State":{"status":"not start","duration":0},
+  "preReleaseState":{"status":"not start","duration":0},
+  "overall":{"current":{"branch":"na","subTime":"na"}}
+
+};  
+
+var nonEmeraldStatus = {
   "idleState":{"status":"not start","duration":0},
   "preCheckState":{"status":"not start","duration":2},
   "buildFwState":{"status":"not start","duration":3},
@@ -31,7 +43,7 @@ setInterval(function(){
       console.log("err in getJobLastBuild");
       return;
     }
-    
+    var ciStatus = emeraldStatus; 
     //console.log(data);
     if (data.building==false){
       //return res.json(ciStatus);
@@ -142,43 +154,25 @@ setInterval(function(){
   });
 },2000);
 /* GET feedback about git page. */
-router.get('/getCurrentStatus', function(req, res, next) {
+router.get('/getEmerStatus', function(req, res, next) {
 
-    return res.json(ciStatus);
+  console.log("getEmerStatus");
+
+  return res.json(emeraldStatus);      
+
+
 
   });
   
+router.get('/getNonEmerStatus', function(req, res, next) {
+
+  console.log("getNonEmerStatus");
+
+  return res.json(nonEmeraldStatus);       
+   
 
 
-router.get('/getNonEmerState', function(req, res, next) {
+  });
 
-/*
-jenkins.job_info('PCR-REPT-0-Trigger', function(err, data) {
-  if (err){ return console.log(err); }
-  console.log(data)
-});
-*/
-var ciStatus = {
-  "idleState":{"status":"done","duration":0},
-  "preCheckState":{"status":"done","duration":2},
-  "buildFwState":{"status":"done","duration":3},
-  "testFwState":{"status":"done","duration":4},
-  "buildWin32State":{"status":"done","duration":5},
-  "testWin32State":{"status":"done","duration":0},
-  "preReleaseState":{"status":"done","duration":0}
-  
-}
-res.json(ciStatus);
-
-});
-
-function convertUTCDateToLocalDate(date) {
-    date = new Date(date);
-    var localOffset = date.getTimezoneOffset() * 60000;
-    var currentTime = date.getTime();
-    date = currentTime - localOffset;
-    date = new Date(date);
-    return date;
-}
 
 module.exports = router;
