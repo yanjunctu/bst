@@ -36,15 +36,17 @@ var getJobLastBuild = function(job,callback)
 
 };
 
-setInterval(function(){
-    getJobLastBuild('PCR-REPT-0-MultiJob',function(err,data){
-    if(err) 
-    {
-      console.log("err in getJobLastBuild");
-      return;
-    }
-    var ciStatus = emeraldStatus; 
-    //console.log(data);
+var getJobBuild = function(job,build,callback)
+{
+  var result;
+  jenkins.build_info(job, build,function(err, data) {
+    callback(err,data);
+  });
+
+};
+
+var updateStatus = function(ciStatus,data){
+    
     if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
@@ -87,8 +89,12 @@ setInterval(function(){
             console.log("On Target all done");               
           }
           else if(element.result==null){
-              getJobLastBuild('PCR-REPT-On_Target_MultiJob',function(err,data){
-              if(err) return;
+              getJobBuild('PCR-REPT-On_Target_MultiJob',element.buildNumber,function(err,data){
+              if(err) 
+              {
+                console.log("err in subBuilds ON target ")
+                return;
+              }
               
               data.subBuilds.forEach(function(element, index, array){
                 if(element.jobName =='PCR-REPT-On_Target_Build_MultiJob'){
@@ -120,8 +126,12 @@ setInterval(function(){
             console.log("Off target all done"); 
           }
           else if(element.result==null){
-              getJobLastBuild('PCR-REPT-Off_Target_MultiJob',function(err,data){
-              if(err) return;
+              getJobBuild('PCR-REPT-Off_Target_MultiJob',element.buildNumber,function(err,data){
+              if(err) 
+              {
+                console.log("err in subBuilds OFF target ")
+                return;
+              }
               
               data.subBuilds.forEach(function(element, index, array){
                 if(element.jobName =='PCR-REPT-Off_Target_Build_MultiJob'){
@@ -148,10 +158,53 @@ setInterval(function(){
           }
         }
       })
-    }
-      
+    }  
+}
 
-  });
+setInterval(function(){
+    var buildID;
+    
+    getJobLastBuild('PCR-REPT-0-MultiJob',function(err,data){
+    if(err) 
+    {
+      console.log("err in getJobLastBuild in 1st");
+      return;
+    }
+    
+    buildID = data.number;
+    //console.log("id=",buildID)
+    var project = data.actions[0].parameters[0].value;
+        console.log("in 1st build,project=",project) 
+    
+    var ciStatus;
+    if (project=="REPT2.7_nonEmerald"){
+      ciStatus = nonEmeraldStatus;      
+    }else{
+      ciStatus = emeraldStatus;
+    }
+  updateStatus(ciStatus,data);
+  
+  //console.log(buildID-1)
+    getJobBuild('PCR-REPT-0-MultiJob',buildID-1,function(err,data){
+    if(err) 
+    {
+      console.log("err in getJobBuild for 2nd");
+      return;
+    }
+    var project = data.actions[0].parameters[0].value;
+        console.log("in 2nd build,project=",project) 
+    if (project=="REPT2.7_nonEmerald"){
+      ciStatus = nonEmeraldStatus;      
+    }else{
+      ciStatus = emeraldStatus;
+    }
+  updateStatus(ciStatus,data);
+    })  
+    })
+  
+
+    //console.log(data);
+
 },2000);
 /* GET feedback about git page. */
 router.get('/getEmerStatus', function(req, res, next) {
