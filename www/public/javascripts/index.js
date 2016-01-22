@@ -188,6 +188,10 @@ var main = function()
       var feedback_advise = $("#comment").val()
       var feedback_coreid = $("#Feedback_coreId").val()
      
+     if(typeof feedback_rateOfGit == "undefined"){
+          $("#feedback_status").text("Please choose your opinion of our service at least:-)");
+          return false;
+      }
       var newFeedBack = {"rateOfGit":feedback_rateOfGit, "selfAdvise":feedback_advise, "coreid":feedback_coreid};
 
       try
@@ -209,6 +213,7 @@ var main = function()
       return false;
   });  
   
+  $(".testFwState").hide();
   acquireJenkinsAllInfo();
   
   setInterval(acquireJenkinsAllInfo, 5000);  

@@ -12,9 +12,9 @@ block content
               div(class="tabbable tabs-below")
                 ul(class="nav nav-tabs")
                   li(class="active")
-                    a(href="#ciTabEmer" data-toggle="tab") Emerlad CI
+                    a(href="#ciTabEmer" data-toggle="tab") Emerald CI
                   li
-                    a(href="#ciTabNonEmer" data-toggle="tab") Non-Emerlad CI
+                    a(href="#ciTabNonEmer" data-toggle="tab") Non-Emerald CI
                 div(class="tab-content")
                   div(class="tab-pane active" id="ciTabEmer")
                     - var escapseRow=0
@@ -39,7 +39,7 @@ block content
                     br
                     
                     - var escapseSpace=0
-                    while escapseSpace<90
+                    while escapseSpace<110
                       | &nbsp
                       - escapseSpace++
                       
@@ -208,7 +208,7 @@ block content
       div(class="col-sm-6")
         div(class="panel panel-primary")
           div(class="panel-heading") 
-            h3 <span class="glyphicon glyphicon-envelope"></span> Release Notes
+            h3 <span class="glyphicon glyphicon-envelope"></span> Major updates
           div(class="panel-body")
             - var n=0
             while n<4
@@ -224,29 +224,36 @@ block content
           div(class="panel-body")
             form(id="feedback_form" role="form")
               div(class="form-group")
-                label your opinion about Git:
-                label(style="padding-left:20px;" class="radio")   
-                  input(type="radio" name="GitUsage" value="Git_Excellent")
-                  Git is much better than clearcase<br>
-                label(style="padding-left:20px;" class="radio")
-                  input(type="radio" name="GitUsage" value="Git_Not_Bad")
-                  Git is good to use<br>   
-                label(style="padding-left:20px;" class="radio")
-                  input(type="radio" name="GitUsage" value="Git_Poor")
-                  Git disappoint me<br>  
+                h4 Do you like our system:
+                div(class="row")
+                  label(class="radio-inline col-md-2 col-md-offset-2") 
+                    img(src="/images/like.png" class="img-circle" width="30" height="30")
+                    br
+                    input(type="radio" name="GitUsage" value="Git_Excellent")
+                    | Like
+                  label(class="radio-inline col-md-2")
+                    img(src="/images/neutral.png" class="img-circle" width="30" height="30")
+                    br                
+                    input(type="radio" name="GitUsage" value="Git_Not_Bad")
+                    | Neutral   
+                  label(class="radio-inline col-md-2")
+                    img(src="/images/dislike.png" class="img-circle" width="30" height="30")
+                    br                
+                    input(type="radio" name="GitUsage" value="Git_Poor")
+                    | Dislike  
               
               div(class="form-group")
-                label(for="comment") Welcome your voice:
+                h4(for="comment") Welcome your comment and suggestion:
                 textarea(class="form-control" rows="5" id="comment")
                 
               div(class="form-group")
-                label core id(Good Suggest have Motocoin):
+                h4 Core ID (Good comment and suggestion have Moto Coin):
                 input(type="text" class="form-control" id="Feedback_coreId")
                 
               
               button(id="submit_btn" type="submit" class="btn btn-info") Submit
               | &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-              a(href="/feedback/gitall" class="text-info") Show All              
+              a(href="/feedback/gitall" class="text-info")              
               h3(id="feedback_status",class="text-primary")
               
     
