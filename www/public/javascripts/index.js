@@ -111,11 +111,29 @@ var refreshCi = function(status)
     
     if (-1 != $.inArray(key,indexArray) && -1 != $.inArray(value.status,statusArray))
     {
+      
       //console.log(key);
       
-      var sel = ".tab-pane.active a."+key;
+      var sel = ".tab-pane.active .currentSubmitBranch";
       //console.log($(sel))
-     
+      $(sel).text(status.overall.current.branch);
+      
+      sel = ".tab-pane.active .currentSubmitTime";
+      //console.log($(sel))
+      var utcSeconds = parseInt(status.overall.current.subTime);
+      
+      if (!isNaN(utcSeconds)){
+        var d = new Date(utcSeconds);
+        var n = d.toLocaleTimeString();      
+        $(sel).text(n);
+      }
+      else{
+        $(sel).text("na");        
+      }
+      
+      
+      sel = ".tab-pane.active a."+key;
+      
       $(sel).removeClass(CIStateLookup[key].curBtn);
       CIStateLookup[key].curBtn = CIStateLookup[key].btn[value.status];
       $(sel).addClass(CIStateLookup[key].curBtn);

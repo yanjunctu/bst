@@ -10,7 +10,8 @@ var ciStatus = {
   "testFwState":{"status":"not start","duration":4},
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
-  "preReleaseState":{"status":"not start","duration":0}
+  "preReleaseState":{"status":"not start","duration":0},
+  "overall":{"current":{"branch":"na","subTime":"na"}}
 
 };  
   
@@ -25,7 +26,13 @@ var getJobLastBuild = function(job,callback)
 
 setInterval(function(){
     getJobLastBuild('PCR-REPT-0-MultiJob',function(err,data){
-    if(err) return;
+    if(err) 
+    {
+      console.log("err in getJobLastBuild");
+      return;
+    }
+    
+    //console.log(data);
     if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
@@ -34,9 +41,14 @@ setInterval(function(){
       ciStatus.testFwState.status="not start";
       ciStatus.buildWin32State.status="not start";
       ciStatus.testWin32State.status="not start";
-      ciStatus.preReleaseState.status="not start";      
+      ciStatus.preReleaseState.status="not start";   
+      ciStatus.overall.current.branch="na";
+      ciStatus.overall.current.subTime="na";
     }else {
       ciStatus.idleState.status="done";
+      ciStatus.overall.current.branch=data.actions[0].parameters[1].value;
+      ciStatus.overall.current.subTime = data.timestamp;   
+      
       data.subBuilds.forEach(function(element, index, array){
         if(element.jobName =='PCR-REPT-Git-Integration'){
           if (element.result==null){
@@ -159,5 +171,14 @@ var ciStatus = {
 res.json(ciStatus);
 
 });
+
+function convertUTCDateToLocalDate(date) {
+    date = new Date(date);
+    var localOffset = date.getTimezoneOffset() * 60000;
+    var currentTime = date.getTime();
+    date = currentTime - localOffset;
+    date = new Date(date);
+    return date;
+}
 
 module.exports = router;

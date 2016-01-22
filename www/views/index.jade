@@ -22,6 +22,22 @@ block content
                       br
                       - escapseRow++
                     
+                    div(class="row")
+                      div(class="col-md-5")
+                        table(class="CIinfoTbl table table-striped table-bordered table-hover table-condensed")
+                          thead
+                            tr
+                              th(class="text-center")                             
+                              th(class="text-center text-info bg-info") submit branch
+                              th(class="text-center text-info bg-info") submit time
+                          tbody
+                            tr
+                              th(class="text-center text-info bg-info") current running                            
+                              td(class="currentSubmitBranch text-center") na
+                              td(class="currentSubmitTime text-center") na
+                    
+                    br
+                    
                     - var escapseSpace=0
                     while escapseSpace<90
                       | &nbsp
