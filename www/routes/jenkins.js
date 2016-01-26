@@ -4,7 +4,7 @@ var jenkins = require('../models/jenkins.js');
 var cnt=0;
 
 var emeraldStatus = {
-  "idleState":{"status":"not start","duration":0},
+  "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
   "buildFwState":{"status":"not start","duration":3},
   "testFwState":{"status":"not start","duration":4},
@@ -16,7 +16,7 @@ var emeraldStatus = {
 };  
 
 var nonEmeraldStatus = {
-  "idleState":{"status":"not start","duration":0},
+  "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
   "buildFwState":{"status":"not start","duration":3},
   "testFwState":{"status":"not start","duration":4},
@@ -163,6 +163,7 @@ var updateStatus = function(ciStatus,data){
 
 setInterval(function(){
     var buildID;
+    var lastProject;
     
     getJobLastBuild('PCR-REPT-0-MultiJob',function(err,data){
     if(err) 
@@ -175,7 +176,7 @@ setInterval(function(){
     //console.log("id=",buildID)
     var project = data.actions[0].parameters[0].value;
         console.log("in 1st build,project=",project) 
-    
+    lastProject = project;
     var ciStatus;
     if (project=="REPT2.7_nonEmerald"){
       ciStatus = nonEmeraldStatus;      
@@ -193,12 +194,18 @@ setInterval(function(){
     }
     var project = data.actions[0].parameters[0].value;
         console.log("in 2nd build,project=",project) 
+        
+    if (lastProject == project){
+      console.log("2nd same with 1st project,return")
+      return;
+    }
+      
     if (project=="REPT2.7_nonEmerald"){
       ciStatus = nonEmeraldStatus;      
     }else{
       ciStatus = emeraldStatus;
     }
-  updateStatus(ciStatus,data);
+    updateStatus(ciStatus,data);
     })  
     })
   
