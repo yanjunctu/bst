@@ -47,17 +47,19 @@ var getJobBuild = function(job,build,callback)
 
 var updateStatus = function(ciStatus,data){
     
+    ciStatus.idleState.status="not start";
+    ciStatus.preCheckState.status="not start";
+    ciStatus.buildFwState.status="not start";
+    ciStatus.testFwState.status="not start";
+    ciStatus.buildWin32State.status="not start";
+    ciStatus.testWin32State.status="not start";
+    ciStatus.preReleaseState.status="not start";   
+    ciStatus.overall.current.branch="na";
+    ciStatus.overall.current.subTime="na";
+      
     if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
-      ciStatus.preCheckState.status="not start";
-      ciStatus.buildFwState.status="not start";
-      ciStatus.testFwState.status="not start";
-      ciStatus.buildWin32State.status="not start";
-      ciStatus.testWin32State.status="not start";
-      ciStatus.preReleaseState.status="not start";   
-      ciStatus.overall.current.branch="na";
-      ciStatus.overall.current.subTime="na";
     }else {
       ciStatus.idleState.status="done";
       ciStatus.overall.current.branch=data.actions[0].parameters[1].value;
