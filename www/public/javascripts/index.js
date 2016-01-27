@@ -1,5 +1,6 @@
 var indexArray = ["idleState","preCheckState","buildFwState","testFwState","buildWin32State","testWin32State","preReleaseState"];
 var statusArray = ["not start","running","done"]
+var GET_JENKINS_INTERVAL = 15000;// each 15 seconds to get a jenkins status
 var CIStateLookup = {
   "idleState": {
     "icon":{
@@ -218,10 +219,14 @@ var main = function()
       return false;
   });  
   
+  $('.nav.nav-tabs').bind('click', function(event) {
+      setTimeout(acquireJenkinsAllInfo, 0);
+  });  
+  
   $(".testFwState").hide();
   acquireJenkinsAllInfo();
   
-  setInterval(acquireJenkinsAllInfo, 5000);  
+  setInterval(acquireJenkinsAllInfo, GET_JENKINS_INTERVAL);  
 };
 
 $(document).ready(main);

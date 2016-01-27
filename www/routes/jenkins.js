@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var cnt=0;
+var GET_JENKINS_INTERVAL = 15000; // 15seconds
 
 var emeraldStatus = {
   "idleState":{"status":"running","duration":0},
@@ -214,7 +215,7 @@ setInterval(function(){
 
     //console.log(data);
 
-},2000);
+},GET_JENKINS_INTERVAL);
 /* GET feedback about git page. */
 router.get('/getEmerStatus', function(req, res, next) {
 
