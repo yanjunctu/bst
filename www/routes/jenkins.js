@@ -46,6 +46,57 @@ var getJobBuild = function(job,build,callback)
 
 };
 
+function getProjectName(data){
+  var actions = data.actions;
+  var found;
+  
+  actions.forEach(function(action){
+    if (action.hasOwnProperty("parameters")) {
+      var paras = action.parameters;
+      paras.forEach(function(para){
+        //console.log(para.name);
+        if(para.name=="PROJECT_NAME"){
+          //console.log("found",para.value)
+          found = para.value;
+          return;
+        }
+        {
+          //console.log()
+        }
+          
+      })
+    }
+  }
+  );
+  return found;
+}
+
+function getBranchName(data){
+  
+  var actions = data.actions;
+  var found;
+  
+  actions.forEach(function(action){
+    if (action.hasOwnProperty("parameters")) {
+      var paras = action.parameters;
+      paras.forEach(function(para){
+        //console.log(para.name);
+        if(para.name=="IR_BRANCH"){
+          //console.log("found",para.value)
+          found = para.value;
+          return;
+        }
+        {
+          //console.log()
+        }
+          
+      })
+    }
+  }
+  );
+  return found;
+}
+
 var updateStatus = function(ciStatus,data){
     
     ciStatus.idleState.status="not start";
@@ -63,7 +114,7 @@ var updateStatus = function(ciStatus,data){
       ciStatus.idleState.status="running";
     }else {
       ciStatus.idleState.status="done";
-      ciStatus.overall.current.branch=data.actions[0].parameters[1].value;
+      ciStatus.overall.current.branch= getBranchName(data);//data.actions[0].parameters[1].value;
       ciStatus.overall.current.subTime = data.timestamp;   
       
       data.subBuilds.forEach(function(element, index, array){
@@ -164,6 +215,7 @@ var updateStatus = function(ciStatus,data){
     }  
 }
 
+
 setInterval(function(){
     var buildID;
     var lastProject;
@@ -177,7 +229,7 @@ setInterval(function(){
     
     buildID = data.number;
     //console.log("id=",buildID)
-    var project = data.actions[0].parameters[0].value;
+    var project = getProjectName(data);//data.actions[0].parameters[0].value;
         console.log("in 1st build,project=",project) 
     lastProject = project;
     var ciStatus;
@@ -195,7 +247,9 @@ setInterval(function(){
       console.log("err in getJobBuild for 2nd");
       return;
     }
-    var project = data.actions[0].parameters[0].value;
+    
+    
+    var project = getProjectName(data);//data.actions[0].parameters[0].value;
         console.log("in 2nd build,project=",project) 
         
     if (lastProject == project){
