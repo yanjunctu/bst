@@ -1,3 +1,7 @@
+#Below is dependency python lib needed by this script
+#sudo pip install python-jenkins
+#sudo pip install xlwt
+
 from jenkins import Jenkins
 from jenkins import JenkinsException
 from six.moves.urllib.error import HTTPError
