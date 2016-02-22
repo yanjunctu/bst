@@ -217,14 +217,11 @@ var acquireJenkinsAllInfo = function(){
                 refreshCi(result);
               
             })
-            /*
-              $.get("/jenkins/getEmerQInfo",function (result) {
+            
+              $.get("/jenkins/getEmerPendingReq",function (result) {
                 refreshQ(result);
               
-            })  */  
-            //result = {"current":{"submitter":"YanJun","subTime":1456127340000},"queue":[{"submitter":"YanJun1","subTime":1456127340000},{"submitter":"YanJun2","subTime":1456127340000},{"submitter":"YanJun3","subTime":1456127340000}]}
-            result = {"current":{"submitter":"YanJun","subTime":1456127340000},"queue":[]}            
-            refreshQ(result);
+            })   
           }
           else if (id == "ciTabNonEmer")
           {
@@ -233,12 +230,12 @@ var acquireJenkinsAllInfo = function(){
               
             })
             
-              /*$.get("/jenkins/getNonEmerQInfo",function (result) {
+              $.get("/jenkins/getNonEmerPendingReq",function (result) {
                 refreshQ(result);
               
-            })    */      
-            result = {"current":{"submitter":"JunJun","subTime":1456127340000},"queue":[{"submitter":"JunJun1","subTime":1456127340000},{"submitter":"JunJun2","subTime":1456127340000},{"submitter":"JunJun3","subTime":1456127340000}]}            
-            refreshQ(result);
+            })    
+            //result = {"current":{"submitter":"JunJun","subTime":1456127340000},"queue":[{"submitter":"JunJun1","subTime":1456127340000},{"submitter":"JunJun2","subTime":1456127340000},{"submitter":"JunJun3","subTime":1456127340000}]}            
+            //refreshQ(result);
           }            
 
           

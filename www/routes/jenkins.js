@@ -96,7 +96,7 @@ function getBranchName(data){
 }
 
 function getPendingReq(project, callback){
-    var arr = [];
+    var result = {"current":{"submitter":"","subTime":0},"queue":[]};
 
     jenkins.queue(function(err, data){
         var items = data.items;
@@ -115,12 +115,12 @@ function getPendingReq(project, callback){
                 console.log("project");
                 console.log(prjName);
                 if (sub){
-                    arr.push({"submitter":sub[1], "date":item.inQueueSince});
-                    console.log(arr);
+                    result.queue.push({"submitter":sub[1], "subTime":item.inQueueSince});
+                    //console.log(arr);
                 }
             }
         });
-        callback(null, arr);
+        callback(null, result);
     });
 }
 
@@ -307,7 +307,9 @@ router.get('/getEmerStatus', function(req, res, next) {
 router.get('/getEmerPendingReq', function(req, res, next){
     console.log("getEmerPendingReq");
     getPendingReq("REPT2.7_Emerald", function(err, data){
-        if (err) { return res.end(); }
+        if (err) { return res.end(err); }
+        data.current.submitter = emeraldStatus.overall.current.branch;
+        data.current.subTime = emeraldStatus.overall.current.subTime;
         return res.json(data);
     });
 });
@@ -320,7 +322,13 @@ router.get('/getNonEmerStatus', function(req, res, next) {
 });
 
 router.get('/getNonEmerPendingReq', function(req, res, next){
-    console.log("getNonEmerPendingReq");
+    console.log("getnonEmerPendingReq");
+    getPendingReq("REPT2.7_nonEmerald", function(err, data){
+        if (err) { return res.end(err); }
+        data.current.submitter = nonEmeraldStatus.overall.current.branch;
+        data.current.subTime = nonEmeraldStatus.overall.current.subTime;
+        return res.json(data);
+    });
 })
 
 
