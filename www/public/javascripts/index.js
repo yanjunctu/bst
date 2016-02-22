@@ -112,27 +112,6 @@ var refreshCi = function(status)
     
     if (-1 != $.inArray(key,indexArray) && -1 != $.inArray(value.status,statusArray))
     {
-      
-      //console.log(key);
-      
-      var sel = ".tab-pane.active .currentSubmitBranch";
-      //console.log($(sel))
-      $(sel).text(status.overall.current.branch);
-      
-      sel = ".tab-pane.active .currentSubmitTime";
-      //console.log($(sel))
-      var utcSeconds = parseInt(status.overall.current.subTime);
-      
-      if (!isNaN(utcSeconds)){
-        var d = new Date(utcSeconds);
-        var n = d.toLocaleTimeString();      
-        $(sel).text(n);
-      }
-      else{
-        $(sel).text("na");        
-      }
-      
-      
       sel = ".tab-pane.active a."+key;
       
       $(sel).removeClass(CIStateLookup[key].curBtn);
@@ -154,6 +133,78 @@ var refreshCi = function(status)
   });
 };
 
+
+var refreshQ = function(QueueInfo)
+{
+  console.log(QueueInfo);
+  
+  var $tblBody = undefined;
+  
+  //clear old tables
+  if($(".tab-pane.active").attr("id")=="ciTabEmer"){
+    console.log("empty emer")
+    $tblBody = $("#emerTbl");
+    $tblBody.empty()
+  }
+  else if($(".tab-pane.active").attr("id")=="ciTabNonEmer"){
+  $tblBody = $("#nonEmerTbl");
+  $tblBody.empty()  
+  }
+  
+  //create running CI row info
+  $c1 = $("<td>").text("running CI");
+  $c1.addClass("text-center");
+  $c2 = $("<td>").text(QueueInfo.current.submitter)
+  $c2.addClass("text-center");  
+  
+  var utcSeconds = parseInt(QueueInfo.current.subTime);
+  
+  if (!isNaN(utcSeconds)){
+    var d = new Date(utcSeconds);
+    var n = d.toLocaleTimeString();      
+    $c3 = $("<td>").text(n)
+    $c3.addClass("text-center");    
+  }
+  else{
+    $c3 = $("<td>").text("na")
+    $c3.addClass("text-center");    
+  }     
+  
+  $addrow = $("<tr>");
+  $addrow.append($c1)
+  $addrow.append($c2)
+  $addrow.append($c3)
+  $tblBody.append($addrow)
+  
+  //create pending row info
+  $.each(QueueInfo.queue,function(index,value){
+    var displayIndex = index+1;
+    $c1 = $("<td>").text("pending CI "+displayIndex);
+    $c1.addClass("text-center");
+    $c2 = $("<td>").text(value.submitter);
+    $c2.addClass("text-center");
+    
+    var utcSeconds = parseInt(value.subTime);
+    
+    if (!isNaN(utcSeconds)){
+      var d = new Date(utcSeconds);
+      var n = d.toLocaleTimeString();      
+      $c3 = $("<td>").text(n)
+      $c3.addClass("text-center");
+    }
+    else{
+      $c3 = $("<td>").text("na")
+      $c3.addClass("text-center");      
+    }     
+    
+    $addrow = $("<tr>");
+    $addrow.append($c1)
+    $addrow.append($c2)
+    $addrow.append($c3)
+    $tblBody.append($addrow)
+    
+  });
+};
 var acquireJenkinsAllInfo = function(){
       try
       {
@@ -166,6 +217,14 @@ var acquireJenkinsAllInfo = function(){
                 refreshCi(result);
               
             })
+            /*
+              $.get("/jenkins/getEmerQInfo",function (result) {
+                refreshQ(result);
+              
+            })  */  
+            //result = {"current":{"submitter":"YanJun","subTime":1456127340000},"queue":[{"submitter":"YanJun1","subTime":1456127340000},{"submitter":"YanJun2","subTime":1456127340000},{"submitter":"YanJun3","subTime":1456127340000}]}
+            result = {"current":{"submitter":"YanJun","subTime":1456127340000},"queue":[]}            
+            refreshQ(result);
           }
           else if (id == "ciTabNonEmer")
           {
@@ -173,6 +232,13 @@ var acquireJenkinsAllInfo = function(){
                 refreshCi(result);
               
             })
+            
+              /*$.get("/jenkins/getNonEmerQInfo",function (result) {
+                refreshQ(result);
+              
+            })    */      
+            result = {"current":{"submitter":"JunJun","subTime":1456127340000},"queue":[{"submitter":"JunJun1","subTime":1456127340000},{"submitter":"JunJun2","subTime":1456127340000},{"submitter":"JunJun3","subTime":1456127340000}]}            
+            refreshQ(result);
           }            
 
           
