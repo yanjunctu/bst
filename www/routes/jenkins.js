@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var cnt=0;
-var GET_JENKINS_INTERVAL = 15000; // 15seconds
+var GET_JENKINS_INTERVAL = 5000; // 15seconds
 
 var emeraldStatus = {
   "idleState":{"status":"running","duration":0},
@@ -13,7 +13,6 @@ var emeraldStatus = {
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
   "overall":{"current":{"branch":"na","subTime":"na"}}
-
 };  
 
 var nonEmeraldStatus = {
@@ -25,9 +24,8 @@ var nonEmeraldStatus = {
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
   "overall":{"current":{"branch":"na","subTime":"na"}}
-
 };  
-  
+
 var getJobLastBuild = function(job,callback)
 {
   var result;
@@ -95,6 +93,35 @@ function getBranchName(data){
   }
   );
   return found;
+}
+
+function getPendingReq(project, callback){
+    var arr = [];
+
+    jenkins.queue(function(err, data){
+        var items = data.items;
+        var prjName = "PROJECT_NAME=".concat(project);
+
+        if (err) {
+            callback(err);
+            return;
+        }
+        //console.log(data);
+        items.forEach(function(item){
+            if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
+                var sub = /SUBMITTER=(.*)/ig.exec(item.params);
+
+                console.log(item);
+                console.log("project");
+                console.log(prjName);
+                if (sub){
+                    arr.push({"submitter":sub[1], "date":item.inQueueSince});
+                    console.log(arr);
+                }
+            }
+        });
+        callback(null, arr);
+    });
 }
 
 var updateStatus = function(ciStatus,data){
@@ -238,7 +265,7 @@ setInterval(function(){
     }else{
       ciStatus = emeraldStatus;
     }
-  updateStatus(ciStatus,data);
+    updateStatus(ciStatus,data);
   
   //console.log(buildID-1)
     getJobBuild('PCR-REPT-0-MultiJob',buildID-1,function(err,data){
@@ -266,30 +293,35 @@ setInterval(function(){
     })  
     })
   
-
     //console.log(data);
 
 },GET_JENKINS_INTERVAL);
 /* GET feedback about git page. */
 router.get('/getEmerStatus', function(req, res, next) {
 
-  console.log("getEmerStatus");
+  console.log("getEmerStatus"); 
 
   return res.json(emeraldStatus);      
+});
 
-
-
-  });
+router.get('/getEmerPendingReq', function(req, res, next){
+    console.log("getEmerPendingReq");
+    getPendingReq("REPT2.7_Emerald", function(err, data){
+        if (err) { return res.end(); }
+        return res.json(data);
+    });
+});
   
 router.get('/getNonEmerStatus', function(req, res, next) {
 
   console.log("getNonEmerStatus");
 
   return res.json(nonEmeraldStatus);       
-   
+});
 
-
-  });
+router.get('/getNonEmerPendingReq', function(req, res, next){
+    console.log("getNonEmerPendingReq");
+})
 
 
 module.exports = router;
