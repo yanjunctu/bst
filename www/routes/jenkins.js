@@ -116,7 +116,6 @@ function getPendingReq(project, callback){
                 console.log(prjName);
                 if (sub){
                     result.queue.push({"submitter":sub[1], "subTime":item.inQueueSince});
-                    //console.log(arr);
                 }
             }
         });

@@ -28,10 +28,9 @@ triggerCI()
             return 1
             ;;
     esac
-    args+="&SUBMITTER=$2"
     [ -e "$timeFile" ] && read lastTriggerTime < "$timeFile"
     [ "$((lastTriggerTime+INTERVAL))" -gt "$currentTime" ] && sleep $((lastTriggerTime+INTERVAL-currentTime)) &>/dev/null
-    wget $args &>/dev/null
+    wget $args"&SUBMITTER=$2" &>/dev/null
     rm -rf buildWithParameters\?token=Trigger_Token* &>/dev/null
     echo $currentTime > $timeFile
 
