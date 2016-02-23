@@ -13,8 +13,14 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
     },
-    "curIcon":"fa fa-coffee fa-lg",
-    "curBtn":"btn btn-md btn-default"
+    "curIcon":{
+      "ciTabEmer":"fa fa-coffee fa-lg",
+      "ciTabNonEmer":"fa fa-coffee fa-lg"
+    },
+    "curBtn":{
+      "ciTabEmer":"btn btn-md btn-default",
+      "ciTabNonEmer":"btn btn-md btn-default"      
+    }
   },
   "preCheckState": {
     "icon":{
@@ -27,8 +33,14 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
     },
-    "curIcon":"fa fa-download fa-lg",
-    "curBtn":"btn btn-md btn-default"    
+    "curIcon":{
+      "ciTabEmer":"fa fa-download fa-lg",
+      "ciTabNonEmer":"fa fa-download fa-lg"      
+    },
+    "curBtn":{
+      "ciTabEmer":"btn btn-md btn-default",
+      "ciTabNonEmer":"btn btn-md btn-default"      
+    } 
   },  
   "buildFwState": {
     "icon":{
@@ -41,8 +53,14 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
     },
-    "curIcon":"fa fa-building fa-lg",
-    "curBtn":"btn btn-md btn-default"        
+    "curIcon":{
+      "ciTabEmer":"fa fa-building fa-lg",
+      "ciTabNonEmer":"fa fa-building fa-lg"        
+    },
+    "curBtn":{
+      "ciTabEmer":"btn btn-md btn-default",
+      "ciTabNonEmer":"btn btn-md btn-default"      
+    }    
   },
   "testFwState": {
     "icon":{
@@ -55,8 +73,14 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
     },
-    "curIcon":"fa fa-flask fa-lg",
-    "curBtn":"btn btn-md btn-default"       
+    "curIcon":{
+      "ciTabEmer":"fa fa-flask fa-lg",
+      "ciTabNonEmer":"fa fa-flask fa-lg"         
+    },
+    "curBtn":{
+      "ciTabEmer":"btn btn-md btn-default",
+      "ciTabNonEmer":"btn btn-md btn-default"      
+    }     
   },
   "buildWin32State": {
     "icon":{
@@ -69,8 +93,14 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
     },
-    "curIcon":"fa fa-building fa-lg",
-    "curBtn":"btn btn-md btn-default"        
+    "curIcon":{
+      "ciTabEmer":"fa fa-building fa-lg",
+      "ciTabNonEmer":"fa fa-building fa-lg"           
+    },
+    "curBtn":{
+      "ciTabEmer":"btn btn-md btn-default",
+      "ciTabNonEmer":"btn btn-md btn-default"      
+    }       
   },
   "testWin32State": {
     "icon":{
@@ -83,8 +113,14 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
     },
-    "curIcon":"fa fa-flask fa-lg",
-    "curBtn":"btn btn-md btn-default"         
+    "curIcon":{
+      "ciTabEmer":"fa fa-flask fa-lg",
+      "ciTabNonEmer":"fa fa-flask fa-lg"        
+    },
+    "curBtn":{
+      "ciTabEmer":"btn btn-md btn-default",
+      "ciTabNonEmer":"btn btn-md btn-default"      
+    }        
   },
   "preReleaseState": {
     "icon":{
@@ -97,8 +133,14 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"      
     },
-    "curIcon":"fa fa-check-square-o fa-lg",
-    "curBtn":"btn btn-md btn-default"        
+    "curIcon":{
+      "ciTabEmer":"fa fa-check-square-o fa-lg",
+      "ciTabNonEmer":"fa fa-check-square-o fa-lg"          
+    },
+    "curBtn":{
+      "ciTabEmer":"btn btn-md btn-default",
+      "ciTabNonEmer":"btn btn-md btn-default"      
+    }       
   },
 };
 
@@ -113,15 +155,15 @@ var refreshCi = function(status)
     if (-1 != $.inArray(key,indexArray) && -1 != $.inArray(value.status,statusArray))
     {
       sel = ".tab-pane.active a."+key;
-      
-      $(sel).removeClass(CIStateLookup[key].curBtn);
-      CIStateLookup[key].curBtn = CIStateLookup[key].btn[value.status];
-      $(sel).addClass(CIStateLookup[key].curBtn);
+      var tabID = $(".tab-pane.active").attr("id");
+      $(sel).removeClass(CIStateLookup[key].curBtn[tabID]);
+      CIStateLookup[key].curBtn[tabID] = CIStateLookup[key].btn[value.status];
+      $(sel).addClass(CIStateLookup[key].curBtn[tabID]);
       
       sel = ".tab-pane.active a."+key+" i";
-      $(sel).removeClass(CIStateLookup[key].curIcon);
-      CIStateLookup[key].curIcon = CIStateLookup[key].icon[value.status];
-      $(sel).addClass(CIStateLookup[key].curIcon);  
+      $(sel).removeClass(CIStateLookup[key].curIcon[tabID]);
+      CIStateLookup[key].curIcon[tabID] = CIStateLookup[key].icon[value.status];
+      $(sel).addClass(CIStateLookup[key].curIcon[tabID]);  
       
       sel = ".tab-pane.active a."+key+" .statusStr";
       //console.log($(sel));

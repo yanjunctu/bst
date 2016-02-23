@@ -333,5 +333,9 @@ router.get('/getNonEmerPendingReq', function(req, res, next){
     });
 })
 
+router.get('/dashboard', function(req, res, next){
+    res.render('ciDashboard',{ title: 'CI DashBoard' });
+})
+
 
 module.exports = router;
