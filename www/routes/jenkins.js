@@ -95,6 +95,33 @@ function getBranchName(data){
   return found;
 }
 
+
+function getSubmitterName(data){
+  
+  var actions = data.actions;
+  var found;
+  
+  actions.forEach(function(action){
+    if (action.hasOwnProperty("parameters")) {
+      var paras = action.parameters;
+      paras.forEach(function(para){
+        //console.log(para.name);
+        if(para.name=="SUBMITTER"){
+          //console.log("found",para.value)
+          found = para.value;
+          return;
+        }
+        {
+          //console.log()
+        }
+          
+      })
+    }
+  }
+  );
+  return found;
+}
+
 function getPendingReq(project, callback){
     var result = {"current":{"submitter":"","subTime":0},"queue":[]};
 
@@ -141,7 +168,7 @@ var updateStatus = function(ciStatus,data){
       ciStatus.idleState.status="running";
     }else {
       ciStatus.idleState.status="done";
-      ciStatus.overall.current.branch= getBranchName(data);//data.actions[0].parameters[1].value;
+      ciStatus.overall.current.branch= getSubmitterName(data);//data.actions[0].parameters[1].value;
       ciStatus.overall.current.subTime = data.timestamp;   
       
       data.subBuilds.forEach(function(element, index, array){
@@ -196,7 +223,7 @@ var updateStatus = function(ciStatus,data){
                     ciStatus.testFwState.status = "done";
                     console.log("testFwState done");                         
                   }
-                }
+                } 
               });
           });
           }
@@ -243,59 +270,34 @@ var updateStatus = function(ciStatus,data){
 }
 
 
+var updateLatestBuildInfo = function(job){
+    
+    getJobLastBuild(job,function(err,data){
+        if(err) 
+        {
+          console.log("err in getJobLastBuild");
+          return;
+        }
+    
+        var project = getProjectName(data);//data.actions[0].parameters[0].value;
+        var ciStatus;
+        if (project=="REPT2.7_nonEmerald"){
+          ciStatus = nonEmeraldStatus;      
+        }else{
+          ciStatus = emeraldStatus;
+        }
+        updateStatus(ciStatus,data);  
+        });
+}
+
 setInterval(function(){
-    var buildID;
-    var lastProject;
     
-    getJobLastBuild('PCR-REPT-0-MultiJob',function(err,data){
-    if(err) 
-    {
-      console.log("err in getJobLastBuild in 1st");
-      return;
-    }
-    
-    buildID = data.number;
-    //console.log("id=",buildID)
-    var project = getProjectName(data);//data.actions[0].parameters[0].value;
-        console.log("in 1st build,project=",project) 
-    lastProject = project;
-    var ciStatus;
-    if (project=="REPT2.7_nonEmerald"){
-      ciStatus = nonEmeraldStatus;      
-    }else{
-      ciStatus = emeraldStatus;
-    }
-    updateStatus(ciStatus,data);
-  
-  //console.log(buildID-1)
-    getJobBuild('PCR-REPT-0-MultiJob',buildID-1,function(err,data){
-    if(err) 
-    {
-      console.log("err in getJobBuild for 2nd");
-      return;
-    }
-    
-    
-    var project = getProjectName(data);//data.actions[0].parameters[0].value;
-        console.log("in 2nd build,project=",project) 
-        
-    if (lastProject == project){
-      console.log("2nd same with 1st project,return")
-      return;
-    }
-      
-    if (project=="REPT2.7_nonEmerald"){
-      ciStatus = nonEmeraldStatus;      
-    }else{
-      ciStatus = emeraldStatus;
-    }
-    updateStatus(ciStatus,data);
-    })  
-    })
-  
-    //console.log(data);
+    updateLatestBuildInfo('PCR-REPT-0-MultiJob-Emerald');
+    updateLatestBuildInfo('PCR-REPT-0-MultiJob-nonEmerald');    
 
 },GET_JENKINS_INTERVAL);
+
+
 /* GET feedback about git page. */
 router.get('/getEmerStatus', function(req, res, next) {
 
