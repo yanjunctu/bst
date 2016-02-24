@@ -1,8 +1,15 @@
 extends layout
 
 block content
-  div(id="tester",style="width:600px;height:250px;")
-        
+  h4 [1]-On Target Build:
+  div(id="onbuild",style="width:600px;height:250px;")
+  h4 [2]-On Target Test:  
+  div(id="ontest",style="width:600px;height:250px;")  
+  h4 [3]-Off Target Build:
+  div(id="offbuild",style="width:600px;height:250px;")
+  h4 [4]-Off Target Test:  
+  div(id="offtest",style="width:600px;height:250px;") 
+  
 block userdefinejs
   script(src="/javascripts/CIDashboard.js")     
   
