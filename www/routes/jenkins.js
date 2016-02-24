@@ -335,6 +335,12 @@ router.get('/getNonEmerPendingReq', function(req, res, next){
 router.get('/dashboard', function(req, res, next){
     res.render('ciDashboard',{ title: 'CI DashBoard' });
 })
-
+/*
+router.get('/getOnBuild', function(req, res, next){
+   
+  getDuration(job,100,function(data){
+    return res.json(data);
+  }));
+})*/
 
 module.exports = router;

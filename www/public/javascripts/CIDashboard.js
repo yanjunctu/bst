@@ -1,5 +1,15 @@
 var main = function(){
   
+  $.get("/jenkins/getOnBuild",function (result) {
+    var plotHandler = document.getElementById('onbuild');
+
+    Plotly.plot( plotHandler, [{
+        x: result.id,
+        y: result.duration }], { 
+        margin: { t: 0 } } );
+
+  }
+        
   // Can't use jquery selection format $("#onbuild"), otherwise plot will not work
   // so far not find the root cause
   var plotHandler = document.getElementById('onbuild');
