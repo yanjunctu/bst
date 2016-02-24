@@ -42,8 +42,14 @@ var getJobBuild = function(job,build,callback)
   var result;
   jenkins.build_info(job, build,function(err, data) {
     callback(err,data);
-  });
-
+  });  
+};
+var getAllBuild = function (job,param,callback)
+{
+   jenkins.all_build(job,param,function(err, tempdata) {
+    data = tempdata.allBuilds;
+    callback(err,data);
+  });  
 };
 
 function getProjectName(data){
@@ -108,7 +114,16 @@ var updateStatus = function(ciStatus,data){
     ciStatus.preReleaseState.status="not start";   
     ciStatus.overall.current.branch="na";
     ciStatus.overall.current.subTime="na";
-      
+	
+    getJobFailureInfo('PCR-REPT-On_Target_MultiJob',100,function(err,data){
+    if(err) 
+    {
+      console.log("err in getJobDuration");
+      return;
+    }
+	});
+	  
+	  
     if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
@@ -215,6 +230,148 @@ var updateStatus = function(ciStatus,data){
     }  
 }
 
+function getJobDuration(job,days,callback){
+
+	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
+	var durationDic = new Array();
+	durationDic['id'] = new Array();
+	durationDic['duration'] = new Array();
+	durationDic['submitter'] = new Array();
+	durationDic['timestamp'] = new Array();
+	var parameters;
+	var param = 'id,duration,result,timestamp,actions[parameters[*]]'
+	
+    getAllBuild(job,param,function(err,data){
+    if(err) 
+    {
+      console.log("err in getJobDuration");
+      return;
+    }
+	for (var i = 0; i < data.length; i++) 
+	{
+	    if(data[i].timestamp > oldestTimeStamp)
+		{
+		   if(data[i].result == "SUCCESS")
+		   {
+		       console.log("test");
+			   durationDic.duration.push(data[i].duration);
+		       durationDic.id.push(data[i].id);
+			   durationDic.timestamp.push(data[i].timestamp);
+			   //get submitter name
+			   parameters=data[i].actions.parameters;
+			   for(var j = 0;j<parameter.length; j++)
+			   {
+			        if(parameter[j].name == "SUBMITTER")
+					{
+					    durationDic.submitter.push(parameter[j].value); 
+					}
+			   }
+		   }
+		}
+		else
+		{
+			callback(err,durationDic);
+			return;
+		}
+	}
+	callback(err,durationDic);
+	return;
+	})
+}
+
+function getJobFailureInfo(job,days,callback){
+
+	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
+	var param = 'timestamp,result,subBuilds[*],actions[parameters[*]]'
+	var subBuilds;
+	var parameters;
+    var failureInfoDic=new Array();
+	failureInfoDic['allBuildNumber'] =0;
+	failureInfoDic['failureNumber'] =0;
+	failureInfoDic['abortedNumber'] =0;
+	failureInfoDic['failBuildName'] =new Array(0,0,0,0,0,0,0,0);
+	failureInfoDic['failBuildNum'] =new Array(0,0,0,0,0,0,0,0);
+	failureInfoDic['failSubmitter'] =new Array();
+	failureInfoDic['failTimeStamp'] =new Array();
+	
+    getAllBuild(job,param,function(err,data){
+    if(err) 
+    {
+      console.log("err in getJobFailureInfo");
+      return;
+    }
+    console.log(data);
+	for (var i = 0; i < data.length; i++) 
+	{
+	    if(data[i].timestamp > oldestTimeStamp)
+		{
+		   failureInfoDic['allBuildNumber']++;
+		   if(data[i].result== "FAILURE")
+		   {
+		       failureInfoDic['failureNumber']++;
+			   failureInfoDic.failTimeStamp.push(data[i].timestamp); 
+			   subBuilds = data[i].subBuilds;
+			   for(var sub =0;sub < subBuilds.length;sub++)
+			   {
+			       if(subBuilds[sub].result== "FAILURE")
+				   {
+				        failureInfoDic.failBuildName[sub]=subBuilds.jobName;
+						failureInfoDic.failBuildNum[sub]++
+						console.log(subBuilds[sub]);
+				   }
+			   }
+			   parameters=data[i].actions.parameters;
+			   for(var j = 0;j<parameter.length; j++)
+			   {
+			        if(parameter[j].name == "SUBMITTER")
+					{
+					    failureInfoDic.failSubmitter.push(parameter[j].value); 
+					}
+			   }
+			   
+		   }
+		   else if(data[i].result== "ABORTED")
+		   {
+		       failureInfoDic['abortedNumber']++;
+		   }
+
+		}
+		else
+		{
+			callback(err,failureInfoDic);
+			return;
+		}
+	}
+    callback(err,failureInfoDic);
+	return;
+	})
+}
+
+function getSumitInfo(job,days,callback){
+
+	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
+	var param = 'timestamp,actions[parameters[*]]'
+	
+    getAllBuild(job,param,function(err,data){
+    if(err) 
+    {
+      console.log("err in getSumitInfo");
+      return;
+    }
+	for (var i = 0; i < data.length; i++) 
+	{
+	    if(data[i].timestamp > oldestTimeStamp)
+		{
+		   
+		}
+		else
+		{
+			//callback(err,...);
+		}
+	}
+	//callback(err,...);
+	})
+}
 
 setInterval(function(){
     var buildID;
