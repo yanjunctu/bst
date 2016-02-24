@@ -46,6 +46,7 @@ var getAllBuild = function (job,param,callback)
 {
    jenkins.all_build(job,param,function(err, tempdata) {
     data = tempdata.allBuilds;
+	//console.log(data);
     callback(err,data);
   });  
 };
@@ -168,7 +169,7 @@ var updateStatus = function(ciStatus,data){
     ciStatus.overall.current.branch="na";
     ciStatus.overall.current.subTime="na";
 	
-    getJobFailureInfo('PCR-REPT-On_Target_MultiJob',100,function(err,data){
+    getJobFailureInfo('PCR-REPT-0-MultiJob-Emerald',7,function(err,data){
     if(err) 
     {
       console.log("err in getJobDuration");
@@ -300,6 +301,7 @@ function getJobDuration(job,days,callback){
       console.log("err in getJobDuration");
       return;
     }
+	//console.log(data);
 	for (var i = 0; i < data.length; i++) 
 	{
 	    if(data[i].timestamp > oldestTimeStamp)
@@ -311,12 +313,13 @@ function getJobDuration(job,days,callback){
 		       durationDic.id.push(data[i].id);
 			   durationDic.timestamp.push(data[i].timestamp);
 			   //get submitter name
-			   parameters=data[i].actions.parameters;
-			   for(var j = 0;j<parameter.length; j++)
+			   parameters=data[i].actions[0].parameters;
+			   //console.log(parameters);
+			   for(var j = 0;j<parameters.length; j++)
 			   {
-			        if(parameter[j].name == "SUBMITTER")
+			        if(parameters[j].name == "SUBMITTER")
 					{
-					    durationDic.submitter.push(parameter[j].value); 
+					    durationDic.submitter.push(parameters[j].value); 
 					}
 			   }
 		   }
@@ -336,13 +339,14 @@ function getJobFailureInfo(job,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
 	var param = 'timestamp,result,subBuilds[*],actions[parameters[*]]'
+    //var param = "subBuilds[*]"
 	var subBuilds;
 	var parameters;
     var failureInfoDic=new Array();
 	failureInfoDic['allBuildNumber'] =0;
 	failureInfoDic['failureNumber'] =0;
 	failureInfoDic['abortedNumber'] =0;
-	failureInfoDic['failBuildName'] =new Array(0,0,0,0,0,0,0,0);
+	failureInfoDic['failBuildName'] =new Array('Pre',0,0,0,0,0,0,0);
 	failureInfoDic['failBuildNum'] =new Array(0,0,0,0,0,0,0,0);
 	failureInfoDic['failSubmitter'] =new Array();
 	failureInfoDic['failTimeStamp'] =new Array();
@@ -364,21 +368,28 @@ function getJobFailureInfo(job,days,callback){
 		       failureInfoDic['failureNumber']++;
 			   failureInfoDic.failTimeStamp.push(data[i].timestamp); 
 			   subBuilds = data[i].subBuilds;
-			   for(var sub =0;sub < subBuilds.length;sub++)
+			   if (subBuilds.length == 0)
 			   {
-			       if(subBuilds[sub].result== "FAILURE")
-				   {
-				        failureInfoDic.failBuildName[sub]=subBuilds.jobName;
-						failureInfoDic.failBuildNum[sub]++
-						console.log(subBuilds[sub]);
-				   }
+			        failureInfoDic.failBuildNum[0]++; 
 			   }
-			   parameters=data[i].actions.parameters;
-			   for(var j = 0;j<parameter.length; j++)
+			   else
 			   {
-			        if(parameter[j].name == "SUBMITTER")
+			       for(var sub =0;sub < subBuilds.length;sub++)
+			       {
+			           if(subBuilds[sub].result== "FAILURE")
+				       {
+							failureInfoDic.failBuildName[sub+1]=subBuilds.jobName;
+							failureInfoDic.failBuildNum[sub+1]++
+							console.log(subBuilds[sub+1]);
+						}
+					}
+			   }
+			   parameters=data[i].actions[0].parameters;
+			   for(var j = 0;j<parameters.length; j++)
+			   {
+			        if(parameters[j].name == "SUBMITTER")
 					{
-					    failureInfoDic.failSubmitter.push(parameter[j].value); 
+					    failureInfoDic.failSubmitter.push(parameters[j].value); 
 					}
 			   }
 			   
@@ -391,40 +402,17 @@ function getJobFailureInfo(job,days,callback){
 		}
 		else
 		{
+		    console.log(failureInfoDic);
 			callback(err,failureInfoDic);
 			return;
 		}
 	}
+	console.log(failureInfoDic);
     callback(err,failureInfoDic);
 	return;
 	})
 }
 
-function getSumitInfo(job,days,callback){
-
-	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
-	var param = 'timestamp,actions[parameters[*]]'
-	
-    getAllBuild(job,param,function(err,data){
-    if(err) 
-    {
-      console.log("err in getSumitInfo");
-      return;
-    }
-	for (var i = 0; i < data.length; i++) 
-	{
-	    if(data[i].timestamp > oldestTimeStamp)
-		{
-		   
-		}
-		else
-		{
-			//callback(err,...);
-		}
-	}
-	//callback(err,...);
-	})
-}
 
 var updateLatestBuildInfo = function(job){
     
