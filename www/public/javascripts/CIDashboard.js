@@ -3,6 +3,7 @@ var fetchBuildFInfo = function(){
 	var $tblHead = $("#infoHead");
 	var $tblBody = $("#infobody");
 	var name;
+	var percent;
 
 	//clear table
 	$tblHead.empty(); 
@@ -37,9 +38,11 @@ var fetchBuildFInfo = function(){
     $.get("/jenkins/getEmeraldFailInfo",function (emerald){
 	    var $bca1= $("<td>").text(emerald.allBuildNumber);
 		$bca1.addClass("text-center");
-	    var $bcf1= $("<td>").text(emerald.failureNumber);
+	    percent =(emerald.allBuildNumber ==0)? NA:(emerald.failureNumber/emerald.allBuildNumber)*100;
+	    var $bcf1= $("<td>").text(emerald.failureNumber+"("+percent+"%)");
 		$bcf1.addClass("text-center");
-	    var $bct1= $("<td>").text(emerald.abortedNumber);
+	    percent =(emerald.allBuildNumber ==0)? NA:(emerald.abortedNumber/emerald.allBuildNumber)*100;
+	    var $bct1= $("<td>").text(emerald.abortedNumber+"("+percent+"%)");
 		$bct1.addClass("text-center");
 		$addBrow1.append($bca1);
 		$addBrow1.append($bcf1);
@@ -51,9 +54,11 @@ var fetchBuildFInfo = function(){
 	    $.get("/jenkins/getNonEmeraldFailInfo",function (nonEmerald){
 			var $bca2= $("<td>").text(nonEmerald.allBuildNumber);
 			$bca2.addClass("text-center");
-			var $bcf2= $("<td>").text(nonEmerald.failureNumber);
+			percent =(nonEmerald.allBuildNumber ==0)? NA:(nonEmerald.failureNumber/nonEmerald.allBuildNumber)*100;
+			var $bcf2= $("<td>").text(nonEmerald.failureNumber+"("+percent+"%)");
 			$bcf2.addClass("text-center");
-			var $bct2= $("<td>").text(nonEmerald.abortedNumber);
+			percent =(nonEmerald.allBuildNumber ==0)? NA:(nonEmerald.abortedNumber/nonEmerald.allBuildNumber)*100;
+			var $bct2= $("<td>").text(nonEmerald.abortedNumber+"("+percent+"%)");
 			$bct2.addClass("text-center");
 			$addBrow2.append($bca2);
 			$addBrow2.append($bcf2);
@@ -68,12 +73,14 @@ var fetchBuildFInfo = function(){
 					var $hc = $("<td>").text(name);
 					$hc.addClass(titleFormat);
 					$addHrow.append($hc);
-						
-					var $bc3 = $("<td>").text(emerald.failBuildNum[i]);
+					
+                    percent =(emerald.allBuildNumber ==0)? NA:(emerald.failBuildNum[i]/emerald.allBuildNumber)*100;	
+					var $bc3 = $("<td>").text(emerald.failBuildNum[i]+"("+percent+"%)");
 	                $bc3.addClass("text-center");
 					$addBrow1.append($bc3);
-						
-					var $bc4 = $("<td>").text(nonEmerald.failBuildNum[i]);
+					
+                    percent =(nonEmerald.allBuildNumber ==0)? NA:(nonEmerald.failBuildNum[i]/nonEmerald.allBuildNumber)*100;	
+					var $bc4 = $("<td>").text(nonEmerald.failBuildNum[i]+"("+percent+"%)");
 	                $bc4.addClass("text-center");
 					$addBrow2.append($bc4);
 					
