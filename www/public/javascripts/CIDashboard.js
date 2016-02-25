@@ -179,6 +179,58 @@ var main = function(){
 
   })
 
+    $.get("/serverInfo/repoInfo",function (result) {
+      
+      console.log(result);
+
+      // draw pie for repo size before checkout
+      var MaxSize = 500000 //5G so far
+      var usedSize = parseInt(result.Gitlab_Comm_OriginSize) + parseInt(result.Gitlab_Cypher_OriginSize) + parseInt(result.Gitlab_Bahama_OriginSize);
+      var unusedSize = MaxSize - usedSize;
+
+      var data = [{
+        values: [usedSize, unusedSize],
+        labels: ['used', 'unused'],
+        type: 'pie'
+}];
+
+
+      var layout = {
+        height: 400,
+        width: 600
+      };
+
+      Plotly.newPlot('originRepoSizePlot', data, layout);
+
+      // draw pie for repo size after checkout
+
+      MaxSize = 500000 //5G so far
+      usedSize = parseInt(result.Gitlab_Comm_UserSize) + parseInt(result.Gitlab_Cypher_UserSize) + parseInt(result.Gitlab_Bahama_UserSize);
+      unusedSize = MaxSize - usedSize;
+
+      data = [{
+        values: [usedSize, unusedSize],
+        labels: ['used', 'unused'],
+        type: 'pie'
+}];
+
+      Plotly.newPlot('userRepoSizePlot', data, layout);
+
+      // draw pie for repo branches counter
+      MaxSize = 5000 //5G so far
+      usedSize = parseInt(result.Gitlab_Comm_BranchCnt) + parseInt(result.Gitlab_Cypher_BranchCnt) + parseInt(result.Gitlab_Bahama_BranchCnt);
+      unusedSize = MaxSize - usedSize;
+
+      data = [{
+        values: [usedSize, unusedSize],
+        labels: ['used', 'unused'],
+        type: 'pie'
+}];
+
+      Plotly.newPlot('repoBrhCntPlot', data, layout);
+      
+
+  })    
   /* Current Plotly.js version */
   
   
