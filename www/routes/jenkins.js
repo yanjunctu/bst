@@ -145,9 +145,9 @@ function getPendingReq(project, callback){
             if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
                 var sub = /SUBMITTER=(.*)/ig.exec(item.params);
 
-                console.log(item);
-                console.log("project");
-                console.log(prjName);
+                //console.log(item);
+                //console.log("project");
+                //console.log(prjName);
                 if (sub){
                     result.queue.push({"submitter":sub[1], "subTime":item.inQueueSince});
                 }
@@ -169,13 +169,13 @@ var updateStatus = function(ciStatus,data){
     ciStatus.overall.current.branch="na";
     ciStatus.overall.current.subTime="na";
 	
-    getJobFailureInfo('PCR-REPT-0-MultiJob-Emerald',7,function(err,data){
+    /*getJobFailureInfo('PCR-REPT-0-MultiJob-Emerald',7,function(err,data){
     if(err) 
     {
       console.log("err in getJobDuration");
       return;
     }
-	});
+	});*/
 	  
 	  
     if (data.building==false){
@@ -190,11 +190,11 @@ var updateStatus = function(ciStatus,data){
         if(element.jobName =='PCR-REPT-Git-Integration'){
           if (element.result==null){
             ciStatus.preCheckState.status = "running";
-            console.log("preCheckState running");
+            //console.log("preCheckState running");
           }
           else if(element.result=="SUCCESS"){
             ciStatus.preCheckState.status = "done";
-            console.log("preCheckState done");            
+            //console.log("preCheckState done");            
           }
         } else if(element.jobName =='PCR-REPT-Git-Release'){
           if (element.result==null){
@@ -203,19 +203,19 @@ var updateStatus = function(ciStatus,data){
           }
           else if(element.result=="SUCCESS"){
             ciStatus.preReleaseState.status = "done";
-            console.log("preReleaseState done");               
+            //console.log("preReleaseState done");               
           }
         } else if(element.jobName =='PCR-REPT-On_Target_MultiJob'){
           if (element.result=="SUCCESS"){
             ciStatus.buildFwState.status = "done";
             ciStatus.testFwState.status = "done";            
-            console.log("On Target all done");               
+            //console.log("On Target all done");               
           }
           else if(element.result==null){
               getJobBuild('PCR-REPT-On_Target_MultiJob',element.buildNumber,function(err,data){
               if(err) 
               {
-                console.log("err in subBuilds ON target ")
+                //console.log("err in subBuilds ON target ")
                 return;
               }
               
@@ -223,20 +223,20 @@ var updateStatus = function(ciStatus,data){
                 if(element.jobName =='PCR-REPT-On_Target_Build_MultiJob'){
                   if (element.result==null){
                     ciStatus.buildFwState.status = "running";
-                    console.log("buildFwState running");                       
+                    //console.log("buildFwState running");                       
                   }
                   else if(element.result=="SUCCESS"){
                     ciStatus.buildFwState.status = "done";
-                    console.log("buildFwState done");                      
+                    //console.log("buildFwState done");                      
                   }
                 } else if(element.jobName =='PCR-REPT-On_Target_Test_MultiJob'){
                   if (element.result==null){
                     ciStatus.testFwState.status = "running";
-                    console.log("testFwState running");                      
+                    //console.log("testFwState running");                      
                   }
                   else if(element.result=="SUCCESS"){
                     ciStatus.testFwState.status = "done";
-                    console.log("testFwState done");                         
+                    //console.log("testFwState done");                         
                   }
                 } 
               });
@@ -246,7 +246,7 @@ var updateStatus = function(ciStatus,data){
           if (element.result=="SUCCESS"){
             ciStatus.buildWin32State.status = "done";
             ciStatus.testWin32State.status = "done";   
-            console.log("Off target all done"); 
+            //console.log("Off target all done"); 
           }
           else if(element.result==null){
               getJobBuild('PCR-REPT-Off_Target_MultiJob',element.buildNumber,function(err,data){
@@ -287,11 +287,9 @@ var updateStatus = function(ciStatus,data){
 function getJobDuration(job,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
-	var durationDic = new Array();
-	durationDic['id'] = new Array();
-	durationDic['duration'] = new Array();
-	durationDic['submitter'] = new Array();
-	durationDic['timestamp'] = new Array();
+	var durationDic = {"id":[],"duration":[],"submitter":[],"timestamp":[]};
+	
+	
 	var parameters;
 	var param = 'id,duration,result,timestamp,actions[parameters[*]]'
 	
@@ -308,9 +306,9 @@ function getJobDuration(job,days,callback){
 		{
 		   if(data[i].result == "SUCCESS")
 		   {
-		       console.log("test");
-			   durationDic.duration.push(data[i].duration);
+			   durationDic.duration.push(data[i].duration/(60000)); //convert to minute
 		       durationDic.id.push(data[i].id);
+			   //durationDic.timestamp.push(data[i].timestamp);
 			   durationDic.timestamp.push(data[i].timestamp);
 			   //get submitter name
 			   parameters=data[i].actions[0].parameters;
@@ -339,10 +337,10 @@ function getJobFailureInfo(job,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
 	var param = 'timestamp,result,subBuilds[*],actions[parameters[*]]'
-    //var param = "subBuilds[*]"
 	var subBuilds;
 	var parameters;
-    var failureInfoDic=new Array();
+    //var failureInfoDic=new Array();
+	var failureInfoDic={};
 	failureInfoDic['allBuildNumber'] =0;
 	failureInfoDic['failureNumber'] =0;
 	failureInfoDic['abortedNumber'] =0;
@@ -351,13 +349,14 @@ function getJobFailureInfo(job,days,callback){
 	failureInfoDic['failSubmitter'] =new Array();
 	failureInfoDic['failTimeStamp'] =new Array();
 	
+	
     getAllBuild(job,param,function(err,data){
     if(err) 
     {
       console.log("err in getJobFailureInfo");
       return;
     }
-    console.log(data);
+    //console.log(data);
 	for (var i = 0; i < data.length; i++) 
 	{
 	    if(data[i].timestamp > oldestTimeStamp)
@@ -378,21 +377,22 @@ function getJobFailureInfo(job,days,callback){
 			       {
 			           if(subBuilds[sub].result== "FAILURE")
 				       {
-							failureInfoDic.failBuildName[sub+1]=subBuilds.jobName;
-							failureInfoDic.failBuildNum[sub+1]++
-							console.log(subBuilds[sub+1]);
+							failureInfoDic.failBuildName[sub+1]=subBuilds[sub].jobName;
+							failureInfoDic.failBuildNum[sub+1]++;
 						}
 					}
 			   }
 			   parameters=data[i].actions[0].parameters;
-			   for(var j = 0;j<parameters.length; j++)
+			   if(parameters != undefined)
 			   {
-			        if(parameters[j].name == "SUBMITTER")
+					for(var j = 0;j<parameters.length; j++)
 					{
-					    failureInfoDic.failSubmitter.push(parameters[j].value); 
+						if(parameters[j].name == "SUBMITTER")
+						{
+							failureInfoDic.failSubmitter.push(parameters[j].value); 
+						}
 					}
-			   }
-			   
+				}			   
 		   }
 		   else if(data[i].result== "ABORTED")
 		   {
@@ -480,12 +480,53 @@ router.get('/getNonEmerPendingReq', function(req, res, next){
 router.get('/dashboard', function(req, res, next){
     res.render('ciDashboard',{ title: 'CI DashBoard' });
 })
-/*
-router.get('/getOnBuild', function(req, res, next){
-   
-  getDuration(job,100,function(data){
+
+router.get('/getOnTargetBuild', function(req, res, next){
+  getJobDuration('PCR-REPT-On_Target_Build_MultiJob',7,function(err,data){
     return res.json(data);
-  }));
-})*/
+  });
+})
+
+router.get('/getOnTargetTest', function(req, res, next){
+  getJobDuration('PCR-REPT-On_Target_Test_MultiJob',7,function(err,data){
+    return res.json(data);
+  });
+})
+
+router.get('/getOffTargetBuild', function(req, res, next){
+  getJobDuration('PCR-REPT-Off_Target_Build_MultiJob',7,function(err,data){
+    return res.json(data);
+  });
+})
+
+router.get('/getOffTargetTest', function(req, res, next){
+  getJobDuration('PCR-REPT-Off_Target_Test_MultiJob',7,function(err,data){
+    return res.json(data);
+  });
+})
+
+router.get('/getTheWholeCI_emerald', function(req, res, next){
+  getJobDuration('PCR-REPT-0-MultiJob-Emerald',7,function(err,data){
+    return res.json(data);
+  });
+})
+
+router.get('/getTheWholeCI_nonemerald', function(req, res, next){
+  getJobDuration('PCR-REPT-0-MultiJob-nonEmerald',7,function(err,data){
+    return res.json(data);
+  });
+})
+
+router.get('/getEmeraldFailInfo', function(req, res, next){
+  getJobFailureInfo('PCR-REPT-0-MultiJob-Emerald',7,function(err,data){
+    return res.json(data);
+  });
+})
+
+router.get('/getNonEmeraldFailInfo', function(req, res, next){
+  getJobFailureInfo('PCR-REPT-0-MultiJob-nonEmerald',7,function(err,data){
+    return res.json(data);
+  });
+})
 
 module.exports = router;

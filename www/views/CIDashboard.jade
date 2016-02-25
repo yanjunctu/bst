@@ -1,16 +1,35 @@
 extends layout
 
 block content
-  h4 [1]-On Target Build:
-  div(id="onbuild",style="width:600px;height:250px;")
-  h4 [2]-On Target Test:  
-  div(id="ontest",style="width:600px;height:250px;")  
-  h4 [3]-Off Target Build:
-  div(id="offbuild",style="width:600px;height:250px;")
-  h4 [4]-Off Target Test:  
-  div(id="offtest",style="width:600px;height:250px;") 
+    div(class="row")
+        div(class="col-md-5")
+            table(class="CIinfoTbl table table-striped table-bordered table-hover table-condensed")
+                thead(id="infoHead")
+                    tr
+                        th(class="text-center")                             
+                        th(class="text-center text-info bg-info") all builds number
+                        th(class="text-center text-info bg-info") failure number
+                        th(class="text-center text-info bg-info") aborted number
+                tbody(id="infobody")
+                    tr
+                        th(class="text-center text-info bg-info") build Info                            
+                        td(class="currentSubmitBranch text-center") 0
+                        td(class="currentSubmitTime text-center") 0
+                        td(class="currentSubmitTime text-center") 0						
+    h4 [1]-The whole CI emerald:
+    div(id="theWholeCIemerald",style="width:600px;height:250px;")
+    h4 [2]-The whole CI nonemerald:
+    div(id="theWholeCInonemerald",style="width:600px;height:250px;")
+    h4 [3]-On Target Build:
+    div(id="onTargetbuild",style="width:600px;height:250px;")
+    h4 [4]-On Target Test:  
+    div(id="onTargetTest",style="width:600px;height:250px;")  
+    h4 [5]-Off Target Build:
+    div(id="offTargetbuild",style="width:600px;height:250px;")
+    h4 [6]-Off Target Test:  
+    div(id="offTargetTest",style="width:600px;height:250px;") 
   
 block userdefinejs
-  script(src="/javascripts/CIDashboard.js")     
+    script(src="/javascripts/CIDashboard.js")     
   
 

@@ -147,7 +147,7 @@ var CIStateLookup = {
 
 var refreshCi = function(status)
 {
-  console.log(status);
+  //console.log(status);
   $.each(status,function(i){
     var key = i;
     var value = status[i];
@@ -252,7 +252,7 @@ var acquireJenkinsAllInfo = function(){
       {
           var whichCI=undefined;
           var id = $(".tab-pane.active").attr("id");
-          console.log(id);
+          //console.log(id);
           if (id == "ciTabEmer")
           {
               $.get("/jenkins/getEmerStatus",function (result) {
