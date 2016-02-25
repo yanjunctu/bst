@@ -59,27 +59,25 @@ var fetchBuildFInfo = function(){
 			$addBrow2.append($bcf2);
 			$addBrow2.append($bct2);
 
-			if(nonEmerald.failBuildName!=undefined)
+			var len =(nonEmerald.failBuildName!=undefined)? nonEmerald.failBuildName.length:emerald.failBuildName.length;
+			for(var i=0;i<len;i++)
 			{
-				for(var i=0;i<nonEmerald.failBuildName.length;i++)
+				if((nonEmerald.failBuildNum[i]!=0)||(emerald.failBuildNum[i]!=0))
 				{
-					if((nonEmerald.failBuildNum[i]!=0)||(emerald.failBuildNum[i]!=0))
-					{
-						name =(nonEmerald.failBuildNum[i]!=0)? nonEmerald.failBuildName[i]:emerald.failBuildName[i];
-						var $hc = $("<td>").text(name);
-						$hc.addClass(titleFormat);
-						$addHrow.append($hc);
+					name =(nonEmerald.failBuildNum[i]!=0)? nonEmerald.failBuildName[i]:emerald.failBuildName[i];
+					var $hc = $("<td>").text(name);
+					$hc.addClass(titleFormat);
+					$addHrow.append($hc);
 						
-						var $bc3 = $("<td>").text(emerald.failBuildNum[i]);
-	                    $bc3.addClass("text-center");
-						$addBrow1.append($bc3);
+					var $bc3 = $("<td>").text(emerald.failBuildNum[i]);
+	                $bc3.addClass("text-center");
+					$addBrow1.append($bc3);
 						
-						var $bc4 = $("<td>").text(nonEmerald.failBuildNum[i]);
-	                    $bc4.addClass("text-center");
-						$addBrow2.append($bc4);
+					var $bc4 = $("<td>").text(nonEmerald.failBuildNum[i]);
+	                $bc4.addClass("text-center");
+					$addBrow2.append($bc4);
 					
-					}
-				}
+				}				
 			}
 		$tblHead.append($addHrow);
         $tblBody.append($addBrow1);

@@ -339,13 +339,12 @@ function getJobFailureInfo(job,days,callback){
 	var param = 'timestamp,result,subBuilds[*],actions[parameters[*]]'
 	var subBuilds;
 	var parameters;
-    //var failureInfoDic=new Array();
 	var failureInfoDic={};
 	failureInfoDic['allBuildNumber'] =0;
 	failureInfoDic['failureNumber'] =0;
 	failureInfoDic['abortedNumber'] =0;
-	failureInfoDic['failBuildName'] =new Array('Pre',0,0,0,0,0,0,0);
-	failureInfoDic['failBuildNum'] =new Array(0,0,0,0,0,0,0,0);
+	failureInfoDic['failBuildName'] =new Array("Pre","PCR-REPT-Git-Integration","PCR-REPT-On_Target_MultiJob","PCR-REPT-Off_Target_MultiJob","PCR-REPT-Git-Release");
+	failureInfoDic['failBuildNum'] =new Array(0,0,0,0,0);
 	failureInfoDic['failSubmitter'] =new Array();
 	failureInfoDic['failTimeStamp'] =new Array();
 	
@@ -377,8 +376,14 @@ function getJobFailureInfo(job,days,callback){
 			       {
 			           if(subBuilds[sub].result== "FAILURE")
 				       {
-							failureInfoDic.failBuildName[sub+1]=subBuilds[sub].jobName;
-							failureInfoDic.failBuildNum[sub+1]++;
+							for(var j = 1;j<failureInfoDic.failBuildName.length;j++)
+							{
+							    if(subBuilds[sub].jobName == failureInfoDic.failBuildName[j])
+                                {
+							        failureInfoDic.failBuildNum[j]++;
+									continue;
+								}
+							}
 						}
 					}
 			   }
