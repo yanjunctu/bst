@@ -81,11 +81,10 @@ router.get('/repoInfo', function (req, res, next) {
 });
 
 function fetchTestCaseNum(project,days,callback){
-    //var emeraldStr="REPT2.7_Emerald";
-	//var nonEmeraldStr="REPT2.7_nonEmerald";
+
 	var utStr = "/ut_report_";
-	var dirname = "/mnt/REPT_Release/";
-	//var dirname = "/vagrant/REPT_Release/";
+	//var dirname = "/mnt/REPT_Release/";
+	var dirname = "/vagrant/REPT_Release/";
 	var reportfilePath;
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
 	var creatTime;
@@ -98,19 +97,17 @@ function fetchTestCaseNum(project,days,callback){
 			return;
 		} 
 		else {
-			console.log(files);
 			//files.forEach(function (file) 
 			for(var i=0;i<files.length;i++)
 			{
-				file = files[i];
+				var file = files[i];
 				var filePath = path.normalize(dirname+ project+"/"+ file);
 
-				stats= fs.lstatSync(filePath);
+				var stats= fs.lstatSync(filePath);
 				creatTime = stats.mtime.getTime();
 
 				if(stats.isDirectory()&&creatTime>oldestTimeStamp){
-				    console.log(stats.isDirectory());
-					console.log(creatTime>oldestTimeStamp);
+
 					reportfilePath=filePath+utStr+file+".txt";
 					if(fs.existsSync(reportfilePath)){
 						var data=fs.readFileSync(reportfilePath,'utf8');
@@ -127,7 +124,7 @@ function fetchTestCaseNum(project,days,callback){
 							{
 							    //console.log(line);
 								//regex=/[^\d\,]/g;
-								regex=/([\w\s]*OK\s\()|/;
+								regex=/[\w\s]*OK\s\(/;
 								//regex =/([\w\s]*OK\s\()|(tests[\w\s\,]*\))/;
 								var num = line.replace(regex,"");
 
