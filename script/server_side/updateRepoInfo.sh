@@ -4,13 +4,9 @@ REPO_DIR=$(grep "git_data_dir" /etc/gitlab/gitlab.rb | cut -d'"' -f2)/repositori
 REPOS="REPT/Comm.git REPT/Bahama.git REPT/Cypher.git"
 
 working_dir=$(pwd)
-#tmp_info_file=/tmp/boosterInfo.tmp
-#repo_info_dir=$(dirname $REPO_INFO_FILE)
 record="timestamp: $(date +%s),"
 
-#[[ ! -e "$repo_info_dir" ]] && mkdir -p $repo_info_dir
 cd /tmp
-#rm -rf $tmp_info_file
 for repo in $REPOS
 do
     repo_name=$(basename $repo | sed 's/\.git//g')
@@ -29,7 +25,6 @@ do
     cd ..
     rm -rf $repo_name
 done
-#mv -f $tmp_info_file $REPO_INFO_FILE
 mongo &>/dev/null << EOF
 use booster
 db.repoinfo.insert({$record})
