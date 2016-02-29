@@ -209,7 +209,7 @@ var main = function(){
       
 
       // draw pie for repo size before checkout
-      var MaxSize = 500000 //5G so far
+      var MaxSize = 1024 //1G so far
       var usedSize = parseInt(result.Gitlab_Comm_OriginSize) + parseInt(result.Gitlab_Cypher_OriginSize) + parseInt(result.Gitlab_Bahama_OriginSize);
       var unusedSize = MaxSize - usedSize;
 
@@ -229,7 +229,7 @@ var main = function(){
 
       // draw pie for repo size after checkout
 
-      MaxSize = 500000 //5G so far
+      MaxSize = 5120 //5G so far
       usedSize = parseInt(result.Gitlab_Comm_UserSize) + parseInt(result.Gitlab_Cypher_UserSize) + parseInt(result.Gitlab_Bahama_UserSize);
       unusedSize = MaxSize - usedSize;
 
@@ -242,7 +242,7 @@ var main = function(){
       Plotly.newPlot('userRepoSizePlot', data, layout);
 
       // draw pie for repo branches counter
-      MaxSize = 5000 //5G so far
+      MaxSize = 1000 //1000 branches so far
       usedSize = parseInt(result.Gitlab_Comm_BranchCnt) + parseInt(result.Gitlab_Cypher_BranchCnt) + parseInt(result.Gitlab_Bahama_BranchCnt);
       unusedSize = MaxSize - usedSize;
 
