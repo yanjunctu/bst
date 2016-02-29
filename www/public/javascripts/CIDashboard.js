@@ -1,4 +1,5 @@
-var fetchBuildFInfo = function(){
+
+ var fetchBuildFInfo = function(){
     //$tblBody = $("#emerTbl");
 	var $tblHead = $("#infoHead");
 	var $tblBody = $("#infobody");
@@ -47,8 +48,6 @@ var fetchBuildFInfo = function(){
 		$addBrow1.append($bca1);
 		$addBrow1.append($bcf1);
 		$addBrow1.append($bct1);
-		console.log('emerald');
-		console.log(emerald);
 		
 		
 	    $.get("/jenkins/getNonEmeraldFailInfo",function (nonEmerald){
@@ -106,7 +105,8 @@ var main = function(){
         margin: {
         t: 0},
     };
-	 fetchBuildFInfo();
+	fetchBuildFInfo();
+	
   $.get("/jenkins/getTheWholeCI_emerald",function (result) {
 
     var plotHandler = document.getElementById('theWholeCIemerald');
@@ -164,24 +164,49 @@ var main = function(){
     $.get("/jenkins/getOffTargetTest",function (result) {
 
     var plotHandler = document.getElementById('offTargetTest');
-	var layout = {
-        xaxis: {
-        title: 'Build Number'},
-        yaxis: {
-        title: 'Build Duaration(m)'},
-        margin: {
-        t: 0},
-    };
 
     Plotly.plot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
   })
+  
+    $.get("/serverInfo/testCaseNum_Emer",function (result) {
+	
+	var plotHandler = document.getElementById('EmerTestCaseNum');
+	var layout = {
+        xaxis: {
+        title: 'release Number'},
+        yaxis: {
+        title: 'case number'},
+        margin: {
+        t: 0},
+    };
+	    Plotly.plot( plotHandler, [{
+        x: result.filename,
+        y: result.num }], layout)
+	
+	})
+	
+    $.get("/serverInfo/testCaseNum_nonEmer",function (result) {
+	
+	var plotHandler = document.getElementById('nonEmerTestCaseNum');
+	var layout = {
+        xaxis: {
+        title: 'release Number'},
+        yaxis: {
+        title: 'case number'},
+        margin: {
+        t: 0},
+    };
+	    Plotly.plot( plotHandler, [{
+        x: result.filename,
+        y: result.num }], layout)
+	
+	})
 
     $.get("/serverInfo/repoInfo",function (result) {
       
-      console.log(result);
 
       // draw pie for repo size before checkout
       var MaxSize = 500000 //5G so far

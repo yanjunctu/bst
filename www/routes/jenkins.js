@@ -46,7 +46,6 @@ var getAllBuild = function (job,param,callback)
 {
    jenkins.all_build(job,param,function(err, tempdata) {
     data = tempdata.allBuilds;
-	//console.log(data);
     callback(err,data);
   });  
 };
@@ -140,7 +139,6 @@ function getPendingReq(project, callback){
             callback(err);
             return;
         }
-        //console.log(data);
         items.forEach(function(item){
             if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
                 var sub = /SUBMITTER=(.*)/ig.exec(item.params);
@@ -169,13 +167,6 @@ var updateStatus = function(ciStatus,data){
     ciStatus.overall.current.branch="na";
     ciStatus.overall.current.subTime="na";
 	
-    /*getJobFailureInfo('PCR-REPT-0-MultiJob-Emerald',7,function(err,data){
-    if(err) 
-    {
-      console.log("err in getJobDuration");
-      return;
-    }
-	});*/
 	  
 	  
     if (data.building==false){
@@ -355,7 +346,6 @@ function getJobFailureInfo(job,days,callback){
       console.log("err in getJobFailureInfo");
       return;
     }
-    //console.log(data);
 	for (var i = 0; i < data.length; i++) 
 	{
 	    if(data[i].timestamp > oldestTimeStamp)
@@ -407,12 +397,10 @@ function getJobFailureInfo(job,days,callback){
 		}
 		else
 		{
-		    console.log(failureInfoDic);
 			callback(err,failureInfoDic);
 			return;
 		}
 	}
-	console.log(failureInfoDic);
     callback(err,failureInfoDic);
 	return;
 	})
