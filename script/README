@@ -1,0 +1,7 @@
+ if the server restarted you need to do following actions
+ 1.mount gitlabbackup
+ mount -t cifs -o username=QPCB36,vers=2.1 //10.193.90.156/gitlab_backup_donot_move /mnt/gitlabbackup/
+ 2.mount REPT_release
+ mount -t cifs -o username=QPCB36,vers=2.1 //10.193.226.164/REPT_release /mnt/REPT_release/
+ 3.check the /etc/crontab
+ make sure that the gitlabbackup and updateRepoInfo are in it.
