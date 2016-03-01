@@ -4,6 +4,7 @@ function dataConvert(timestamp)
 {
 	var date = new Date(timestamp * 1000);
 	var formattedDate = ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear() + ' ' + ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2);
+	console.log(timestamp);
 	console.log(formattedDate);
 	return formattedDate;
 }
@@ -11,6 +12,7 @@ function dataConvert(timestamp)
 function getreposize(days,callback)
 {
   repoinfoDB.repoinfoDbModel.find(function (err, repoinfos) {
+    console.log(repoinfos);
     var oldestTimeStamp = (Math.round(new Date().getTime())/1000)-(days * 24 * 60 * 60);
     var info = {};
 	info.Gitlab_Comm_OriginSize=[];
