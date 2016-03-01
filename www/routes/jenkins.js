@@ -3,6 +3,7 @@ var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var cnt=0;
 var GET_JENKINS_INTERVAL = 5000; // 15seconds
+var days=7;
 
 var emeraldStatus = {
   "idleState":{"status":"running","duration":0},
@@ -475,49 +476,49 @@ router.get('/dashboard', function(req, res, next){
 })
 
 router.get('/getOnTargetBuild', function(req, res, next){
-  getJobDuration('PCR-REPT-On_Target_Build_MultiJob',7,function(err,data){
+  getJobDuration('PCR-REPT-On_Target_Build_MultiJob',days,function(err,data){
     return res.json(data);
   });
 })
 
 router.get('/getOnTargetTest', function(req, res, next){
-  getJobDuration('PCR-REPT-On_Target_Test_MultiJob',7,function(err,data){
+  getJobDuration('PCR-REPT-On_Target_Test_MultiJob',days,function(err,data){
     return res.json(data);
   });
 })
 
 router.get('/getOffTargetBuild', function(req, res, next){
-  getJobDuration('PCR-REPT-Off_Target_Build_MultiJob',7,function(err,data){
+  getJobDuration('PCR-REPT-Off_Target_Build_MultiJob',days,function(err,data){
     return res.json(data);
   });
 })
 
 router.get('/getOffTargetTest', function(req, res, next){
-  getJobDuration('PCR-REPT-Off_Target_Test_MultiJob',7,function(err,data){
+  getJobDuration('PCR-REPT-Off_Target_Test_MultiJob',days,function(err,data){
     return res.json(data);
   });
 })
 
 router.get('/getTheWholeCI_emerald', function(req, res, next){
-  getJobDuration('PCR-REPT-0-MultiJob-Emerald',7,function(err,data){
+  getJobDuration('PCR-REPT-0-MultiJob-Emerald',days,function(err,data){
     return res.json(data);
   });
 })
 
 router.get('/getTheWholeCI_nonemerald', function(req, res, next){
-  getJobDuration('PCR-REPT-0-MultiJob-nonEmerald',7,function(err,data){
+  getJobDuration('PCR-REPT-0-MultiJob-nonEmerald',days,function(err,data){
     return res.json(data);
   });
 })
 
 router.get('/getEmeraldFailInfo', function(req, res, next){
-  getJobFailureInfo('PCR-REPT-0-MultiJob-Emerald',7,function(err,data){
+  getJobFailureInfo('PCR-REPT-0-MultiJob-Emerald',days,function(err,data){
     return res.json(data);
   });
 })
 
 router.get('/getNonEmeraldFailInfo', function(req, res, next){
-  getJobFailureInfo('PCR-REPT-0-MultiJob-nonEmerald',7,function(err,data){
+  getJobFailureInfo('PCR-REPT-0-MultiJob-nonEmerald',days,function(err,data){
     return res.json(data);
   });
 })

@@ -204,6 +204,84 @@ var main = function(){
         y: result.num }], layout)
 	
 	})
+	
+    $.get("/reposizeinfo/getreposize",function (reposize) {
+	
+	
+	var plotHandlerRepo = document.getElementById('repoSize');
+	var plotHandlerBranch = document.getElementById('branchNumber');
+	var layoutRepo = {
+        xaxis: {
+        title: 'time'},
+        yaxis: {
+        title: 'repo size (M)'},
+        margin: {
+        t: 0},
+    };
+	var layoutBranch = {
+        xaxis: {
+        title: 'time'},
+        yaxis: {
+        title: 'branch number'},
+        margin: {
+        t: 0},
+    };
+	
+	
+	var trace1 = {
+		x: reposize.timestamp,
+		y: reposize.Gitlab_Comm_OriginSize,
+		name: 'Comm_OriginSize'
+   };
+	var trace2 = {
+		x: reposize.timestamp,
+		y: Gitlab_Comm_UserSize,
+		name: 'Comm_UserSize'
+   };  
+	var trace3 = {
+		x: reposize.timestamp,
+		y: reposize.Gitlab_Cypher_OriginSize,
+			name: 'Cypher_OriginSize'
+	};  
+	var trace4 = {
+		x: reposize.timestamp,
+		y: reposize.Gitlab_Cypher_UserSize,
+		name: 'Cypher_UserSize'
+	};  
+	var trace5 = {
+		x: reposize.timestamp,
+		y: reposize.Gitlab_Bahama_OriginSize,
+		name: 'Bahama_OriginSize'
+	};  
+	var trace6 = {
+		x: reposize.timestamp,
+		y: reposize.Gitlab_Bahama_UserSize,
+		name: 'Bahama_UserSize'
+	}; 
+	
+	var trace7 = {
+		x: reposize.timestamp,
+		y: reposize.Gitlab_Comm_BranchCnt,
+		name: 'Comm'
+	};  
+	var trace8 = {
+		x: reposize.timestamp,
+		y: reposize.Gitlab_Cypher_BranchCnt,
+		name: 'Cypher'
+	};  
+	var trace9 = {
+		x: reposize.timestamp,
+		y: reposize.Gitlab_Bahama_BranchCnt,
+		name: 'Bahama'
+	}; 
+
+	var repodata = [ trace1, trace2, trace3, trace4, trace5, trace6 ];
+	var branchdata = [ trace7, trace8, trace9];
+	
+	Plotly.plot( plotHandlerRepo, repodata, layoutRepo);
+	Plotly.plot( plotHandlerBranch, branchdata, layoutBranch);	
+	})
+	
 
     $.get("/serverInfo/repoInfo",function (result) {
       
@@ -217,7 +295,7 @@ var main = function(){
         values: [usedSize, unusedSize],
         labels: ['used', 'unused'],
         type: 'pie'
-}];
+		}];
 
 
       var layout = {
@@ -237,7 +315,7 @@ var main = function(){
         values: [usedSize, unusedSize],
         labels: ['used', 'unused'],
         type: 'pie'
-}];
+		}];
 
       Plotly.newPlot('userRepoSizePlot', data, layout);
 
@@ -250,7 +328,7 @@ var main = function(){
         values: [usedSize, unusedSize],
         labels: ['used', 'unused'],
         type: 'pie'
-}];
+		}];
 
       Plotly.newPlot('repoBrhCntPlot', data, layout);
       
