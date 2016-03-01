@@ -83,8 +83,8 @@ router.get('/repoInfo', function (req, res, next) {
 function fetchTestCaseNum(project,days,callback){
 
 	var utStr = "/ut_report_";
-	//var dirname = "/mnt/REPT_Release/";
-	var dirname = "/vagrant/REPT_Release/";
+	var dirname = "/mnt/REPT_Release/";
+	//var dirname = "/vagrant/REPT_Release/";
 	var reportfilePath;
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
 	var creatTime;
