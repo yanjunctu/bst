@@ -10,6 +10,7 @@ var users = require('./routes/users');
 var feedback = require('./routes/feedback');
 var jenkins = require('./routes/jenkins')
 var serverInfo = require('./routes/serverInfo')
+var repoInfo = require('./routes/reposizeinfo')
 
 var app = express();
 
@@ -30,6 +31,7 @@ app.use('/users', users);
 app.use('/feedback', feedback);
 app.use('/jenkins',jenkins);
 app.use('/serverInfo',serverInfo)
+app.use('/reposizeinfo',repoInfo)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

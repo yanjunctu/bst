@@ -207,7 +207,6 @@ var main = function(){
 	
     $.get("/reposizeinfo/getreposize",function (reposize) {
 	
-	
 	var plotHandlerRepo = document.getElementById('repoSize');
 	var plotHandlerBranch = document.getElementById('branchNumber');
 	var layoutRepo = {
@@ -235,7 +234,7 @@ var main = function(){
    };
 	var trace2 = {
 		x: reposize.timestamp,
-		y: Gitlab_Comm_UserSize,
+		y: reposize.Gitlab_Comm_UserSize,
 		name: 'Comm_UserSize'
    };  
 	var trace3 = {

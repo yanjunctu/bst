@@ -16,17 +16,19 @@ db.once('open', function() {
   
   exports.feebackDbModel = mongoose.model('feebackDbModel', feedbackDbSchema);
   var repoinfoDbSchema = mongoose.Schema({
-      Gitlab_Comm_OriginSize: Number,
+      timestamp: Number,      
+	  Gitlab_Comm_OriginSize: Number,
       Gitlab_Comm_UserSize: Number,
       Gitlab_Comm_BranchCnt: Number,
-      Gitlab_Cypher_OriginSize: Number,
-      Gitlab_Cypher_UserSize: Number,
-      Gitlab_Cypher_BranchCnt: Number,
       Gitlab_Bahama_OriginSize: Number,
       Gitlab_Bahama_UserSize: Number,
-      Gitlab_Bahama_BranchCnt: Number,
-      timestamp: Date,
-
+      Gitlab_Bahama_BranchCnt: Number,	  
+      Gitlab_Cypher_OriginSize: Number,
+      Gitlab_Cypher_UserSize: Number,
+      Gitlab_Cypher_BranchCnt: Number
+	  },
+	  {
+	   collection:'repoinfo'
   });
   
   exports.repoinfoDbModel = mongoose.model('repoinfo', repoinfoDbSchema);
