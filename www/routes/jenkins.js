@@ -291,7 +291,7 @@ function getJobDuration(job,days,callback){
       console.log("err in getJobDuration");
       return;
     }
-	//console.log(data);
+
 	for (var i = 0; i < data.length; i++) 
 	{
 	    if(data[i].timestamp > oldestTimeStamp)
@@ -482,7 +482,7 @@ router.get('/getOnTargetBuild', function(req, res, next){
 })
 
 router.get('/getOnTargetTest', function(req, res, next){
-  getJobDuration('PCR-REPT-On_Target_Test_MultiJob',days,function(err,data){
+  getJobDuration('PCR-REPT-DAT_REAL',days,function(err,data){
     return res.json(data);
   });
 })
