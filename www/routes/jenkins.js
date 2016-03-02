@@ -326,8 +326,6 @@ function getJobDuration(job,days,callback){
 			   else
 			   {
 			       pushdata(durationDic.id_em,durationDic.duration_em,durationDic.submitter_em,durationDic.timestamp_em,parameter,data[i]);
-				   console.log(parameter[0].value);
-			       console.log(durationDic);
 			   }
 		   }
 		}

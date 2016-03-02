@@ -110,7 +110,6 @@ var main = function(){
   $.get("/jenkins/getTheWholeCI_emerald",function (result) {
 
     var plotHandler = document.getElementById('theWholeCIemerald');
-	console.log(result);
 	
     Plotly.plot( plotHandler, [{
         x: result.id_em,
