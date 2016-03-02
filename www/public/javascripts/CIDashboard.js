@@ -110,10 +110,11 @@ var main = function(){
   $.get("/jenkins/getTheWholeCI_emerald",function (result) {
 
     var plotHandler = document.getElementById('theWholeCIemerald');
-
+	console.log(result);
+	
     Plotly.plot( plotHandler, [{
-        x: result.id,
-        y: result.duration }], layout)
+        x: result.id_em,
+        y: result.duration_em }], layout)
 
   })
   
@@ -122,8 +123,8 @@ var main = function(){
     var plotHandler = document.getElementById('theWholeCInonemerald');
 
     Plotly.plot( plotHandler, [{
-        x: result.id,
-        y: result.duration }], layout)
+        x: result.id_non,
+        y: result.duration_non }], layout)
 
   })
 
@@ -131,43 +132,70 @@ var main = function(){
   
   $.get("/jenkins/getOnTargetBuild",function (result) {
 
-    var plotHandler = document.getElementById('onTargetbuild');
-
-    Plotly.plot( plotHandler, [{
-        x: result.id,
-        y: result.duration }], layout)
+	var trace1 = {
+		x: result.id_em,
+		y: result.duration_em,
+		name: 'Emerald'
+   };
+	var trace2 = {
+		x: result.id_non,
+		y: result.duration_non,
+		name: 'nonEerald'
+   }; 
+	data = [trace1,trace2];
+	Plotly.newPlot('onTargetbuild', data, layout);
 
   })
         
-
   
     $.get("/jenkins/getOnTargetTest",function (result) {
 
-    var plotHandler = document.getElementById('onTargetTest');
-
-    Plotly.plot( plotHandler, [{
-        x: result.id,
-        y: result.duration }], layout)
+	var trace1 = {
+		x: result.id_em,
+		y: result.duration_em,
+		name: 'Emerald'
+   };
+	var trace2 = {
+		x: result.id_non,
+		y: result.duration_non,
+		name: 'nonEerald'
+   }; 
+	data = [trace1,trace2];
+	Plotly.newPlot('onTargetTest', data, layout);
 
   })
   
     $.get("/jenkins/getOffTargetBuild",function (result) {
 
-    var plotHandler = document.getElementById('offTargetbuild');
-
-    Plotly.plot( plotHandler, [{
-        x: result.id,
-        y: result.duration }], layout)
+	var trace1 = {
+		x: result.id_em,
+		y: result.duration_em,
+		name: 'Emerald'
+   };
+	var trace2 = {
+		x: result.id_non,
+		y: result.duration_non,
+		name: 'nonEerald'
+   }; 
+	data = [trace1,trace2];
+	Plotly.newPlot('offTargetbuild', data, layout);
 
   })
   
     $.get("/jenkins/getOffTargetTest",function (result) {
 
-    var plotHandler = document.getElementById('offTargetTest');
-
-    Plotly.plot( plotHandler, [{
-        x: result.id,
-        y: result.duration }], layout)
+	var trace1 = {
+		x: result.id_em,
+		y: result.duration_em,
+		name: 'Emerald'
+   };
+	var trace2 = {
+		x: result.id_non,
+		y: result.duration_non,
+		name: 'nonEerald'
+   }; 
+	data = [trace1,trace2];
+	Plotly.newPlot('offTargetTest', data, layout);
 
   })
   
