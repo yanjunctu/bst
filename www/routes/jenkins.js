@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var cnt=0;
-var GET_JENKINS_INTERVAL = 5000; // 15seconds
+var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var days=7;
 
 var emeraldStatus = {
