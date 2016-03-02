@@ -298,6 +298,7 @@ function pushdata(id,duration,submitter,timestamp,parameter,data){
 function getJobDuration(job,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
+	var nonEmerStr ="REPT2.7_nonEmerald";
 	var durationDic = {"id_em":[],"duration_em":[],"submitter_em":[],"timestamp_em":[],"id_non":[],"duration_non":[],"submitter_non":[],"timestamp_non":[]};
 	
 	
@@ -318,7 +319,7 @@ function getJobDuration(job,days,callback){
 		   if(data[i].result == "SUCCESS")
 		   {
 		       parameter=data[i].actions[0].parameters;
-			   if(parameter[0].value == "REPT2.7_nonEmerald")
+			   if(parameter[0].value == nonEmerStr)
 			   {
 			       pushdata(durationDic.id_non,durationDic.duration_non,durationDic.submitter_non,durationDic.timestamp_non,parameter,data[i]);
 			   }
