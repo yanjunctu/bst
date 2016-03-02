@@ -3,7 +3,7 @@ if [ `id -u` -ne 0 ];then
    echo "this backup script must be exec as root." exit
 fi
 
-save_days=15 #keep days
+save_days=30 #keep days
 # gitlab_rails['backup_path'] = "/var/opt/gitlab/backups" configed in /etc/gitlab/gitlab.rb
 bakdir_gitlab="/var/opt/gitlab/backups" 
 bakdir_authorized_keys="/var/opt/gitlab/.ssh/"

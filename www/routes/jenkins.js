@@ -275,11 +275,31 @@ var updateStatus = function(ciStatus,data){
       })
     }  
 }
+function pushdata(id,duration,submitter,timestamp,parameter,data){
 
+
+
+	duration.push(data.duration/(60000)); //convert to minute
+
+	id.push(data.id);
+	//durationDic.timestamp.push(data[i].timestamp);
+	timestamp.push(data.timestamp);
+	//get submitter name
+	//parameter=data.actions[0].parameters;
+	//console.log(parameters);
+	for(var j = 0;j<parameter.length; j++)
+	{
+		if(parameter[j].name == "SUBMITTER")
+		{
+			submitter.push(parameter[j].value); 
+		}
+	}
+}
 function getJobDuration(job,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
-	var durationDic = {"id":[],"duration":[],"submitter":[],"timestamp":[]};
+	var nonEmerStr ="REPT2.7_nonEmerald";
+	var durationDic = {"id_em":[],"duration_em":[],"submitter_em":[],"timestamp_em":[],"id_non":[],"duration_non":[],"submitter_non":[],"timestamp_non":[]};
 	
 	
 	var parameters;
@@ -291,26 +311,21 @@ function getJobDuration(job,days,callback){
       console.log("err in getJobDuration");
       return;
     }
-	//console.log(data);
+
 	for (var i = 0; i < data.length; i++) 
 	{
 	    if(data[i].timestamp > oldestTimeStamp)
 		{
 		   if(data[i].result == "SUCCESS")
 		   {
-			   durationDic.duration.push(data[i].duration/(60000)); //convert to minute
-		       durationDic.id.push(data[i].id);
-			   //durationDic.timestamp.push(data[i].timestamp);
-			   durationDic.timestamp.push(data[i].timestamp);
-			   //get submitter name
-			   parameters=data[i].actions[0].parameters;
-			   //console.log(parameters);
-			   for(var j = 0;j<parameters.length; j++)
+		       parameter=data[i].actions[0].parameters;
+			   if(parameter[0].value == nonEmerStr)
 			   {
-			        if(parameters[j].name == "SUBMITTER")
-					{
-					    durationDic.submitter.push(parameters[j].value); 
-					}
+			       pushdata(durationDic.id_non,durationDic.duration_non,durationDic.submitter_non,durationDic.timestamp_non,parameter,data[i]);
+			   }
+			   else
+			   {
+			       pushdata(durationDic.id_em,durationDic.duration_em,durationDic.submitter_em,durationDic.timestamp_em,parameter,data[i]);
 			   }
 		   }
 		}
@@ -482,7 +497,7 @@ router.get('/getOnTargetBuild', function(req, res, next){
 })
 
 router.get('/getOnTargetTest', function(req, res, next){
-  getJobDuration('PCR-REPT-On_Target_Test_MultiJob',days,function(err,data){
+  getJobDuration('PCR-REPT-DAT_REAL',days,function(err,data){
     return res.json(data);
   });
 })
