@@ -207,7 +207,8 @@ var main = function(){
 	
     $.get("/reposizeinfo/getreposize",function (reposize) {
 	
-	var plotHandlerRepo = document.getElementById('repoSize');
+	var plotHandlerRepoOriginal = document.getElementById('repoSizeOriginal');
+    var plotHandlerRepoCheckout = document.getElementById('repoSizeCheckout');
 	var plotHandlerBranch = document.getElementById('branchNumber');
 	var layoutRepo = {
         xaxis: {
@@ -230,55 +231,26 @@ var main = function(){
 	var trace1 = {
 		x: reposize.timestamp,
 		y: reposize.Gitlab_Comm_OriginSize,
-		name: 'Comm_OriginSize'
+		name: 'Comm'
    };
 	var trace2 = {
 		x: reposize.timestamp,
 		y: reposize.Gitlab_Comm_UserSize,
-		name: 'Comm_UserSize'
+		name: 'Comm'
    };  
 	var trace3 = {
-		x: reposize.timestamp,
-		y: reposize.Gitlab_Cypher_OriginSize,
-			name: 'Cypher_OriginSize'
-	};  
-	var trace4 = {
-		x: reposize.timestamp,
-		y: reposize.Gitlab_Cypher_UserSize,
-		name: 'Cypher_UserSize'
-	};  
-	var trace5 = {
-		x: reposize.timestamp,
-		y: reposize.Gitlab_Bahama_OriginSize,
-		name: 'Bahama_OriginSize'
-	};  
-	var trace6 = {
-		x: reposize.timestamp,
-		y: reposize.Gitlab_Bahama_UserSize,
-		name: 'Bahama_UserSize'
-	}; 
-	
-	var trace7 = {
 		x: reposize.timestamp,
 		y: reposize.Gitlab_Comm_BranchCnt,
 		name: 'Comm'
 	};  
-	var trace8 = {
-		x: reposize.timestamp,
-		y: reposize.Gitlab_Cypher_BranchCnt,
-		name: 'Cypher'
-	};  
-	var trace9 = {
-		x: reposize.timestamp,
-		y: reposize.Gitlab_Bahama_BranchCnt,
-		name: 'Bahama'
-	}; 
 
-	var repodata = [ trace1, trace2, trace3, trace4, trace5, trace6 ];
-	var branchdata = [ trace7, trace8, trace9];
+	var repoDataOriginal = [trace1];
+    var repoDataCheckout = [trace2];
+	var branchData = [trace3];
 	
-	Plotly.plot( plotHandlerRepo, repodata, layoutRepo);
-	Plotly.plot( plotHandlerBranch, branchdata, layoutBranch);	
+	Plotly.plot( plotHandlerRepoOriginal, repoDataOriginal, layoutRepo);
+	Plotly.plot( plotHandlerRepoCheckout, repoDataCheckout, layoutRepo);
+	Plotly.plot( plotHandlerBranch, branchData, layoutBranch);	
 	})
 	
 
@@ -286,7 +258,7 @@ var main = function(){
       
 
       // draw pie for repo size before checkout
-      var MaxSize = 1024 //1G so far
+      var MaxSize = 2048 //2G so far
       var usedSize = parseInt(result.Gitlab_Comm_OriginSize) + parseInt(result.Gitlab_Cypher_OriginSize) + parseInt(result.Gitlab_Bahama_OriginSize);
       var unusedSize = MaxSize - usedSize;
 
@@ -306,7 +278,7 @@ var main = function(){
 
       // draw pie for repo size after checkout
 
-      MaxSize = 5120 //5G so far
+      MaxSize = 10240 //10G so far
       usedSize = parseInt(result.Gitlab_Comm_UserSize) + parseInt(result.Gitlab_Cypher_UserSize) + parseInt(result.Gitlab_Bahama_UserSize);
       unusedSize = MaxSize - usedSize;
 
