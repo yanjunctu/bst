@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var cnt=0;
-var GET_JENKINS_INTERVAL = 15000; // 15seconds
+var GET_JENKINS_INTERVAL = 1000; // 15seconds
 var days=7;
 
 var emeraldStatus = {
@@ -133,22 +133,20 @@ function getPendingReq(project, callback){
     var result = {"current":{"submitter":"","subTime":0},"queue":[]};
 
     jenkins.queue(function(err, data){
-        var items = data.items;
-        var prjName = "PROJECT_NAME=".concat(project);
-
         if (err) {
+            console.log(err);
             callback(err);
             return;
         }
+
+        var items = data.items;
+        var prjName = "PROJECT_NAME=".concat(project);
         items.forEach(function(item){
             if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
-                var sub = /SUBMITTER=(.*)/ig.exec(item.params);
+                var sub = /SUBMITTER=(.*)\n*EMAIL=(.*)\n*PUSH_TIME=(.*)/ig.exec(item.params);
 
-                //console.log(item);
-                //console.log("project");
-                //console.log(prjName);
                 if (sub){
-                    result.queue.push({"submitter":sub[1], "subTime":item.inQueueSince});
+                    result.queue.push({"submitter":sub[1], "subTime":sub[3]});
                 }
             }
         });
