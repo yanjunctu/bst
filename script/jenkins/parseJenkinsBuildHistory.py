@@ -2,6 +2,7 @@
 #sudo pip install python-jenkins
 #sudo pip install xlwt
 #sudo pip install xlrd
+#sudo pip install xlutils
 
 
 from jenkins import Jenkins
@@ -51,7 +52,17 @@ JOBS = {
 "offTarget_test_it_job":{"name":u"PCR-REPT-Win32_IT","xlsHandler":None,"subBuilds":None},
 }
 
-JENKINS_FILE_DIR = '/var/opt/booster/jenkins.xls'
+#JENKINS_FILE_DIR = '/var/opt/booster/jenkins.xls'
+JENKINS_FILE_DIR = 'D:/GitRepos/webBox/booster_project/script/jenkins/jenkins.xls'
+ID_COL=0
+PROJNA_COL=1
+SUBMIT_COL=2
+PUSHT_COL=3
+START_COL=4
+DUR_COL=5
+RESULT_COL=6
+SUBSTART_COL=7
+
 # This line is needed as if our server will report SSL failure if SSL true
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -87,20 +98,21 @@ def JenkinsFileCreate():
   for k in JOBS:
     #init excel sheet handler
     JOBS[k]["xlsHandler"] = wb.add_sheet(k)
-    
+
     # write title firstly
-    JOBS[k]["xlsHandler"].write(0, 0, 'build id')
-    JOBS[k]["xlsHandler"].write(0, 1, 'project name')
-    JOBS[k]["xlsHandler"].write(0, 2, 'submitter')
-    JOBS[k]["xlsHandler"].write(0, 3, 'start time')
-    JOBS[k]["xlsHandler"].write(0, 4, 'build duration')
-    JOBS[k]["xlsHandler"].write(0, 5, 'build result') 
+    JOBS[k]["xlsHandler"].write(0, ID_COL, 'build id')
+    JOBS[k]["xlsHandler"].write(0, PROJNA_COL, 'project name')
+    JOBS[k]["xlsHandler"].write(0, SUBMIT_COL, 'submitter')
+    JOBS[k]["xlsHandler"].write(0, PUSHT_COL, 'push time')	
+    JOBS[k]["xlsHandler"].write(0, START_COL, 'start time')
+    JOBS[k]["xlsHandler"].write(0, DUR_COL, 'build duration')
+    JOBS[k]["xlsHandler"].write(0, RESULT_COL, 'build result') 
 	# write the subBuilds title
-    col=5
+    col=SUBSTART_COL
     if JOBS[k]["subBuilds"]!= None:
       for sub in JOBS[k]["subBuilds"]:
-        col+=1
         JOBS[k]["xlsHandler"].write(0, col, sub)
+        col+=1
 	  
   wb.save(JENKINS_FILE_DIR)
 
@@ -108,9 +120,20 @@ def JenkinsFileCreate():
 def saveSubBuilds(curExcelRow,cols_num,writeHandler,readHandler,subBuilds):
 	for build in subBuilds:
 		jobname = build["jobName"]
-		for i in range(6,cols_num):
+		for i in range(SUBSTART_COL,cols_num):
 			if readHandler.cell(0,i).value == jobname:
 				writeHandler.write(curExcelRow,i,build["buildNumber"])
+
+				
+def timeConvert(origTime):
+    x = origTime / 1000
+    seconds = x % 60
+    x /= 60
+    minutes = x % 60
+    x /= 60
+    hours = x % 24
+    converTime = "%d:%d:%d"%(hours,minutes,seconds)
+    return converTime
 			    
 
 def JenkinsDataSave():  
@@ -150,9 +173,11 @@ def JenkinsDataSave():
       # save id
 		buildId = buildArray[lenBuildArray-buildIndex-1]["id"]
 		if int(buildId) > int(maxBuildId):
-			sheetHandlerCP.write(curExcelRow,0,buildId)
+			sheetHandlerCP.write(curExcelRow,ID_COL,buildId)
 			submitter=None
 			projName=None
+			pushTime=None
+
       		# get project name and submitter
 			actions = buildArray[lenBuildArray-buildIndex-1]["actions"]
 			for parameters in actions:
@@ -163,25 +188,24 @@ def JenkinsDataSave():
 							submitter = para["value"]
 						elif para["name"]=="PROJECT_NAME":
 							projName =  para["value"]
-			sheetHandlerCP.write(curExcelRow,1,projName)
-			sheetHandlerCP.write(curExcelRow,2,submitter)
+						elif para["name"]=="PUSH_TIME":
+							pushTime =  para["value"]
+			sheetHandlerCP.write(curExcelRow,PROJNA_COL,projName)
+			sheetHandlerCP.write(curExcelRow,SUBMIT_COL,submitter)
+			#the origin push time's unit is second
+			if pushTime != None:
+				pushTime = time.strftime("%c", time.localtime(pushTime)/1000)
+			sheetHandlerCP.write(curExcelRow,PUSHT_COL,pushTime)
 			# save timestamp
 			stamp = buildArray[lenBuildArray-buildIndex-1]["timestamp"]
 			#print stamp
 			stamp = time.strftime("%c", time.localtime(float(stamp)/1000))
-			sheetHandlerCP.write(curExcelRow,3,stamp)
+			sheetHandlerCP.write(curExcelRow,START_COL,stamp)
 			# save duration, duration unit is ms
-			dur = buildArray[lenBuildArray-buildIndex-1]["duration"]
-			x = dur / 1000
-			seconds = x % 60
-			x /= 60
-			minutes = x % 60
-			x /= 60
-			hours = x % 24
-			dur = "%d:%d:%d"%(hours,minutes,seconds)
-			sheetHandlerCP.write(curExcelRow,4,dur)
+			dur=timeConvert(buildArray[lenBuildArray-buildIndex-1]["duration"])
+			sheetHandlerCP.write(curExcelRow,DUR_COL,dur)
 			#save result 
-			sheetHandlerCP.write(curExcelRow,5,buildArray[lenBuildArray-buildIndex-1]["result"])
+			sheetHandlerCP.write(curExcelRow,RESULT_COL,buildArray[lenBuildArray-buildIndex-1]["result"])
 
 			if buildArray[lenBuildArray-buildIndex-1].has_key("subBuilds"):
 				saveSubBuilds(curExcelRow,cols_num,sheetHandlerCP,sheetHandler,buildArray[lenBuildArray-buildIndex-1]["subBuilds"])
