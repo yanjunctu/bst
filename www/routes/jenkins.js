@@ -275,7 +275,7 @@ var updateStatus = function(ciStatus,data){
       })
     }  
 }
-function pushdata(id,duration,submitter,timestamp,parameter,data){
+function pushdata(id,duration,submitter,timestamp,data){
 
 
 
@@ -287,14 +287,11 @@ function pushdata(id,duration,submitter,timestamp,parameter,data){
 	//get submitter name
 	//parameter=data.actions[0].parameters;
 	//console.log(parameters);
-	for(var j = 0;j<parameter.length; j++)
-	{
-		if(parameter[j].name == "SUBMITTER")
-		{
-			submitter.push(parameter[j].value); 
-		}
-	}
+
+submitter.push(getSubmitterName(data)); 
+
 }
+
 function getJobDuration(job,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
@@ -318,14 +315,14 @@ function getJobDuration(job,days,callback){
 		{
 		   if(data[i].result == "SUCCESS")
 		   {
-		       parameter=data[i].actions[0].parameters;
-			   if(parameter[0].value == nonEmerStr)
+		       //parameter=data[i].actions[0].parameters;
+			   if(getProjectName(data[i]) == nonEmerStr)
 			   {
-			       pushdata(durationDic.id_non,durationDic.duration_non,durationDic.submitter_non,durationDic.timestamp_non,parameter,data[i]);
+			       pushdata(durationDic.id_non,durationDic.duration_non,durationDic.submitter_non,durationDic.timestamp_non,data[i]);
 			   }
 			   else
 			   {
-			       pushdata(durationDic.id_em,durationDic.duration_em,durationDic.submitter_em,durationDic.timestamp_em,parameter,data[i]);
+			       pushdata(durationDic.id_em,durationDic.duration_em,durationDic.submitter_em,durationDic.timestamp_em,data[i]);
 			   }
 		   }
 		}
@@ -393,17 +390,9 @@ function getJobFailureInfo(job,days,callback){
 						}
 					}
 			   }
-			   parameters=data[i].actions[0].parameters;
-			   if(parameters != undefined)
-			   {
-					for(var j = 0;j<parameters.length; j++)
-					{
-						if(parameters[j].name == "SUBMITTER")
-						{
-							failureInfoDic.failSubmitter.push(parameters[j].value); 
-						}
-					}
-				}			   
+
+				failureInfoDic.failSubmitter.push(getSubmitterName(data[i])); 
+   
 		   }
 		   else if(data[i].result== "ABORTED")
 		   {
