@@ -3,17 +3,17 @@
 #40 zeroes, reprsents a nonexistent obj
 NULL_COMMIT_ID="0000000000000000000000000000000000000000"
 CI_BRANCH="IR_Emerald..*|IR_nonEmerald..*|IR_REPT_2.7_INT..*"
-#Minimum interval in seconds between CI triggered events
-INTERVAL=10
+#Minimum interval in milliseconds between CI triggered events
+INTERVAL=10000
 
 triggerCI()
 {
     lastTriggerTime=0
-    currentTime=$(date +%s)
+    currentTime=$4
     timeFile="/tmp/ci_time.tmp"
     branch=$(echo $1 | tr [a-z] [A-Z])
     args="--no-check-certificate --auth-no-challenge --http-user=pnw748 --http-password=079ffabb999ca608c05753b7557f442f https://cars.ap.mot-solutions.com:8080/job/PCR-REPT-0-Trigger/buildWithParameters?token=Trigger_Token"
-    
+
     case "$branch" in
         IR_EMERALD?*)
             args+="&IR_BRANCH=${1}&PROJECT_NAME=REPT2.7_Emerald"
@@ -30,13 +30,14 @@ triggerCI()
     esac
     [ -e "$timeFile" ] && read lastTriggerTime < "$timeFile"
     [ "$((lastTriggerTime+INTERVAL))" -gt "$currentTime" ] && sleep $((lastTriggerTime+INTERVAL-currentTime)) &>/dev/null
-    wget $args"&SUBMITTER=$2" &>/dev/null
+    wget $args"&SUBMITTER=$2&EMAIL=$3&PUSH_TIME=$4" &>/dev/null
     rm -rf buildWithParameters\?token=Trigger_Token* &>/dev/null
     echo $currentTime > $timeFile
 
     return 0
 }
 
+pushTime=$(data +%s%3N)
 while read oldref newref refname
 do
     logger "[post-receive]push event: $oldref $newref $refname"
@@ -45,7 +46,8 @@ do
     then
         branch=$(echo "$refname" | cut -d '/' -f 3)
         submitter=$(git --no-pager show -s --format='%an' $newref)
-        logger "[post-receive]trigger CI: branch=$branch submitter=$submitter"
-        triggerCI "$branch" "$submitter"
+        email=$(git --no-pager show -s --format='%ae' $newref)
+        logger "[post-receive]trigger CI: branch=$branch submitter=$submitter email=$email push-time=$pushTime"
+        triggerCI "$branch" "$submitter" "$email" "$pushTime"
     fi
 done
