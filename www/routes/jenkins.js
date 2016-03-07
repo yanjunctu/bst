@@ -135,7 +135,7 @@ function getPendingReq(project, callback){
     jenkins.queue(function(err, data){
         if (err) {
             console.log(err);
-            callback(err);
+            callback(err, result);
             return;
         }
 
@@ -449,7 +449,7 @@ router.get('/getEmerStatus', function(req, res, next) {
 router.get('/getEmerPendingReq', function(req, res, next){
     console.log("getEmerPendingReq");
     getPendingReq("REPT2.7_Emerald", function(err, data){
-        if (err) { return res.end(err); }
+        if (err) { return res.end(); }
         data.current.submitter = emeraldStatus.overall.current.branch;
         data.current.subTime = emeraldStatus.overall.current.subTime;
         return res.json(data);
@@ -466,7 +466,7 @@ router.get('/getNonEmerStatus', function(req, res, next) {
 router.get('/getNonEmerPendingReq', function(req, res, next){
     console.log("getnonEmerPendingReq");
     getPendingReq("REPT2.7_nonEmerald", function(err, data){
-        if (err) { return res.end(err); }
+        if (err) { return res.end(); }
         data.current.submitter = nonEmeraldStatus.overall.current.branch;
         data.current.subTime = nonEmeraldStatus.overall.current.subTime;
         return res.json(data);
