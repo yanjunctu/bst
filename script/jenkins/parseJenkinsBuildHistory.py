@@ -20,6 +20,7 @@ import datetime
 import time
 
 import os
+import xmlrpclib
 from xlrd import open_workbook
 from xlutils.copy import copy
 
@@ -53,7 +54,8 @@ JOBS = {
 }
 
 JENKINS_FILE_DIR = '/var/opt/booster/jenkins.xls'
-#JENKINS_FILE_DIR = 'D:/GitRepos/webBox/booster_project/script/jenkins/jenkins.xls'
+#JENKINS_FILE_DIR = 'D:/desktop/repeater2.7/python/jenkins.xls'
+#JENKINS_FILE_DIR = '/mnt/gitlabbackup/jenkins.xls'
 ID_COL=0
 PROJNA_COL=1
 SUBMIT_COL=2
@@ -62,6 +64,7 @@ START_COL=4
 DUR_COL=5
 RESULT_COL=6
 SUBSTART_COL=7
+
 
 # This line is needed as if our server will report SSL failure if SSL true
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -138,81 +141,80 @@ def timeConvert(origTime):
 
 def JenkinsDataSave():  
 	
-  jenkins_url = 'https://cars01:8080'
-  # password is use token 
-  jenkinsServer = BoosterJenkins(jenkins_url, username='jhv384', password='4aff12c2c2c0fba8342186ef0fd9e60c')
-  jenkinsFile = open_workbook(JENKINS_FILE_DIR,formatting_info=True)
-  jenkinsFileCP = copy(jenkinsFile)
-  for k in JOBS:
-    #get excel sheet handler
-	sheetHandler = jenkinsFile.sheet_by_name(k)
-	#sheetHandlerCP = jenkinsFileCP.sheet_by_name(k)
-	sheetHandlerCP = jenkinsFileCP.get_sheet(jenkinsFile.sheet_names().index(k)) 
-    #get the rows number
-	rows_num = sheetHandler.nrows
-	cols_num =sheetHandler.ncols
-	if 0 == rows_num:
-      # file title not exist creat the file
-		JenkinsFileCreate()
-	elif 1 == rows_num:
-      #only title 
-		maxBuildId = 0;
-	else:
-      #get the last build id
-		maxBuildId=sheetHandler.cell(rows_num-1,0).value
+	#jenkins_url = 'https://cars01:8080'
+	jenkins_url = 'https://10.193.226.152:8080'
+	# password is use token 
+	jenkinsServer = BoosterJenkins(jenkins_url, username='jhv384', password='4aff12c2c2c0fba8342186ef0fd9e60c')
+	jenkinsFile = open_workbook(JENKINS_FILE_DIR,formatting_info=True)
+	jenkinsFileCP = copy(jenkinsFile)
+	for k in JOBS:
+		#get excel sheet handler
+		sheetHandler = jenkinsFile.sheet_by_name(k)
+		#sheetHandlerCP = jenkinsFileCP.sheet_by_name(k)
+		sheetHandlerCP = jenkinsFileCP.get_sheet(jenkinsFile.sheet_names().index(k)) 
+		#get the rows number
+		rows_num = sheetHandler.nrows
+		cols_num =sheetHandler.ncols
+		if 0 == rows_num:
+			# file title not exist creat the file
+			JenkinsFileCreate()
+		elif 1 == rows_num:
+			#only title 
+			maxBuildId = 0;
+		else:
+			#get the last build id
+			maxBuildId=sheetHandler.cell(rows_num-1,0).value
+		#retrieve all builds info from jenkins
+		jobInfo = jenkinsServer.get_job_all_builds(JOBS[k]["name"]) 
+		#write retrieved info into excel
+		curExcelRow = rows_num
+		buildArray = jobInfo["allBuilds"]
+		lenBuildArray = len(buildArray)
+		#print buildArray
 	
-    #retrieve all builds info from jenkins
-	jobInfo = jenkinsServer.get_job_all_builds(JOBS[k]["name"]) 
-    #write retrieved info into excel
-	curExcelRow = rows_num
-	buildArray = jobInfo["allBuilds"]
-	lenBuildArray = len(buildArray)
-    #print buildArray
-	
-	for buildIndex in range(lenBuildArray):
-      # save id
-		buildId = buildArray[lenBuildArray-buildIndex-1]["id"]
-		if int(buildId) > int(maxBuildId):
-			sheetHandlerCP.write(curExcelRow,ID_COL,buildId)
-			submitter=None
-			projName=None
-			pushTime=None
+		for buildIndex in range(lenBuildArray):
+		# save id
+			buildId = buildArray[lenBuildArray-buildIndex-1]["id"]
+			if int(buildId) > int(maxBuildId):
+				sheetHandlerCP.write(curExcelRow,ID_COL,buildId)
+				submitter=None
+				projName=None
+				pushTime=None
 
-      		# get project name and submitter
-			actions = buildArray[lenBuildArray-buildIndex-1]["actions"]
-			for parameters in actions:
-				if parameters!= {}:
-					parameter=parameters["parameters"]
-					for para in parameter:
-						if para["name"]=="SUBMITTER":
-							submitter = para["value"]
-						elif para["name"]=="PROJECT_NAME":
-							projName =  para["value"]
-						elif para["name"]=="PUSH_TIME":
-							pushTime =  para["value"]
-			sheetHandlerCP.write(curExcelRow,PROJNA_COL,projName)
-			sheetHandlerCP.write(curExcelRow,SUBMIT_COL,submitter)
-			#the origin push time's unit is second
-			if pushTime != None:
-				pushTime = time.strftime("%c", time.localtime(pushTime)/1000)
-			sheetHandlerCP.write(curExcelRow,PUSHT_COL,pushTime)
-			# save timestamp
-			stamp = buildArray[lenBuildArray-buildIndex-1]["timestamp"]
-			#print stamp
-			stamp = time.strftime("%c", time.localtime(float(stamp)/1000))
-			sheetHandlerCP.write(curExcelRow,START_COL,stamp)
-			# save duration, duration unit is ms
-			dur=timeConvert(buildArray[lenBuildArray-buildIndex-1]["duration"])
-			sheetHandlerCP.write(curExcelRow,DUR_COL,dur)
-			#save result 
-			sheetHandlerCP.write(curExcelRow,RESULT_COL,buildArray[lenBuildArray-buildIndex-1]["result"])
+				# get project name and submitter
+				actions = buildArray[lenBuildArray-buildIndex-1]["actions"]
+				for parameters in actions:
+					if parameters!= {}:
+						parameter=parameters["parameters"]
+						for para in parameter:
+							if para["name"]=="SUBMITTER":
+								submitter = para["value"]
+							elif para["name"]=="PROJECT_NAME":
+								projName =  para["value"]
+							elif para["name"]=="PUSH_TIME":
+								pushTime =  para["value"]
+				sheetHandlerCP.write(curExcelRow,PROJNA_COL,projName)
+				sheetHandlerCP.write(curExcelRow,SUBMIT_COL,submitter)
+				#the origin push time's unit is second
+				if (pushTime != None) and (pushTime != ""):
+					pushTime = time.strftime("%c", time.localtime(float(pushTime))/1000)
+				sheetHandlerCP.write(curExcelRow,PUSHT_COL,pushTime)
+				# save timestamp
+				stamp = buildArray[lenBuildArray-buildIndex-1]["timestamp"]
+				#print stamp
+				stamp = time.strftime("%c", time.localtime(float(stamp)/1000))
+				sheetHandlerCP.write(curExcelRow,START_COL,stamp)
+				# save duration, duration unit is ms
+				dur=timeConvert(buildArray[lenBuildArray-buildIndex-1]["duration"])
+				sheetHandlerCP.write(curExcelRow,DUR_COL,dur)
+				#save result 
+				sheetHandlerCP.write(curExcelRow,RESULT_COL,buildArray[lenBuildArray-buildIndex-1]["result"])
 
-			if buildArray[lenBuildArray-buildIndex-1].has_key("subBuilds"):
-				saveSubBuilds(curExcelRow,cols_num,sheetHandlerCP,sheetHandler,buildArray[lenBuildArray-buildIndex-1]["subBuilds"])
-			curExcelRow = curExcelRow+1
-		
-  os.remove(JENKINS_FILE_DIR)
-  jenkinsFileCP.save(JENKINS_FILE_DIR)
+				if buildArray[lenBuildArray-buildIndex-1].has_key("subBuilds"):
+					saveSubBuilds(curExcelRow,cols_num,sheetHandlerCP,sheetHandler,buildArray[lenBuildArray-buildIndex-1]["subBuilds"])
+				curExcelRow = curExcelRow+1		
+	os.remove(JENKINS_FILE_DIR)
+	jenkinsFileCP.save(JENKINS_FILE_DIR)
 
 if __name__ == "__main__":
    
