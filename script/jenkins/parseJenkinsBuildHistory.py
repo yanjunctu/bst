@@ -197,7 +197,7 @@ def JenkinsDataSave():
 				sheetHandlerCP.write(curExcelRow,SUBMIT_COL,submitter)
 				#the origin push time's unit is second
 				if (pushTime != None) and (pushTime != ""):
-					pushTime = time.strftime("%c", time.localtime(float(pushTime))/1000)
+					pushTime = time.strftime("%c", time.localtime(float(pushTime)/1000))
 				sheetHandlerCP.write(curExcelRow,PUSHT_COL,pushTime)
 				# save timestamp
 				stamp = buildArray[lenBuildArray-buildIndex-1]["timestamp"]
