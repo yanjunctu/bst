@@ -132,26 +132,31 @@ function getSubmitterName(data){
 function getPendingReq(project, callback){
     var result = {"current":{"submitter":"","subTime":0},"queue":[]};
 
-    jenkins.queue(function(err, data){
-        if (err) {
-            console.log(err);
-            callback(err, result);
-            return;
-        }
-
-        var items = data.items;
-        var prjName = "PROJECT_NAME=".concat(project);
-        items.forEach(function(item){
-            if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
-                var sub = /SUBMITTER=(.*)\n*EMAIL=(.*)\n*PUSH_TIME=(.*)/ig.exec(item.params);
-
-                if (sub){
-                    result.queue.push({"submitter":sub[1], "subTime":sub[3]});
-                }
+    try {
+        jenkins.queue(function(err, data){
+            if (err) {
+                console.log(err);
+                callback(err, result);
+                return;
             }
+
+            var items = data.items;
+            var prjName = "PROJECT_NAME=".concat(project);
+            items.forEach(function(item){
+                if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
+                    var sub = /SUBMITTER=(.*)\n*EMAIL=(.*)\n*PUSH_TIME=(.*)/ig.exec(item.params);
+
+                    if (sub){
+                        result.queue.push({"submitter":sub[1], "subTime":sub[3]});
+                    }
+                }
+            });
+            callback(null, result);
         });
+    }catch(e){
+        console.log("failed to call jenkins.queue");
         callback(null, result);
-    });
+    }
 }
 
 var updateStatus = function(ciStatus,data){

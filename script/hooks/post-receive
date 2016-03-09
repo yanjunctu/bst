@@ -37,7 +37,7 @@ triggerCI()
     return 0
 }
 
-pushTime=$(data +%s%3N)
+pushTime=$(date +%s%3N)
 while read oldref newref refname
 do
     logger "[post-receive]push event: $oldref $newref $refname"
