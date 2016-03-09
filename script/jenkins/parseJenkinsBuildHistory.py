@@ -53,9 +53,9 @@ JOBS = {
 "offTarget_test_it_job":{"name":u"PCR-REPT-Win32_IT","xlsHandler":None,"subBuilds":None},
 }
 
-#JENKINS_FILE_DIR = '/var/opt/booster/jenkins.xls'
+JENKINS_FILE_DIR = '/var/opt/booster/jenkins.xls'
 #JENKINS_FILE_DIR = 'D:/desktop/repeater2.7/python/jenkins.xls'
-JENKINS_FILE_DIR = '/mnt/gitlabbackup/jenkins.xls'
+#JENKINS_FILE_DIR = '/mnt/gitlabbackup/jenkins.xls'
 ID_COL=0
 PROJNA_COL=1
 SUBMIT_COL=2
