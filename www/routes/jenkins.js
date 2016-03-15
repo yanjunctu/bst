@@ -46,7 +46,11 @@ var getJobBuild = function(job,build,callback)
 var getAllBuild = function (job,param,callback)
 {
    jenkins.all_build(job,param,function(err, tempdata) {
-    data = tempdata.allBuilds;
+    data={};
+    if (tempdata.hasOwnProperty("allBuilds")) {
+       data = tempdata.allBuilds;
+    }
+	   
     callback(err,data);
   });  
 };
