@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var dB = require('../models/repoinfoDB.js');
-var days=7;
+var days=30;
 
 router.get('/getreposize', function(req, res, next){
     dB.getreposize(days,function(err,repoinfo){
