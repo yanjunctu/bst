@@ -38,10 +38,21 @@ Besides server side, this module will also contain client side code.
 
 """
 
-import sys,socket
+import sys,socket,random
 from SocketServer import ThreadingUDPServer,DatagramRequestHandler
 
+SREVER_HOST_NAME = "ubuntu-14"
+SREVER_PORT = 8061
+
 SERVER_CAN_NOT_HANDLE = "SERVER_CAN_NOT_HANDLE"
+
+#OPCODE
+KLOCWORK_WARNING_CHECK = "KLOCWORK_WARNING_CHECK"
+
+#RESULT
+SUCCESS     = "SUCCESS"
+WRONG_OPCODE  = "WRONG_OPCODE"
+WRONG_PAYLOAD  = "WRONG_PAYLOAD"
 
 class BoosterRequestHandler(DatagramRequestHandler):
   """
@@ -57,7 +68,10 @@ class BoosterRequestHandler(DatagramRequestHandler):
   
   def handle(self):
     print "[recv from client]: "+ self.packet;
-    self.wfile.write(SERVER_CAN_NOT_HANDLE);# content of wfile will be send back to client in baseclass, so set it value to not handle firstly
+    
+    #self.wfile.write(SERVER_CAN_NOT_HANDLE);# content of wfile will be send back to client in baseclass, so set it value to not handle firstly
+    
+    self.wfile.write(self.packet);
 
     
 class BoosterServer(ThreadingUDPServer):
@@ -74,26 +88,18 @@ class BoosterServer(ThreadingUDPServer):
     
   
 
-class BoosterClientInterface:
-  
-  def __init__(self,ip,port):
-    self.server_address = (ip,port)
-    # SOCK_DGRAM is the socket type to use for UDP sockets
+class BoosterClientInterface():
+    
+  def __init__(self):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
     
-  def send(self,data):
-    self.sock.sendto(data,self.server_address);
-    
+  def send(self,data,isWaitRecv=True):
+    self.sock.sendto(data,(SREVER_HOST_NAME,SREVER_PORT));
+
   def recv(self):
     return self.sock.recv(1024);
-  
-    
-  
-
-
         
 if __name__ == "__main__":
-  HOST,PORT = "localhost",8061;
   
   if len(sys.argv)<2:
     print('''
@@ -105,13 +111,15 @@ if __name__ == "__main__":
   if sys.argv[1] == "start":
     #start server
     
-    pBoosterServer = BoosterServer((HOST,PORT),BoosterRequestHandler);
+    pBoosterServer = BoosterServer((SREVER_HOST_NAME,SREVER_PORT),BoosterRequestHandler);
     pBoosterServer.serve_forever();
   
   if sys.argv[1] == "client":
     #simulate client
-    PSendInterface = BoosterClientInterface(HOST,PORT);
-    PSendInterface.send("client sanity test")
-    print "[recv from server]: "+PSendInterface.recv();
+    s = str(random.random());
+    interface = BoosterClientInterface();
+    interface.send(s);
+    print "[send from client]: "+s;
+    print "[recv from server]: "+interface.recv();
   
   
