@@ -38,7 +38,7 @@ Besides server side, this module will also contain client side code.
 
 """
 
-import sys,socket,random
+import sys,socket,random,json
 from SocketServer import ThreadingUDPServer,DatagramRequestHandler
 
 SREVER_HOST_NAME = "ubuntu-14"
@@ -54,6 +54,38 @@ SUCCESS     = "SUCCESS"
 WRONG_OPCODE  = "WRONG_OPCODE"
 WRONG_PAYLOAD  = "WRONG_PAYLOAD"
 
+class BoosterMsg():
+  """
+  Base class for the msg instance exchanged between booster server and client
+  """
+  OPCODE = None
+  def getSendMsg():
+    msg = {"opcode":OPCODE}
+    return msg;
+  
+class WarnKlocCheckResult(BoosterMsg):
+  """
+  Like CI will check warning and klocwork, if have unclear items, CI will create one such message
+  to send to server
+  """  
+  OPCODE = KLOCWORK_WARNING_CHECK;
+  
+  def __init__(self,engineerName,engineerMail,date,buildWarningCnt=0,klocworkCnt=0):
+    self.engineerName = engineerName;
+    self.engineerMail = engineerMail;
+    self.buildWarningCnt = buildWarningCnt;
+    self.klocworkCnt = klocworkCnt;
+    
+    i = datetime.datetime.now();
+    self.date = "{year}/{month}/{day}".format(year=i.year,month=i.month,day=i.day);
+
+  def getSendMsg():
+    msg = BoosterMsg.getSendMsg();
+    payload = {"engineerName":engineerName,"engineerMail":engineerMail,"date":date,"buildWarningCnt":buildWarningCnt,"klocworkCnt":klocworkCnt};
+    msg["data"]= payload;
+    
+    
+  
 class BoosterRequestHandler(DatagramRequestHandler):
   """
   In baseclass, have below import attr:
@@ -88,7 +120,7 @@ class BoosterServer(ThreadingUDPServer):
     
   
 
-class BoosterClientInterface():
+class BoosterClient():
     
   def __init__(self):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
@@ -101,12 +133,13 @@ class BoosterClientInterface():
         
 if __name__ == "__main__":
   
-  if len(sys.argv)<2:
+  if len(sys.argv)<2 or sys.argv[1] not in ["start","sanitytest"]:
     print('''
-    python boosterSocket.py start:   start server...
-    python boosterSocket.py client:  a base test
+    python boosterSocket.py start:               start server...
+    python boosterSocket.py sanitytest:          A basic test
     ''');
     sys.exit()
+  
   
   if sys.argv[1] == "start":
     #start server
@@ -114,10 +147,10 @@ if __name__ == "__main__":
     pBoosterServer = BoosterServer((SREVER_HOST_NAME,SREVER_PORT),BoosterRequestHandler);
     pBoosterServer.serve_forever();
   
-  if sys.argv[1] == "client":
+  if sys.argv[1] == "sanitytest":
     #simulate client
     s = str(random.random());
-    interface = BoosterClientInterface();
+    interface = BoosterClient();
     interface.send(s);
     print "[send from client]: "+s;
     print "[recv from server]: "+interface.recv();
