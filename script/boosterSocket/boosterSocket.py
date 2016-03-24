@@ -53,10 +53,17 @@ KLOCWORK_WARNING_CHECK = "KLOCWORK_WARNING_CHECK"
 SUCCESS_CODE     = "SUCCESS"
 FAIL_CODE = "FAIL"
 
+
+#######define all your opcode handlers functions here##########
 def handleWarnKlocCheckResult(data):
   print "hello I am in handler"
   return SUCCESS_CODE;
 
+
+
+
+
+#### mapping table for opcode and its callback function
 registeredHandlers = {
   KLOCWORK_WARNING_CHECK:handleWarnKlocCheckResult
 }
@@ -115,16 +122,19 @@ class BoosterRequestHandler(DatagramRequestHandler):
     #self.wfile.write(SERVER_CAN_NOT_HANDLE);# content of wfile will be send back to client in baseclass, so set it value to not handle firstly
     
     try:
-      recvMsg = json.load(self.packet);# convert string to json object
-      if recvMsg["opcode"] in registeredHandlers.keys():
-        ret = self.registeredHandlers[recvMsg["opcode"]](recvMsg["data"]);
+      recvMsg = json.loads(self.packet);# convert string to json object
+      opcode = recvMsg["opcode"];
+      data = recvMsg["data"];
+      if opcode in registeredHandlers.keys():
+        ret = registeredHandlers[opcode](data);
         recvMsg["result"] = ret;
       else:
-        recvMsg["result"] = SUCCESS_CODE;   
+        recvMsg["result"] = FAIL_CODE;   
         
       resultStr = json.dumps(recvMsg);
-      
+
     except:
+      print "in exception"
       resultStr = json.dumps({"result":FAIL_CODE})
         
     self.wfile.write(resultStr);
@@ -190,7 +200,7 @@ if __name__ == "__main__":
     ret = interface.send(wkresult);
     if ret:
       print "[send from client]: "+json.dumps(wkresult.getSendMsg());
-      print "[recv from server]: "+interface.recv();
+      #print "[recv from server]: "+interface.recv();
     else:
       print "send failed!"
   
