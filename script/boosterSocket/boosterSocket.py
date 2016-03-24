@@ -10,6 +10,14 @@ what you should do to add new type of msg handler:
    b. defined a new handler, like handleWarnKlocCheckResult()
    c. create a new msg type for client to call, like class WarnKlocCheckResult(BoosterMsg):
 
+
+Precondition:
+
+    python -m pip install pymongo
+    
+    
+# Booster server Archtecture Diagram:
+
         +------------+
         | BaseServer |
         +------------+
@@ -44,6 +52,10 @@ what you should do to add new type of msg handler:
 """
 
 import sys,socket,random,json,datetime
+import smtplib
+import email.utils
+from email.mime.text import MIMEText
+from pymongo import MongoClient
 from SocketServer import ThreadingUDPServer,DatagramRequestHandler
 
 SREVER_HOST_NAME = "ubuntu-14"
@@ -58,9 +70,44 @@ SUCCESS_CODE     = "SUCCESS"
 FAIL_CODE = "FAIL"
 
 
+##########utility functions###################################
+
+def sendEmail(to,text,title):
+  # Create the message
+  msg = MIMEText(text)
+
+  msg['To'] = email.utils.formataddr((to, to+'@motorolasolutions.com'))
+  msg['From'] = email.utils.formataddr(('booster', 'booster@motorolasolutions.com'))
+  msg['Subject'] = title
+
+  server = smtplib.SMTP('remotesmtp.mot-solutions.com')
+  #server.set_debuglevel(True) # show communication with the server
+  try:
+      server.sendmail('booster@motorolasolutions.com', [to,'jhv384@motorolasolutions.com'], msg.as_string())
+  finally:
+      server.quit()
+        
+        
+        
+        
 #######define all your opcode handlers functions here##########
 def handleWarnKlocCheckResult(data):
-  print "hello I am in handler"
+  """
+  This handler will response to write received klock and warning check result into database
+  """
+  
+  print "I am in Handler"
+  
+  #get Mongo DB client Instance, connect to default port
+  client = MongoClient();
+
+  #get db
+  db = client.booster
+
+  #get collections
+  collection = db.warningKlocwork.insert_one(data)
+
+
   return SUCCESS_CODE;
 
 
@@ -124,21 +171,31 @@ class BoosterRequestHandler(DatagramRequestHandler):
   def handle(self):
     print "[recv from client]: "+ self.packet;
     
-    try:
-      recvMsg = json.loads(self.packet);# convert string to json object
-      opcode = recvMsg["opcode"];
-      data = recvMsg["data"];
-      if opcode in registeredHandlers.keys():
-        ret = registeredHandlers[opcode](data);
-        recvMsg["result"] = ret;
-      else:
-        recvMsg["result"] = FAIL_CODE;   
-        
-      resultStr = json.dumps(recvMsg);
+    #try:
+    recvMsg = json.loads(self.packet);# convert string to json object
+    
+    """
+    Below three lines is a little tricky, it is because recvMsg["opcode"] is already a object.
+    If send this object to registeredHandlers[opcode]() as a argv, this argv will be changed in
+    the functions, becuase the function internal is to store the object into db, before that, will
+    append a new attr named "_id" for mongo db, but after this, json.dumps() can't handle to such
+    data type, so we need to make a deep copy here before pass the object to the function, then original
+    object not be influenced.
+    """
+    opcode = recvMsg["opcode"];
+    dataObject = recvMsg["data"];
+    dbData = dataObject.copy();#dataObject is a dictionary type, it own a copy() to do deep copy
+    
+    if opcode in registeredHandlers.keys():
+      ret = registeredHandlers[opcode](dbData);
+      recvMsg["result"] = ret;
+    else:
+      recvMsg["result"] = FAIL_CODE;   
 
-    except:
-      print "in exception"
-      resultStr = json.dumps({"result":FAIL_CODE})
+    resultStr = json.dumps(recvMsg);
+
+    #except:
+    #  resultStr = json.dumps({"result":FAIL_CODE})
         
     self.wfile.write(resultStr);
     
@@ -220,6 +277,8 @@ if __name__ == "__main__":
     if ret:
       print "[send from client]: "+json.dumps(wkresult.getSendMsg());
       print "[recv from server]: "+interface.recv();
+      sendEmail('',"hello! booster","checked new warnings");
+      
     else:
       print "send failed!"
   
