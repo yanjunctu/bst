@@ -38,7 +38,7 @@ Besides server side, this module will also contain client side code.
 
 """
 
-import sys,socket,random,json
+import sys,socket,random,json,datetime
 from SocketServer import ThreadingUDPServer,DatagramRequestHandler
 
 SREVER_HOST_NAME = "ubuntu-14"
@@ -50,17 +50,26 @@ SERVER_CAN_NOT_HANDLE = "SERVER_CAN_NOT_HANDLE"
 KLOCWORK_WARNING_CHECK = "KLOCWORK_WARNING_CHECK"
 
 #RESULT
-SUCCESS     = "SUCCESS"
-WRONG_OPCODE  = "WRONG_OPCODE"
-WRONG_PAYLOAD  = "WRONG_PAYLOAD"
+SUCCESS_CODE     = "SUCCESS"
+FAIL_CODE = "FAIL"
 
+def handleWarnKlocCheckResult(data):
+  print "hello I am in handler"
+  return SUCCESS_CODE;
+
+registeredHandlers = {
+  KLOCWORK_WARNING_CHECK:handleWarnKlocCheckResult
+}
+
+
+  
 class BoosterMsg():
   """
   Base class for the msg instance exchanged between booster server and client
   """
   OPCODE = None
-  def getSendMsg():
-    msg = {"opcode":OPCODE}
+  def getSendMsg(self):
+    msg = {"opcode":self.OPCODE}
     return msg;
   
 class WarnKlocCheckResult(BoosterMsg):
@@ -70,7 +79,7 @@ class WarnKlocCheckResult(BoosterMsg):
   """  
   OPCODE = KLOCWORK_WARNING_CHECK;
   
-  def __init__(self,engineerName,engineerMail,date,buildWarningCnt=0,klocworkCnt=0):
+  def __init__(self,engineerName,engineerMail,buildWarningCnt=0,klocworkCnt=0):
     self.engineerName = engineerName;
     self.engineerMail = engineerMail;
     self.buildWarningCnt = buildWarningCnt;
@@ -79,10 +88,11 @@ class WarnKlocCheckResult(BoosterMsg):
     i = datetime.datetime.now();
     self.date = "{year}/{month}/{day}".format(year=i.year,month=i.month,day=i.day);
 
-  def getSendMsg():
-    msg = BoosterMsg.getSendMsg();
-    payload = {"engineerName":engineerName,"engineerMail":engineerMail,"date":date,"buildWarningCnt":buildWarningCnt,"klocworkCnt":klocworkCnt};
+  def getSendMsg(self):
+    msg = BoosterMsg.getSendMsg(self);
+    payload = {"engineerName":self.engineerName,"engineerMail":self.engineerMail,"date":self.date,"buildWarningCnt":self.buildWarningCnt,"klocworkCnt":self.klocworkCnt};
     msg["data"]= payload;
+    return msg;
     
     
   
@@ -98,12 +108,29 @@ class BoosterRequestHandler(DatagramRequestHandler):
      client_address: client's address
   """
   
+    
   def handle(self):
     print "[recv from client]: "+ self.packet;
     
     #self.wfile.write(SERVER_CAN_NOT_HANDLE);# content of wfile will be send back to client in baseclass, so set it value to not handle firstly
     
-    self.wfile.write(self.packet);
+    try:
+      recvMsg = json.load(self.packet);# convert string to json object
+      if recvMsg["opcode"] in registeredHandlers.keys():
+        ret = self.registeredHandlers[recvMsg["opcode"]](recvMsg["data"]);
+        recvMsg["result"] = ret;
+      else:
+        recvMsg["result"] = SUCCESS_CODE;   
+        
+      resultStr = json.dumps(recvMsg);
+      
+    except:
+      resultStr = json.dumps({"result":FAIL_CODE})
+        
+    self.wfile.write(resultStr);
+    
+    
+    
 
     
 class BoosterServer(ThreadingUDPServer):
@@ -125,8 +152,18 @@ class BoosterClient():
   def __init__(self):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
     
-  def send(self,data,isWaitRecv=True):
-    self.sock.sendto(data,(SREVER_HOST_NAME,SREVER_PORT));
+  def send(self,boosterMsg):
+    ret = False;
+
+    try:
+      msg = boosterMsg.getSendMsg();
+      msgStr = json.dumps(boosterMsg.getSendMsg());
+      self.sock.sendto(msgStr,(SREVER_HOST_NAME,SREVER_PORT));
+      ret = True;
+    except:
+      ret = False;
+
+    return ret;
 
   def recv(self):
     return self.sock.recv(1024);
@@ -143,16 +180,18 @@ if __name__ == "__main__":
   
   if sys.argv[1] == "start":
     #start server
-    
     pBoosterServer = BoosterServer((SREVER_HOST_NAME,SREVER_PORT),BoosterRequestHandler);
     pBoosterServer.serve_forever();
   
   if sys.argv[1] == "sanitytest":
     #simulate client
-    s = str(random.random());
+    wkresult = WarnKlocCheckResult(engineerName="engineerName",engineerMail="engineerMail",buildWarningCnt=12,klocworkCnt=13);
     interface = BoosterClient();
-    interface.send(s);
-    print "[send from client]: "+s;
-    print "[recv from server]: "+interface.recv();
+    ret = interface.send(wkresult);
+    if ret:
+      print "[send from client]: "+json.dumps(wkresult.getSendMsg());
+      print "[recv from server]: "+interface.recv();
+    else:
+      print "send failed!"
   
   
