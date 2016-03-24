@@ -5,6 +5,11 @@ The exchange is based on socket, UDP protocol is used. And multi-threading is al
 
 Besides server side, this module will also contain client side code.
 
+what you should do to add new type of msg handler:
+   a. defined a new opcode like KLOCWORK_WARNING_CHECK_OPCODE
+   b. defined a new handler, like handleWarnKlocCheckResult()
+   c. create a new msg type for client to call, like class WarnKlocCheckResult(BoosterMsg):
+
         +------------+
         | BaseServer |
         +------------+
@@ -33,7 +38,7 @@ Besides server side, this module will also contain client side code.
 
 ###change log####
 
-21 Mar 2016 -- initial version by yanjun
+24 Mar 2016 -- initial version by yanjun
 
 
 """
@@ -44,10 +49,9 @@ from SocketServer import ThreadingUDPServer,DatagramRequestHandler
 SREVER_HOST_NAME = "ubuntu-14"
 SREVER_PORT = 8061
 
-SERVER_CAN_NOT_HANDLE = "SERVER_CAN_NOT_HANDLE"
 
 #OPCODE
-KLOCWORK_WARNING_CHECK = "KLOCWORK_WARNING_CHECK"
+KLOCWORK_WARNING_CHECK_OPCODE = "KLOCWORK_WARNING_CHECK"
 
 #RESULT
 SUCCESS_CODE     = "SUCCESS"
@@ -65,7 +69,7 @@ def handleWarnKlocCheckResult(data):
 
 #### mapping table for opcode and its callback function
 registeredHandlers = {
-  KLOCWORK_WARNING_CHECK:handleWarnKlocCheckResult
+  KLOCWORK_WARNING_CHECK_OPCODE:handleWarnKlocCheckResult
 }
 
 
@@ -76,6 +80,7 @@ class BoosterMsg():
   """
   OPCODE = None
   def getSendMsg(self):
+    # every msg should have opcode key, so put it assign value in base class
     msg = {"opcode":self.OPCODE}
     return msg;
   
@@ -84,7 +89,7 @@ class WarnKlocCheckResult(BoosterMsg):
   Like CI will check warning and klocwork, if have unclear items, CI will create one such message
   to send to server
   """  
-  OPCODE = KLOCWORK_WARNING_CHECK;
+  OPCODE = KLOCWORK_WARNING_CHECK_OPCODE;
   
   def __init__(self,engineerName,engineerMail,buildWarningCnt=0,klocworkCnt=0):
     self.engineerName = engineerName;
@@ -118,8 +123,6 @@ class BoosterRequestHandler(DatagramRequestHandler):
     
   def handle(self):
     print "[recv from client]: "+ self.packet;
-    
-    #self.wfile.write(SERVER_CAN_NOT_HANDLE);# content of wfile will be send back to client in baseclass, so set it value to not handle firstly
     
     try:
       recvMsg = json.loads(self.packet);# convert string to json object
@@ -158,16 +161,27 @@ class BoosterServer(ThreadingUDPServer):
   
 
 class BoosterClient():
-    
+  """
+  Client use this class to send udp packet to server socket
+  """  
   def __init__(self):
+    #create a udp socket
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
     
   def send(self,boosterMsg):
+    """
+    The argv is boosterMsg class, not string. We will convert to 
+    string internal then send to server
+    """
     ret = False;
 
+    #use try here because, if aninvalid object, exception will happen when call json.dumps
     try:
+      #get json object from boosterMsg
       msg = boosterMsg.getSendMsg();
+      #convert object to string 
       msgStr = json.dumps(boosterMsg.getSendMsg());
+      #send the json string to server, the server 's ip and port is predefined
       self.sock.sendto(msgStr,(SREVER_HOST_NAME,SREVER_PORT));
       ret = True;
     except:
@@ -176,6 +190,9 @@ class BoosterClient():
     return ret;
 
   def recv(self):
+    """
+    If you need to wait server's response, call this interface
+    """
     return self.sock.recv(1024);
         
 if __name__ == "__main__":
@@ -193,6 +210,8 @@ if __name__ == "__main__":
     pBoosterServer = BoosterServer((SREVER_HOST_NAME,SREVER_PORT),BoosterRequestHandler);
     pBoosterServer.serve_forever();
   
+  
+  #This is just a example for client to send msg to server
   if sys.argv[1] == "sanitytest":
     #simulate client
     wkresult = WarnKlocCheckResult(engineerName="engineerName",engineerMail="engineerMail",buildWarningCnt=12,klocworkCnt=13);
@@ -200,7 +219,7 @@ if __name__ == "__main__":
     ret = interface.send(wkresult);
     if ret:
       print "[send from client]: "+json.dumps(wkresult.getSendMsg());
-      #print "[recv from server]: "+interface.recv();
+      print "[recv from server]: "+interface.recv();
     else:
       print "send failed!"
   
