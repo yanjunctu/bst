@@ -60,14 +60,12 @@ class BuildLogReader(object):
         matches = [m for m in warning_pattern_1.finditer(content)]
         if not matches:
             matches = [m for m in warning_pattern_2.finditer(content)]  
-        fp = file('test.txt','a+')
         for match in matches:
             try:
                 file_name = match.groupdict()['file_name'].replace('\\', '/')
                 line_num = int(match.groupdict()['line_num'])
                 pos = (file_name, line_num)
                 warnings[pos] = match.group(0).replace('\\', '/')
-                print >>fp,'%s\n\n\n' %warnings[pos]
             except Exception, e:
                 continue
         #print len(matches)
