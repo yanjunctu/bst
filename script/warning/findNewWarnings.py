@@ -10,6 +10,9 @@ import string
 import subprocess
 from Queue import Queue 
 import glob
+
+ALL_NEW_WARNINGS= OrderedDict()
+
 BAHAMADIR='/bahama/code'
 CYPHERDIR='/pcr_srp/code'
 TEMP_DIR='/temp_warning/'
@@ -17,7 +20,8 @@ LOG_DIR = '/temp_warning/buildlog/'
 CLEAN_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make clean','logfile':'/temp_warning/clean.log'},
 		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 host_clean_32mb','logfile':'/temp_warning/clean.log'},
 			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 dsp_clean_32mb','logfile':'/temp_warning/clean.log'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 host_matrix_clean','logfile':'/temp_warning/clean.log'}]
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 host_matrix_clean','logfile':'/temp_warning/clean.log'},
+		   	{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 bandit_clean','logfile':'/temp_warning/clean.log'}]
 
 BUILD_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make dsp_all','logfile':LOG_DIR+'bahama_dsp.log'},
 		    {'cmdDir':BAHAMADIR,'cmdType':'path.bat && make arm_all','logfile':LOG_DIR+'bahama_arm.log'},
@@ -41,22 +45,29 @@ class BuildLogReader(object):
             return None
 
         #warning_pattern_str = '''(^\"(?P<file_name>[^\"]{1,})\",\sline\s(?P<line_num>\d{1,})\:\swarning\s\#(?P<warning_ID>\d{1,})\-.*\n(\s{1,}[^\^]{1,}\n){1,}(\s{1,}\^\s{0,}\^{0,}){1,})'''
-        warning_pattern_str = r'''"(?P<file_name>[^"]+)", line (?P<line_num>\d+): warning #(?P<warning_ID>\d+)-.*\n(\s*[^^]+\n)+(\s*\^.*)+'''
+        warning_pattern_str1 = r'''"(?P<file_name>[^"]+)", line (?P<line_num>\d+): warning #(?P<warning_ID>\d+)-.*\n(\s*[^^]+\n)+(\s*\^.*)+'''
 		
+        warning_pattern_str2= r'(?P<file_name>[^"\n]+):(?P<line_num>\d+)(:[^"\n]+)*:(?P<row_num>\d+): warning:.+'
+	
 			
-        warning_pattern = re.compile(warning_pattern_str, re.IGNORECASE|re.MULTILINE)
+        warning_pattern_1 = re.compile(warning_pattern_str1, re.IGNORECASE|re.MULTILINE)
+        warning_pattern_2 = re.compile(warning_pattern_str2, re.IGNORECASE|re.MULTILINE)
 
         warnings = {}
         with open(self.buildLog, 'r') as f:
             content = f.read()
 
-        matches = [m for m in warning_pattern.finditer(content)]
+        matches = [m for m in warning_pattern_1.finditer(content)]
+        if not matches:
+            matches = [m for m in warning_pattern_2.finditer(content)]  
+        fp = file('test.txt','a+')
         for match in matches:
             try:
                 file_name = match.groupdict()['file_name'].replace('\\', '/')
                 line_num = int(match.groupdict()['line_num'])
                 pos = (file_name, line_num)
                 warnings[pos] = match.group(0).replace('\\', '/')
+                print >>fp,'%s\n\n\n' %warnings[pos]
             except Exception, e:
                 continue
         #print len(matches)
@@ -154,13 +165,14 @@ def get_new_warnings(buildLog,changes,drive):
                     linetemp = range(start,end)
                     if w_line in range(start, end):
                         new_warnings[(w_file_name, w_line)] = warning_content
+                        ALL_NEW_WARNINGS[(w_file_name, w_line)] = warning_content
     return (warnings,new_warnings)
 
 def process_argument():
     parser = argparse.ArgumentParser(description="description:gennerate new warnings", epilog=" %(prog)s description end")
     parser.add_argument('-m',dest="mode",choices=['preCI', 'CI', 'desktop'],required = True)
     parser.add_argument('-d',dest="drive")
-    parser.add_argument('-l',dest="build_log")
+    parser.add_argument('-l',dest="build_logs", nargs='*')
     parser.add_argument('-b',dest="ci_Branch")
     args = parser.parse_args()
     try:
@@ -170,14 +182,13 @@ def process_argument():
         args.drive = args.drive.strip().rstrip(':')[0] + ':'
 		
     if args.mode != 'preCI':
-        try:
-            if not os.path.exists(args.build_log): 
-                print 'Error: build_log %r not found'%args.build_log
-                sys.exit()
-        except:
-            print 'Error: the build_log not define'
+        if not args.build_logs:
+            print 'Error: missing build logs'
             sys.exit()
-	
+        for log in args.build_logs:
+            if not os.path.exists(log): 
+                print 'Error: build_log %r not found'%log
+                sys.exit()
 
     return args
 
@@ -192,15 +203,15 @@ def pre_check(args):
     if args.mode == 'preCI':
         while True:
         # Get User from which team
-            choose_team = raw_input('''Tell me you from which team, input 1 or 2: 
+            choose_team = raw_input('''Tell me which team are you from, input 1 or 2: 
 1: emerald  2: nonEmerald\n''');
 
             if choose_team in ['1','2']:
                 if choose_team == '1':
-                    pattern = r' *(.*/REPT_2\.7_Emerald_INT)\n';
+                    pattern = r' *(.*)/(REPT_2\.7_Emerald_INT)\n';
                     break;
                 else:
-                    pattern = r' *(.*/REPT_2\.7_nonEmerald_INT)\n';
+                    pattern = r' *(.*)/(REPT_2\.7_nonEmerald_INT)\n';
                     break;
             else:
                 print("input wrong")
@@ -208,17 +219,19 @@ def pre_check(args):
         try:
             remote_branches = subprocess.check_output('git branch -r')
         except:
-            print('failed to get remote branches, make sure you are in the repo directory')
+            print('failed to get remote branches, make sure you are in the correct repo directory')
             sys.exit()
         match = re.search(pattern, remote_branches) 
         if match:
-            args.ci_Branch = match.group(1)
+            f = open(os.devnull, 'w')
+            subprocess.call('git fetch {} {}'.format(match.group(1), match.group(2)), stdout=f, stderr=f)
+            args.ci_Branch = match.group(0).strip()
         else:
             print('no such branch in remote repo, make sure your repo is correct')
             sys.exit()
     if args.mode == 'desktop':
         if not args.ci_Branch:
-            args.ci_Branch = 'HEAD'
+            args.ci_Branch = 'HEAD~1'
         else:
             try:
                 output = subprocess.check_output('git show '+args.ci_Branch, stderr=subprocess.STDOUT)
@@ -262,7 +275,7 @@ def buildLog_generate(drive):
     print 'clean is Done'  
 	
     #clean old build logs
-    print("generate build log,this will take about 20 Minutes...")
+    print("generate build log,this will take about 10 Minutes...")
     cmdQ = Queue()
     for build in BUILD_CMDS:
         cmdQ.put(build) 
@@ -315,14 +328,15 @@ if __name__ == "__main__":
         buildLog_generate(args.drive)
         #find all the buildlog file
         logfiles = glob.glob(args.drive+LOG_DIR+ '*.log')
-        for logfile in logfiles:
-            (warnings,new_warnings)=get_new_warnings(logfile,changes,args.drive)
-            print_log(changes,warnings,new_warnings,logfile,args.drive)
     else:
-        (warnings,new_warnings)=get_new_warnings(args.build_log,changes,args.drive)
-        print_log(changes,warnings,new_warnings,args.build_log,args.drive)
+        logfiles = args.build_logs
+    for logfile in logfiles:
+        (warnings,new_warnings)=get_new_warnings(logfile,changes,args.drive)
+        print_log(changes,warnings,new_warnings,logfile,args.drive)
     tEnd = datetime.datetime.now()
+
     print 'warning check is done!'
+    print '\nIntroduced {num} warnings in total'.format(num=len(ALL_NEW_WARNINGS))
     print '\nmore details please refer to {summarize_log_file}\n'.format(summarize_log_file=args.drive+TEMP_DIR+'summarize.log')
     print 'warning check takes {time}\n'.format(time=(tEnd-tStart))
 
