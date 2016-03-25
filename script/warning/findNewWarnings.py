@@ -23,11 +23,17 @@ CLEAN_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make clean','logfile':'/t
 			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 host_matrix_clean','logfile':'/temp_warning/clean.log'},
 		   	{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 bandit_clean','logfile':'/temp_warning/clean.log'}]
 
+MATRIX_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make matrix','logfile':LOG_DIR+'bahama_matrix.log'},
+			 {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make matrix_32mb','logfile':LOG_DIR+'cypher_matrix.log'},
+			]
+
 BUILD_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make dsp_all','logfile':LOG_DIR+'bahama_dsp.log'},
-		    {'cmdDir':BAHAMADIR,'cmdType':'path.bat && make arm_all','logfile':LOG_DIR+'bahama_arm.log'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 matrix_32mb_host && emake --win32  host_32mb','logfile':LOG_DIR+'cypher_host_build.log'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 matrix_32mb_dsp && emake --win32  dsp_32mb','logfile':LOG_DIR+'cypher_dsp_build.log'},
+		    {'cmdDir':BAHAMADIR,'cmdType':'path.bat  && make arm_all','logfile':LOG_DIR+'bahama_arm.log'},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32  host_32mb','logfile':LOG_DIR+'cypher_host_build.log'},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32  dsp_32mb','logfile':LOG_DIR+'cypher_dsp_build.log'},
 		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 bandit','logfile':LOG_DIR+'bandit_build.log'}]
+
+All_CMDS =[CLEAN_CMDS,MATRIX_CMDS,BUILD_CMDS]
 #---------------------------------------------------------------------------------------------------------------
 # define class BuildLogReader 
 #----------------------------------------------------------------------------------------------------------------
@@ -260,29 +266,18 @@ def buildLog_generate(drive):
     os.mkdir('temp_warning')
     os.mkdir('temp_warning\\buildlog')
     
-    #clean old build logs
-    print("cleaning old build out...")
-    cmdQ = Queue()
-    for clean in CLEAN_CMDS:
-        cmdQ.put(clean) 
-    for clean in CLEAN_CMDS:
-        p = threading.Thread(target=run_cmd,args=(drive,cmdQ))
-        p.setDaemon(True)  
-        p.start()  
-    cmdQ.join()
-    print 'clean is Done'  
-	
-    #clean old build logs
-    print("generate build log,this will take about 10 Minutes...")
-    cmdQ = Queue()
-    for build in BUILD_CMDS:
-        cmdQ.put(build) 
-    for build in CLEAN_CMDS:
-        p = threading.Thread(target=run_cmd,args=(drive,cmdQ))
-        p.setDaemon(True)  
-        p.start()  
-    cmdQ.join()
-    print 'build is Done' 
+
+    print("start to generate the build log,this will take about 10 minutes")
+    for cmds in All_CMDS:
+        cmdQ = Queue()
+        for cmdType in cmds:
+            cmdQ.put(cmdType) 
+        for cmdType in cmds:
+            p = threading.Thread(target=run_cmd,args=(drive,cmdQ))
+            p.setDaemon(True)  
+            p.start()  
+        cmdQ.join()
+    print 'build logs have been generated'  
 	
 def print_log(changes,warnings,new_warnings,logfile,drive):
 
