@@ -24,10 +24,13 @@ my $log = Log::Log4perl->get_logger("My::packagename");
 my $viewdrive = "";
 my $kw_project = "";
 my $check_file = "";
-if (scalar(@ARGV) == 2)
+my $FCL_file_dir = "";
+#my $check_file ="Y:\\pcr_srp\\code\\phyrCe\\Code\\Neptune\\IP_Interface\\PH_NeptuneIPInterface.cpp";
+if (scalar(@ARGV) == 3)
 {
     $viewdrive = $ARGV[0];
     $kw_project = $ARGV[1];
+	$FCL_file_dir = $ARGV[2];
     # Remove ':' from view driver
     $viewdrive =~ s/\://;
     $log->info("viewdrive: $viewdrive");
@@ -40,12 +43,22 @@ else
     exit 1;
 }
 
+open (FILE,"<",$FCL_file_dir) or die $!;
+{
+    local $/=undef;
+    $check_file= <FILE>;
+    close FILE;
+}
+
+#$log->info("FCL: $check_file");
 $log->debug("USERNAME: $ENV{USERNAME}");
 $log->debug("COMPUTERNAME: $ENV{COMPUTERNAME}");
+#$check_file ="R:\\pcr_srp\\code\\phyrCe\\Code\\Neptune\\IP_Interface\\PH_NeptuneIPInterface.cpp
+#R:/pcr_srp/code/win32_stubs/Codeplug.cpp";
 #$log->debug("$ENV{PERL}");
 #my $viewdrive = "S";
 #my $kw_project = "NGR_DSP";
-my $check_file ="Y:\\pcr_srp\\code\\phyrCe\\Code\\Neptune\\IP_Interface\\PH_NeptuneIPInterface.cpp"; #"S:\\bahama\\code\\source_files\\RadioDebugger\\DspHandlers\\RdDspMemProfileCommandHandler\\RdDspMemProfileCommandHandler.cpp";
+ #"S:\\bahama\\code\\source_files\\RadioDebugger\\DspHandlers\\RdDspMemProfileCommandHandler\\RdDspMemProfileCommandHandler.cpp";
 
 #=================================================
 # Get patameters from configure file
@@ -214,11 +227,11 @@ if($ret != 0)
 my $kwcheck_run_command = "";
 if ($kw_user_home eq "local")
 {
-    $kwcheck_run_command = "\"kwcheck.exe\" run --verbose -F detailed -j auto -pd $pd_directory -sd $sd_directory $check_file -l -y --report $viewdrive:\\kw_check.report";
+    $kwcheck_run_command = "\"kwcheck.exe\" run --verbose -F detailed -j auto -pd $pd_directory -sd $sd_directory $check_file -l -Y --report $viewdrive:\\temp_log\\kw_check.report";
 }
 else
 {
-    $kwcheck_run_command = "\"$kw_user_home\\bin\\kwcheck.exe\" run --verbose -F detailed -j auto -pd $pd_directory -sd $sd_directory $check_file -l -y --report $viewdrive:\\kw_check.report";    
+    $kwcheck_run_command = "\"$kw_user_home\\bin\\kwcheck.exe\" run --verbose -F detailed -j auto -pd $pd_directory -sd $sd_directory $check_file -l -Y --report $viewdrive:\\temp_log\\kw_check.report";    
 }
 
 $log->debug("$kwcheck_run_command");
@@ -231,7 +244,7 @@ if($ret != 0)
 
 print "================================================================================\n";
 #system("type $workspace\\kw_check.report");
-system("type $viewdrive:\\kw_check.report");
+system("type $viewdrive:\\temp_log\\kw_check.report");
 print "================================================================================\n";
 #system("\"$kw_user_home\\bin\\kwcheck.exe\" list -pd $pd_directory -sd $sd_directory");
 

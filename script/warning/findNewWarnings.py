@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-__author__ = 'phkc36, cpn873'
-
+try:
+    import xml.etree.cElementTree as ET  
+except ImportError:
+    import xml.etree.ElementTree as ET 
 
 import argparse
 import os,sys,re,threading;
@@ -11,29 +13,42 @@ import subprocess
 from Queue import Queue 
 import glob
 
+WelcomeWords = '''
+#####################################################################################################################
+#                                                                                                                   #
+#                  Welcome to new warning self check tool                                                           #
+# This tool is used before you submit CI to find new warnings introduced by your new changes. You 'd better reslove #
+# these new warnings before CI, otherwise, CI system will note down.                                                #
+#####################################################################################################################
+'''
+
 ALL_NEW_WARNINGS= OrderedDict()
 
-BAHAMADIR='/bahama/code'
-CYPHERDIR='/pcr_srp/code'
-TEMP_DIR='/temp_warning/'
-LOG_DIR = '/temp_warning/buildlog/'
-CLEAN_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make clean','logfile':'/temp_warning/clean.log'},
-		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 host_clean_32mb','logfile':'/temp_warning/clean.log'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 dsp_clean_32mb','logfile':'/temp_warning/clean.log'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 host_matrix_clean','logfile':'/temp_warning/clean.log'},
-		   	{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 bandit_clean','logfile':'/temp_warning/clean.log'}]
+BAHAMADIR='\\bahama\\code'
+CYPHERDIR='\\pcr_srp\\code'
+LOG_DIR='\\temp_log\\'
+ANNOFILE_DIR=['\\bahama\\code\\annofile\\','\\pcr_srp\\code\\annofile\\']
 
-MATRIX_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make matrix','logfile':LOG_DIR+'bahama_matrix.log'},
-			 {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make matrix_32mb','logfile':LOG_DIR+'cypher_matrix.log'},
+CLEAN_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make clean selfChecking=Y'},
+		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_clean_32mb selfChecking=Y'},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_clean_32mb selfChecking=Y'},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_matrix_clean selfChecking=Y'},
+		   	{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make bandit_clean selfChecking=Y'}]
+
+MATRIX_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make matrix selfChecking=Y'},
+			 {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make matrix_32mb selfChecking=Y'}
 			]
 
-BUILD_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make dsp_all','logfile':LOG_DIR+'bahama_dsp.log'},
-		    {'cmdDir':BAHAMADIR,'cmdType':'path.bat  && make arm_all','logfile':LOG_DIR+'bahama_arm.log'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32  host_32mb','logfile':LOG_DIR+'cypher_host_build.log'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32  dsp_32mb','logfile':LOG_DIR+'cypher_dsp_build.log'},
-		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && emake --win32 bandit','logfile':LOG_DIR+'bandit_build.log'}]
+BUILD_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make dsp_all selfChecking=Y'},
+		    {'cmdDir':BAHAMADIR,'cmdType':'path.bat && make arm_all selfChecking=Y'},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_32mb selfChecking=Y'},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_32mb selfChecking=Y'},
+		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make bandit selfChecking=Y'}]
+
+BAHAMA_ARM_LOG=['arm.xml','srp.xml','arm_link.xml']
 
 All_CMDS =[CLEAN_CMDS,MATRIX_CMDS,BUILD_CMDS]
+
 #---------------------------------------------------------------------------------------------------------------
 # define class BuildLogReader 
 #----------------------------------------------------------------------------------------------------------------
@@ -41,31 +56,29 @@ class BuildLogReader(object):
     def __init__(self, buildLog=''):
         self.buildLog = buildLog
 
-    def validate_log(self):
+    def validate_logfile(self):
         if not os.path.isfile(self.buildLog):
             return False
         return True
 
-    def get_warnings(self):
-        if not self.validate_log():
-            return None
-
-        #warning_pattern_str = '''(^\"(?P<file_name>[^\"]{1,})\",\sline\s(?P<line_num>\d{1,})\:\swarning\s\#(?P<warning_ID>\d{1,})\-.*\n(\s{1,}[^\^]{1,}\n){1,}(\s{1,}\^\s{0,}\^{0,}){1,})'''
-        warning_pattern_str1 = r'''"(?P<file_name>[^"]+)", line (?P<line_num>\d+): warning #(?P<warning_ID>\d+)-.*\n(\s*[^^]+\n)+(\s*\^.*)+'''
-		
-        warning_pattern_str2= r'(?P<file_name>[^"\n]+):(?P<line_num>\d+)(:[^"\n]+)*:(?P<row_num>\d+): warning:.+'
+    def get_warnings(self,isBahamaArm):
+  
+        if not isBahamaArm :
+            warning_pattern= r'''"(?P<file_name>[^"]+)", line (?P<line_num>\d+): warning #(?P<warning_ID>\d+)-.*\n(\s*[^^]+\n)+(\s*\^.*)+'''
+        else:
+            warning_pattern= r'(?P<file_name>[^"\n]+):(?P<line_num>\d+)(:[^"\n]+)*:(?P<row_num>\d+): warning:.+'
 	
-			
-        warning_pattern_1 = re.compile(warning_pattern_str1, re.IGNORECASE|re.MULTILINE)
-        warning_pattern_2 = re.compile(warning_pattern_str2, re.IGNORECASE|re.MULTILINE)
+        warning_pattern = re.compile(warning_pattern, re.IGNORECASE|re.MULTILINE)
 
         warnings = {}
-        with open(self.buildLog, 'r') as f:
-            content = f.read()
+        
+        if not self.validate_logfile():
+            content = self.buildLog
+        else:
+            with open(self.buildLog, 'r') as f:
+                content = f.read()
 
-        matches = [m for m in warning_pattern_1.finditer(content)]
-        if not matches:
-            matches = [m for m in warning_pattern_2.finditer(content)]  
+        matches = [m for m in warning_pattern.finditer(content)]
         for match in matches:
             try:
                 file_name = match.groupdict()['file_name'].replace('\\', '/')
@@ -93,19 +106,27 @@ class DiffParser(object):
             return ()
 
         filename = match.group(1)
-        changes = {'modifysections':[]}
+        changes = {'newfile':False, 'modifysections':[]}
         for line in section.split('\n'):
-            match = re.search(r'^@@ -(.*) +(.*) @@', line)
+            match = re.search(r'^@@ -(.*) \+(.*) @@', line)
 
             if not match:
                 continue
-            change = match.group(2).split(',')
-            start = int(change[0])
-            if len(change) < 2:
+
+            change_a = match.group(1).split(',')
+            change_b = match.group(2).split(',')
+            # No need to process removed file
+            if change_b[0] == '0' and change_b[1] == '0':
+                return ()
+            start = int(change_b[0])
+            if len(change_b) < 2:
                 last = 1
             else:
-                last = int(change[1])
+                last = int(change_b[1])
             changes['modifysections'].append({'start':start, 'last':last})
+            if change_a[0] == '0' and change_a[1] == '0':
+                changes['newfile'] = True
+                break
 
         return (filename, changes) 
 
@@ -148,13 +169,20 @@ class DiffParser(object):
 # class DiffParser end
 #----------------------------------------------------------------------------------------------------------------
 
-
-
-def get_new_warnings(buildLog,changes,drive):
+def get_new_warnings(buildLog,changes,isBahamaArm):
     
-    
-    build_log_reader = BuildLogReader(buildLog)
-    warnings = build_log_reader.get_warnings()
+    try:
+        tree = ET.parse(buildLog) 
+        root = tree.getroot()
+    except Exception, e:
+        print "Error:cannot parse file:{}".format(buildLog)
+        sys.exit(1) 
+        
+    warnings ={}
+    for output_node in root.iter('output'):
+        build_log_reader = BuildLogReader(output_node.text)
+        warning_temp = build_log_reader.get_warnings(isBahamaArm)
+        warnings=dict(warnings, **warning_temp)
 
     new_warnings = OrderedDict()
     for file_name  in changes:
@@ -197,14 +225,20 @@ def process_argument():
     return args
 
 def pre_check(args):
-    # Make sure Git repo have mount to a drive firstly
-    valid_current_path_pattern = r'^\w:\\$';  # match root driver, like c:\ or d:\
-    current_path_drive = os.getcwd();# as this file is called in root, so os.getcwd directly return is drive
-    if re.match(valid_current_path_pattern,current_path_drive) == None:
-        print("pls mount git repo to a drive, then get back to run this script")
-        sys.exit()
-  
+    try:
+        os.system('rd /s /q {}\\temp_log'.format(args.drive));
+        os.mkdir('{}\\temp_log'.format(args.drive))
+    except:
+        print 'can not remove temp_log' 
+
+
     if args.mode == 'preCI':
+    # Make sure Git repo have mount to a drive firstly
+        valid_current_path_pattern = r'^\w:\\$';  # match root driver, like c:\ or d:\
+        current_path_drive = os.getcwd();# as this file is called in root, so os.getcwd directly return is drive
+        if re.match(valid_current_path_pattern,current_path_drive) == None:
+            print("pls mount git repo to a drive, then get back to run this script")
+            sys.exit()
         while True:
         # Get User from which team
             choose_team = raw_input('''Tell me which team are you from, input 1 or 2: 
@@ -221,7 +255,7 @@ def pre_check(args):
                 print("input wrong")
                 sys.exit()
         try:
-            remote_branches = subprocess.check_output('git branch -r')
+            remote_branches = subprocess.check_output('git branch -r', stderr=subprocess.STDOUT)
         except:
             print('failed to get remote branches, make sure you are in the correct repo directory')
             sys.exit()
@@ -235,13 +269,7 @@ def pre_check(args):
             sys.exit()
     if args.mode == 'desktop':
         if not args.ci_Branch:
-            args.ci_Branch = 'HEAD~1'
-        else:
-            try:
-                output = subprocess.check_output('git show '+args.ci_Branch, stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError as err:
-                print('failed to get branch info: '+args.ci_Branch)
-                sys.exit()
+            args.ci_Branch = 'HEAD'
 
     return args
 
@@ -249,8 +277,10 @@ def run_cmd(drive,cmdQ):
     while True:  
         cmdDic=cmdQ.get() 
         cmdType='cd '+drive+cmdDic['cmdDir']+' && '+cmdDic['cmdType']
-        logfile=drive+cmdDic['logfile']
-        ret=subprocess.call(cmdType,shell=True,stdout=open(logfile,'w'),stderr=subprocess.STDOUT) 
+        #logfile=drive+cmdDic['logfile']
+        #ret=subprocess.call(cmdType,shell=True,stdout=open(logfile,'w'),stderr=subprocess.STDOUT) 
+        f = open(os.devnull, 'w')
+        ret=subprocess.call(cmdType,shell=True,stdout=f,stderr=subprocess.STDOUT) 
         if ret==0:  
             print '%s is done!' %cmdType   
         else:
@@ -259,14 +289,6 @@ def run_cmd(drive,cmdQ):
         cmdQ.task_done() 
             
 def buildLog_generate(drive):
-    
-    print "remove folder generated last time"
-    os.system('rd /s /q temp_warning');
-    
-    os.mkdir('temp_warning')
-    os.mkdir('temp_warning\\buildlog')
-    
-
     print("start to generate the build log,this will take about 10 minutes")
     for cmds in All_CMDS:
         cmdQ = Queue()
@@ -281,26 +303,33 @@ def buildLog_generate(drive):
 	
 def print_log(changes,warnings,new_warnings,logfile,drive):
 
+    print os.linesep*2
+    
     changed_files = set([file_name for (file_name) in changes])
     warning_files = set([file_name for (file_name, line_num) in warnings])
-    summarize_log_file = drive+TEMP_DIR+'summarize.log'
+    summarize_log_file = drive+LOG_DIR+'summarize.log'
     fp=file(summarize_log_file,'a+')
 
+    """
     print '\nChecked {w_cnt} warning(s), {f_cnt} file(s) ({l_cnt} lines) changed'.format(
                   w_cnt=len(warnings), f_cnt=len(changed_files), l_cnt=len(changes))
     print>>fp,'\nChecked {w_cnt} warning(s), {f_cnt} file(s) ({l_cnt} lines) changed'.format(
                   w_cnt=len(warnings), f_cnt=len(changed_files), l_cnt=len(changes))
+    """
+                  
     if (0 == len(new_warnings)):
-        print'{build_log} No new warning.'.format(build_log=logfile)
-        print>>fp, '{build_log} No new warning.'.format(build_log=logfile)
+        print '[PASS] no new warning for {build_log} .'.format(build_log=logfile)
+        print>>fp, '[PASS] no new warning for {build_log}.'.format(build_log=logfile)
     else:
-        print '{build_log} Introduced {cnt} new warning(s):'.format(build_log=logfile,cnt=len(new_warnings))
-        print>>fp, '{build_log} Introduced {cnt} new warning(s):'.format(build_log=logfile,cnt=len(new_warnings))
-    for (file_name, line) in new_warnings:
-        print file_name, line
-        print>>fp, file_name, line
-        print new_warnings[(file_name, line)]
-        print>>fp, new_warnings[(file_name, line)]
+        print '[Found {cnt} New Warnings] Whole log can be found at {build_log}:'.format(build_log=logfile,cnt=len(new_warnings))
+        print>>fp, '[Found {cnt} New Warnings] Whole log can be found at {build_log}:'.format(build_log=logfile,cnt=len(new_warnings))
+        
+        for (file_name, line) in new_warnings:
+            print file_name, line
+            print>>fp, file_name, line
+            print new_warnings[(file_name, line)]
+            print>>fp, new_warnings[(file_name, line)]
+            
 if __name__ == "__main__":
 
     tStart = datetime.datetime.now()
@@ -313,24 +342,39 @@ if __name__ == "__main__":
     diff_parser = DiffParser(args.drive)
     status,changes = diff_parser.get_changes(args.ci_Branch)
     if not status:
-        print 'failed to get new warnings'
+        print 'failed to get new warnings for branch: '+args.ci_Branch
+        print changes
         sys.exit()
 
     #generate the build log if mode is preCI
     if (args.mode == 'preCI'):
+        
+        os.system("cls") # clear screen
+        print WelcomeWords;
+        
         buildLog_generate(args.drive)
         #find all the buildlog file
-        logfiles = glob.glob(args.drive+LOG_DIR+ '*.log')
+        logfiles =[]
+        for annofileDir in ANNOFILE_DIR:
+            logfiles =logfiles + glob.glob(args.drive+annofileDir+ '*.xml')
+        
     else:
         logfiles = args.build_logs
+        print os.linesep;
+        
     for logfile in logfiles:
-        (warnings,new_warnings)=get_new_warnings(logfile,changes,args.drive)
+        
+        isBahamaArm =False
+        basename = os.path.basename(logfile)
+        if basename in BAHAMA_ARM_LOG:
+            isBahamaArm=True
+
+        (warnings,new_warnings)=get_new_warnings(logfile,changes,isBahamaArm)
         print_log(changes,warnings,new_warnings,logfile,args.drive)
+    
     tEnd = datetime.datetime.now()
 
-    print 'warning check is done!'
+    print '\nWarning check is done!'
     print '\nIntroduced {num} warnings in total'.format(num=len(ALL_NEW_WARNINGS))
-    print '\nmore details please refer to {summarize_log_file}\n'.format(summarize_log_file=args.drive+TEMP_DIR+'summarize.log')
-    print 'warning check takes {time}\n'.format(time=(tEnd-tStart))
-
-    exit()
+    print '\nMore details please refer to {summarize_log_file}\n'.format(summarize_log_file=args.drive+LOG_DIR+'summarize.log')
+    print 'Warning check totally use {minute} minutes {seconds} seconds\n'.format(minute = int((tEnd-tStart).total_seconds() / 60),seconds = int((tEnd-tStart).total_seconds() % 60))
