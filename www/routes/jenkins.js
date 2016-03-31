@@ -3,7 +3,7 @@ var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
-var days=7;
+var days=30;
 
 var emeraldStatus = {
   "idleState":{"status":"running","duration":0},
@@ -46,7 +46,11 @@ var getJobBuild = function(job,build,callback)
 var getAllBuild = function (job,param,callback)
 {
    jenkins.all_build(job,param,function(err, tempdata) {
-    data = tempdata.allBuilds;
+    data={};
+    if (tempdata.hasOwnProperty("allBuilds")) {
+       data = tempdata.allBuilds;
+    }
+	   
     callback(err,data);
   });  
 };

@@ -18,6 +18,8 @@ var bahamaOrgSizeStr = "Gitlab_Bahama_OriginSize"
 var bahamaUsrSizeStr = "Gitlab_Bahama_UserSize"
 var bahamaBrhCntStr = "Gitlab_Bahama_BranchCnt"
 
+var days=30
+
 var keyStrArray = [commOrgSizeStr, commUsrSizeStr, commBrhCntStr, cypherOrgSizeStr, cypherUsrSizeStr, cypherBrhCntStr, bahamaOrgSizeStr, bahamaUsrSizeStr, bahamaBrhCntStr];
 
 var isValidRepoInfoKey = function (key, keyArray) {
@@ -145,13 +147,13 @@ function fetchTestCaseNum(project,days,callback){
 }
 
 router.get('/testCaseNum_Emer', function (req, res, next) {
-    fetchTestCaseNum("REPT2.7_Emerald",7,function(err,data){
+    fetchTestCaseNum("REPT2.7_Emerald",days,function(err,data){
     return res.json(data);
   });
 })
 
 router.get('/testCaseNum_nonEmer', function (req, res, next) {
-    fetchTestCaseNum("REPT2.7_nonEmerald",7,function(err,data){
+    fetchTestCaseNum("REPT2.7_nonEmerald",days,function(err,data){
     return res.json(data);
   });
 })
