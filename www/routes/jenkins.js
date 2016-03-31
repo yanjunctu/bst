@@ -148,10 +148,11 @@ function getPendingReq(project, callback){
             var prjName = "PROJECT_NAME=".concat(project);
             items.forEach(function(item){
                 if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
-                    var sub = /SUBMITTER=(.*)\n*EMAIL=(.*)\n*PUSH_TIME=(.*)/ig.exec(item.params);
+                    var submitter = /SUBMITTER=(.*)/ig.exec(item.params);
+                    var pushTime = /PUSH_TIME=(.*)/ig.exec(item.params);
 
-                    if (sub){
-                        result.queue.push({"submitter":sub[1], "subTime":sub[3]});
+                    if (submitter && pushTime){
+                        result.queue.push({"submitter":submitter[1], "subTime":pushTime[1]});
                     }
                 }
             });
