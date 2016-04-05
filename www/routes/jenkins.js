@@ -150,8 +150,9 @@ function getPendingReq(project, callback){
                 if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
                     var submitter = /SUBMITTER=(.*)/ig.exec(item.params);
                     var pushTime = /PUSH_TIME=(.*)/ig.exec(item.params);
+                    var jobName = /pcr-rept-0-multijob-(emerald|nonemerald)/ig.exec(item.task.name);
 
-                    if (submitter && pushTime){
+                    if (jobName && submitter && pushTime){
                         result.queue.push({"submitter":submitter[1], "subTime":pushTime[1]});
                     }
                 }

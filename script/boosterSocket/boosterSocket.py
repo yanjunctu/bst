@@ -58,7 +58,7 @@ from email.mime.text import MIMEText
 from pymongo import MongoClient
 from SocketServer import ThreadingUDPServer,DatagramRequestHandler
 
-SREVER_HOST_NAME = "ubuntu-14"
+SREVER_HOST_NAME = "booster"
 SREVER_PORT = 8061
 
 
@@ -72,18 +72,18 @@ FAIL_CODE = "FAIL"
 
 ##########utility functions###################################
 
-def sendEmail(to,text,title):
+def sendEmail(name,mail,text,title):
   # Create the message
   msg = MIMEText(text)
 
-  msg['To'] = email.utils.formataddr((to, to+'@motorolasolutions.com'))
+  msg['To'] = email.utils.formataddr((name, mail))
   msg['From'] = email.utils.formataddr(('booster', 'booster@motorolasolutions.com'))
   msg['Subject'] = title
 
   server = smtplib.SMTP('remotesmtp.mot-solutions.com')
   #server.set_debuglevel(True) # show communication with the server
   try:
-      server.sendmail('booster@motorolasolutions.com', [to,'jhv384@motorolasolutions.com'], msg.as_string())
+      server.sendmail('booster@motorolasolutions.com', [mail,'jhv384@motorolasolutions.com'], msg.as_string())
   finally:
       server.quit()
         
