@@ -53,8 +53,6 @@ DUR_COL=5
 RESULT_COL=6
 SUBSTART_COL=7
 
-global NEW_SHEET
-
 # This line is needed as if our server will report SSL failure if SSL true
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -200,7 +198,7 @@ class JenkinsDataXLS(object):
             except:
                 print 'no sheet named {}'.format(sheetName)
                 continue
-            print 'open sheet {}'.format(sheetName)
+ 
             sheetHandlerCP = self.jenkinsFileObjCP.get_sheet(self.jenkinsFileObj.sheet_names().index(sheetName)) 
             #get the rows number
             rows_num = sheetHandler.nrows
@@ -228,9 +226,8 @@ class JenkinsDataXLS(object):
             for buildIndex in range(lenBuildArray):
             # save id
                 buildId = buildArray[lenBuildArray-buildIndex-1]["id"]
-                print 'buildID:{},maxbuildID{}'.format(buildId,maxBuildId)
+              
                 if int(buildId) > int(maxBuildId):
-                    print 'buildId>maxbuildid'
                     sheetHandlerCP.write(curExcelRow,ID_COL,buildId)
                     submitter=None
                     projName=None
