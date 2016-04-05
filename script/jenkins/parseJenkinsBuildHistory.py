@@ -39,10 +39,10 @@ from xlutils.copy import copy
 
 JOB_ALL_BUILDS_INFO = '%(folder_url)sjob/%(short_name)s/api/json?tree=allBuilds[id,timestamp,result,duration,subBuilds[*],actions[parameters[*]]]'
 
-#JENKINS_FILE_DIR = '/var/opt/booster/jenkins.xls'
-#JOBLIST_DIR='/var/opt/booster/JobList.xml'
-JENKINS_FILE_DIR = 'D:\\GitRepos\\I_booster\\booster_project\\script\\jenkins\\jenkins.xls'
-JOBLIST_DIR='D:\\GitRepos\\I_booster\\booster_project\\script\\jenkins\\JobList.xml'
+JENKINS_FILE_DIR = '/var/opt/booster/jenkins.xls'
+JOBLIST_DIR='/var/opt/booster/JobList.xml'
+#JENKINS_FILE_DIR = 'D:\\GitRepos\\I_booster\\booster_project\\script\\jenkins\\jenkins.xls'
+#JOBLIST_DIR='D:\\GitRepos\\I_booster\\booster_project\\script\\jenkins\\JobList.xml'
 #JENKINS_FILE_DIR = '/mnt/gitlabbackup/jenkins.xls'
 ID_COL=0
 PROJNA_COL=1
