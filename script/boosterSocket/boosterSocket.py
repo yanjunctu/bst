@@ -59,7 +59,7 @@ from pymongo import MongoClient
 from SocketServer import ThreadingUDPServer,DatagramRequestHandler
 
 SREVER_HOST_NAME = "booster"
-SREVER_PORT = 8061
+SREVER_PORT = 16979
 
 
 #OPCODE
@@ -264,7 +264,8 @@ if __name__ == "__main__":
   
   if sys.argv[1] == "start":
     #start server
-    pBoosterServer = BoosterServer((SREVER_HOST_NAME,SREVER_PORT),BoosterRequestHandler);
+    #can't bind server socket's name, pass a empty '' to it,otherwise, client can not send packet to it
+    pBoosterServer = BoosterServer(('',SREVER_PORT),BoosterRequestHandler);
     pBoosterServer.serve_forever();
   
   
@@ -277,7 +278,7 @@ if __name__ == "__main__":
     if ret:
       print "[send from client]: "+json.dumps(wkresult.getSendMsg());
       print "[recv from server]: "+interface.recv();
-      sendEmail('',"hello! booster","checked new warnings");
+      #sendEmail('',"hello! booster","checked new warnings");
       
     else:
       print "send failed!"

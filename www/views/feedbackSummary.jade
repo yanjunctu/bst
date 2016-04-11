@@ -1,22 +1,40 @@
 extends layout
 
 block content
-  p totally #{feedbackCollection.length} feedbacks
   
   each fdbk in feedbackCollection
-    div
-      span date:#{fdbk.date}
-      | &nbsp&nbsp&nbsp&nbsp
-      span submitter:#{fdbk.author}
-      
-    p opinion about git:
-    p #{fdbk.gitRate} 
-    
-    p comments:
-    p #{fdbk.detailComment}
-    
+ 
+    form(class="form-horizontal")
+      div(class="form-group")
+        label(class="col-sm-1 control-label text-primary text-center") 
+          |submit date
+        div(class="col-sm-10")
+          p(class="form-control-static") 
+            |#{fdbk.date}
+      div(class="form-group")
+        label(class="col-sm-1 control-label text-primary text-center") 
+          |submitter
+        div(class="col-sm-10")
+          p(class="form-control-static") 
+            |#{fdbk.author}
+      div(class="form-group")
+        label(class="col-sm-1 control-label text-primary text-center") 
+          |Opinion about Git
+        div(class="col-sm-10")
+          p(class="form-control-static") 
+            |#{fdbk.gitRate} 
+      div(class="form-group")
+        label(class="col-sm-1 control-label text-primary text-center") 
+          |Suggestion
+        div(class="col-sm-5")
+          textarea(class="form-control" rows="6") 
+            |#{fdbk.detailComment}
+
     hr(border-color=black)
     
+    
+
+            
 block userdefinejs
   script(src="/javascripts/feedbackSummary.js")   
   
