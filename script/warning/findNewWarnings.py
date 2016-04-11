@@ -12,6 +12,8 @@ import string
 import subprocess
 from Queue import Queue 
 import glob
+import StringIO
+        
 
 WelcomeWords = '''
 #####################################################################################################################
@@ -21,6 +23,18 @@ WelcomeWords = '''
 # these new warnings before CI, otherwise, CI system will note down.                                                #
 #####################################################################################################################
 '''
+
+CIMailSubject = '[Notice!] Found new warnings from your submitted code'
+
+
+CIMailHeader = '''
+This mail is sent as CI detected new warnings be introduced from your submit code. 
+Please click /checkWarning.bat to do self audit before you submit IR to make sure no new warnings there.
+
+Below is the raw output from the warning check tool, pls refer to it:
+#############################################
+'''
+        
 
 ALL_NEW_WARNINGS= OrderedDict()
 
@@ -42,7 +56,7 @@ MATRIX_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make matrix selfChecking
 BUILD_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make dsp_all selfChecking=Y'},
 		    {'cmdDir':BAHAMADIR,'cmdType':'path.bat && make arm_all selfChecking=Y'},
 			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_32mb selfChecking=Y'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_32mb selfChecking=Y'},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_32mb_nomatrix selfChecking=Y'},
 		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make bandit selfChecking=Y'}]
 
 BAHAMA_ARM_LOG=['arm.xml','srp.xml','arm_link.xml']
@@ -53,22 +67,23 @@ All_CMDS =[CLEAN_CMDS,MATRIX_CMDS,BUILD_CMDS]
 # define class BuildLogReader 
 #----------------------------------------------------------------------------------------------------------------
 class BuildLogReader(object):
-    def __init__(self, buildLog=''):
-        self.buildLog = buildLog
+    buildLog = ""
+
+    def __init__(self, isBahamaArm):
+        if not isBahamaArm :
+            self.warning_pattern= r'''"(?P<file_name>[^"]+)", line (?P<line_num>\d+): warning #(?P<warning_ID>\d+)-.*\n(\s*[^^]+\n)*(\s*\^.*)*'''
+        else:
+            self.warning_pattern= r'(?P<file_name>[^"\n]+):(?P<line_num>\d+)(:[^"\n]+)*:(?P<row_num>\d+): warning:.+'
+
+        self.warning_pattern = re.compile(self.warning_pattern, re.IGNORECASE|re.MULTILINE)
 
     def validate_logfile(self):
         if not os.path.isfile(self.buildLog):
             return False
         return True
 
-    def get_warnings(self,isBahamaArm):
-  
-        if not isBahamaArm :
-            warning_pattern= r'''"(?P<file_name>[^"]+)", line (?P<line_num>\d+): warning #(?P<warning_ID>\d+)-.*\n(\s*[^^]+\n)+(\s*\^.*)+'''
-        else:
-            warning_pattern= r'(?P<file_name>[^"\n]+):(?P<line_num>\d+)(:[^"\n]+)*:(?P<row_num>\d+): warning:.+'
-	
-        warning_pattern = re.compile(warning_pattern, re.IGNORECASE|re.MULTILINE)
+    def get_warnings(self, buildLog=''):
+        self.buildLog = buildLog
 
         warnings = {}
         
@@ -77,8 +92,9 @@ class BuildLogReader(object):
         else:
             with open(self.buildLog, 'r') as f:
                 content = f.read()
-
-        matches = [m for m in warning_pattern.finditer(content)]
+        
+        
+        matches = [m for m in self.warning_pattern.finditer(content)]
         for match in matches:
             try:
                 file_name = match.groupdict()['file_name'].replace('\\', '/')
@@ -178,10 +194,11 @@ def get_new_warnings(buildLog,changes,isBahamaArm):
         print "Error:cannot parse file:{}".format(buildLog)
         sys.exit(1) 
         
+    build_log_reader = BuildLogReader(isBahamaArm)
+    
     warnings ={}
     for output_node in root.iter('output'):
-        build_log_reader = BuildLogReader(output_node.text)
-        warning_temp = build_log_reader.get_warnings(isBahamaArm)
+        warning_temp = build_log_reader.get_warnings(output_node.text)
         warnings=dict(warnings, **warning_temp)
 
     new_warnings = OrderedDict()
@@ -206,6 +223,9 @@ def process_argument():
     parser.add_argument('-d',dest="drive")
     parser.add_argument('-l',dest="build_logs", nargs='*')
     parser.add_argument('-b',dest="ci_Branch")
+    parser.add_argument('-n',dest="CIUserName")
+    parser.add_argument('-e',dest="CIUserEmail")
+    
     args = parser.parse_args()
     try:
         args.drive = args.drive.strip().rstrip(':')[0] + ':'
@@ -213,7 +233,8 @@ def process_argument():
         args.drive = os.getcwd()	
         args.drive = args.drive.strip().rstrip(':')[0] + ':'
 		
-    if args.mode != 'preCI':
+    # Only desktop mode require user pass a log file, CI and preCI mode will parse the log a hardcode path
+    if args.mode == 'desktop':
         if not args.build_logs:
             print 'Error: missing build logs'
             sys.exit()
@@ -267,9 +288,12 @@ def pre_check(args):
         else:
             print('no such branch in remote repo, make sure your repo is correct')
             sys.exit()
-    if args.mode == 'desktop':
+    elif args.mode == 'desktop':
         if not args.ci_Branch:
             args.ci_Branch = 'HEAD'
+    else: #including  CI mode and default others to compare with last HEAD
+        if not args.ci_Branch:
+            sys.exit()          
 
     return args
 
@@ -300,7 +324,7 @@ def buildLog_generate(drive):
             p.start()  
         cmdQ.join()
     print 'build logs have been generated'  
-	
+
 def print_log(changes,warnings,new_warnings,logfile,drive):
 
     print os.linesep*2
@@ -329,7 +353,18 @@ def print_log(changes,warnings,new_warnings,logfile,drive):
             print>>fp, file_name, line
             print new_warnings[(file_name, line)]
             print>>fp, new_warnings[(file_name, line)]
+
             
+def actionOnNewWarning(name,mail,file):
+    wkresult = WarnKlocCheckResult(engineerName=name,engineerMail=mail,buildWarningCnt=len(ALL_NEW_WARNINGS),klocworkCnt=0);
+    interface = BoosterClient();
+    ret = interface.send(wkresult);
+    if ret:
+      #print "[send from client]: "+json.dumps(wkresult.getSendMsg());
+      #print "[recv from server]: "+interface.recv();
+      sendEmail(name,mail,file.getvalue(),CIMailSubject);  
+
+      
 if __name__ == "__main__":
 
     tStart = datetime.datetime.now()
@@ -357,20 +392,37 @@ if __name__ == "__main__":
         logfiles =[]
         for annofileDir in ANNOFILE_DIR:
             logfiles =logfiles + glob.glob(args.drive+annofileDir+ '*.xml')
-        
-    else:
+    
+    # buildlog is passed from makefile for desktop mode
+    elif args.mode == 'desktop':
         logfiles = args.build_logs
         print os.linesep;
-        
+    
+    # buildlog is exists in output folder, the only difference with preCI mode is , we have not to trigger the whole build self
+    # and the seconds difference is need exclude the default.xml which is no needed to analysis, but in CI env, there will be have
+    # default.xml generated from win32 build
+    elif args.mode == 'CI':
+        from boosterSocket import WarnKlocCheckResult,BoosterClient,sendEmail
+        logfiles =[]
+        for annofileDir in ANNOFILE_DIR:
+            logfiles =logfiles + [fn for fn in glob.glob(args.drive+annofileDir+ '*.xml') if 'default.xml' not in fn]
+
+    if args.mode == 'CI':
+        stdout = sys.stdout
+        sys.stdout = stdOutfile = StringIO.StringIO()
+        print CIMailHeader
+               
     for logfile in logfiles:
         
         isBahamaArm =False
         basename = os.path.basename(logfile)
-        if basename in BAHAMA_ARM_LOG:
-            isBahamaArm=True
+        if basename != 'default.xml':
+            if basename in BAHAMA_ARM_LOG:
+                isBahamaArm=True
 
-        (warnings,new_warnings)=get_new_warnings(logfile,changes,isBahamaArm)
-        print_log(changes,warnings,new_warnings,logfile,args.drive)
+            (warnings,new_warnings)=get_new_warnings(logfile,changes,isBahamaArm)
+            
+            print_log(changes,warnings,new_warnings,logfile,args.drive)
     
     tEnd = datetime.datetime.now()
 
@@ -378,3 +430,8 @@ if __name__ == "__main__":
     print '\nIntroduced {num} warnings in total'.format(num=len(ALL_NEW_WARNINGS))
     print '\nMore details please refer to {summarize_log_file}\n'.format(summarize_log_file=args.drive+LOG_DIR+'summarize.log')
     print 'Warning check totally use {minute} minutes {seconds} seconds\n'.format(minute = int((tEnd-tStart).total_seconds() / 60),seconds = int((tEnd-tStart).total_seconds() % 60))
+
+    if args.mode == 'CI' and len(ALL_NEW_WARNINGS)>0:
+        sys.stdout = stdout #recover sys.stdout
+        actionOnNewWarning(args.CIUserName,args.CIUserEmail,stdOutfile)
+        
