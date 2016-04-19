@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "cp ../script/jenkins/jenkins_api/main.js ./node_modules/jenkins-api/lib && node ./bin/www"
+    "start": "pm2 start pm2_start.json"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
@@ -14,6 +14,7 @@
     "jenkins-api": "^0.2.8",
     "mongoose": "^4.3.5",
     "morgan": "~1.6.1",
+    "pm2": "^1.1.2",
     "serve-favicon": "~2.3.0"
   }
 }

@@ -1,0 +1,1 @@
+cp ../script/jenkins/jenkins_api/main.js ./node_modules/jenkins-api/lib && node ./bin/www
