@@ -87,7 +87,7 @@ if __name__ == '__main__':
     args = process_argument()
     
     # Load previous data
-    pickle_file = 'data.pkl' 
+    pickle_file = '/var/log/data.pkl' 
     pickledata = load_old_results(pickle_file)
         
     # update the last check time
