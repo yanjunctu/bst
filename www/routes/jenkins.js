@@ -145,18 +145,53 @@ function getPendingReq(project, callback){
             }
 
             var items = data.items;
-            var prjName = "PROJECT_NAME=".concat(project);
+            //var prjName = "PROJECT_NAME=".concat(project);
+            //var prjName = "PROJECT_NAME="+project+"&|$"
             items.forEach(function(item){
-                if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
+                //if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
+                if (item.blocked || item.stuck) {
+                    var paraArray = item.params.split('\n');
+                    //console.log('array=',paraArray);
+                    paraArray.forEach(function(itr){
+                        var keyValue = itr.split('=');
+                        
+                        if(keyValue[0] == 'PROJECT_NAME')
+                        {
+                            projName = keyValue[1];
+                        }
+                        if(keyValue[0] == 'SUBMITTER')
+                        {
+                            submitter = keyValue[1];
+                        }
+                        if(keyValue[0] == 'PUSH_TIME')
+                        {
+                            pushTime = keyValue[1];
+                        }
+                   
+                    });
+                    
+                    if(projName == project){
+                        var jobName = /pcr-rept-0-multijob(-emerald)?/ig.exec(item.task.name);
+                        if (jobName && submitter && pushTime){
+                     
+                            console.log('jobname:'+item.task.name);
+                                        console.log(submitter,pushTime);
+                            result.queue.push({"submitter":submitter, "subTime":pushTime});
+                        }     
+                    }
+                    /*
+                    var projName = /PROJECT_NAME=(.*)[&]/ig.exec(item.params);
                     var submitter = /SUBMITTER=(.*)/ig.exec(item.params);
                     var pushTime = /PUSH_TIME=(.*)/ig.exec(item.params);
                     var jobName = /pcr-rept-0-multijob(-emerald)?/ig.exec(item.task.name);
 
-                    if (jobName && submitter && pushTime){
+                    if (projName && jobName && submitter && pushTime){
                         result.queue.push({"submitter":submitter[1], "subTime":pushTime[1]});
                     }
+                    */
                 }
             });
+
             callback(null, result);
         });
     }catch(e){
@@ -477,7 +512,7 @@ router.get('/getNonEmerStatus', function(req, res, next) {
 
 router.get('/getNonEmerPendingReq', function(req, res, next){
     console.log("getnonEmerPendingReq");
-    getPendingReq("REPT2.7_nonEmerald", function(err, data){
+    getPendingReq("REPT2.7", function(err, data){
         if (err) { return res.end(); }
         data.current.submitter = nonEmeraldStatus.overall.current.branch;
         data.current.subTime = nonEmeraldStatus.overall.current.subTime;
