@@ -25,7 +25,7 @@ do
     record+="${field_prefix}OriginSize: $repo_origin_size,"
     record+="${field_prefix}UserSize: $repo_user_size,"
     record+="${field_prefix}BranchCnt: $repo_branch_cnt,"
-    echo $record
+
     cd ..
     rm -rf $repo
     rm -rf $repo_name
