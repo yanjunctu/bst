@@ -153,7 +153,7 @@ router.get('/testCaseNum_Emer', function (req, res, next) {
 })
 
 router.get('/testCaseNum_nonEmer', function (req, res, next) {
-    fetchTestCaseNum("REPT2.7_nonEmerald",days,function(err,data){
+    fetchTestCaseNum("REPT2.7",days,function(err,data){
     return res.json(data);
   });
 })

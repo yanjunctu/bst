@@ -43,21 +43,21 @@ CYPHERDIR='\\pcr_srp\\code'
 LOG_DIR='\\temp_log\\'
 ANNOFILE_DIR=['\\bahama\\code\\annofile\\','\\pcr_srp\\code\\annofile\\']
 
-CLEAN_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make clean selfChecking=Y'},
-		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_clean_32mb selfChecking=Y'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_clean_32mb selfChecking=Y'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_matrix_clean selfChecking=Y'},
-		   	{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make bandit_clean selfChecking=Y'}]
+CLEAN_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make clean selfChecking=Y','annofile':''},
+		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_clean_32mb selfChecking=Y','annofile':''},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_clean_32mb selfChecking=Y','annofile':''},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_matrix_clean selfChecking=Y','annofile':''},
+		   	{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make bandit_clean selfChecking=Y','annofile':''}]
 
-MATRIX_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make matrix selfChecking=Y'},
-			 {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make matrix_32mb selfChecking=Y'}
+MATRIX_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make matrix selfChecking=Y','annofile':['matrix.xml']},
+			 {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make matrix_32mb selfChecking=Y','annofile':['matrix_32mb_arm_legacy.xml','matrix_32mb_arm_nolegacy.xml','matrix_32mb_dsp.xml']}
 			]
 
-BUILD_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make dsp_all selfChecking=Y'},
-		    {'cmdDir':BAHAMADIR,'cmdType':'path.bat && make arm_all selfChecking=Y'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_32mb selfChecking=Y'},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_32mb_nomatrix selfChecking=Y'},
-		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make bandit selfChecking=Y'}]
+BUILD_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make dsp_all selfChecking=Y','annofile':['dsp.xml']},
+		    {'cmdDir':BAHAMADIR,'cmdType':'path.bat && make arm_all selfChecking=Y','annofile':['arm.xml']},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make srp_32mb selfChecking=Y','annofile':['arm_32mb.xml']},
+			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_32mb_nomatrix selfChecking=Y','annofile':['dsp_32mb.xml']},
+		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make bandit selfChecking=Y','annofile':['matrix_32mb_dsp.xml','dsp_bandit.xml']}]
 
 BAHAMA_ARM_LOG=['arm.xml','srp.xml','arm_link.xml']
 
@@ -92,6 +92,7 @@ class BuildLogReader(object):
         else:
             with open(self.buildLog, 'r') as f:
                 content = f.read()
+                f.close()
         
         
         matches = [m for m in self.warning_pattern.finditer(content)]
@@ -270,23 +271,25 @@ def pre_check(args):
                     pattern = r' *(.*)/(REPT_2\.7_Emerald_INT)\n';
                     break;
                 else:
-                    pattern = r' *(.*)/(REPT_2\.7_nonEmerald_INT)\n';
+                    pattern = r' *(.*)/(REPT_2\.7_INT)\n';
                     break;
             else:
                 print("input wrong")
                 sys.exit()
+                
+        f = open(os.devnull, 'w')
+        subprocess.call('git fetch --all', stdout=f, stderr=f)
+        f.close()
         try:
-            remote_branches = subprocess.check_output('git branch -r', stderr=subprocess.STDOUT)
+            remote_branches = subprocess.check_output('git branch -r --merged', stderr=subprocess.STDOUT)
         except:
             print('failed to get remote branches, make sure you are in the correct repo directory')
             sys.exit()
         match = re.search(pattern, remote_branches) 
         if match:
-            f = open(os.devnull, 'w')
-            subprocess.call('git fetch {} {}'.format(match.group(1), match.group(2)), stdout=f, stderr=f)
             args.ci_Branch = match.group(0).strip()
         else:
-            print('no such branch in remote repo, make sure your repo is correct')
+            print('ERROR!!! plese merge your branch to INT branch')
             sys.exit()
     elif args.mode == 'desktop':
         if not args.ci_Branch:
@@ -301,14 +304,35 @@ def run_cmd(drive,cmdQ):
     while True:  
         cmdDic=cmdQ.get() 
         cmdType='cd '+drive+cmdDic['cmdDir']+' && '+cmdDic['cmdType']
+        annofiles = cmdDic['annofile'];
+
+        #annofile = cmdDic['annofile']
         #logfile=drive+cmdDic['logfile']
         #ret=subprocess.call(cmdType,shell=True,stdout=open(logfile,'w'),stderr=subprocess.STDOUT) 
         f = open(os.devnull, 'w')
         ret=subprocess.call(cmdType,shell=True,stdout=f,stderr=subprocess.STDOUT) 
+        f.close()
         if ret==0:  
             print '%s is done!' %cmdType   
         else:
-            print 'ERROR:%s is fail!!!' %cmdType
+            print 'ERROR:%s is fail!!!' %cmdType  
+            summarize_log_file = drive+LOG_DIR+'summarize.log'
+            fp=file(summarize_log_file,'a+')
+
+            for annofile in annofiles:
+
+                annofileDir = cmdDic['cmdDir']+'\\annofile\\'+annofile;
+                if os.path.exists(annofileDir):
+                    try:
+                        tree = ET.parse(annofileDir) 
+                        root = tree.getroot()
+                        for output_node in root.iter('output'):
+                            print>>fp, output_node.text
+                    except Exception, e:
+                        print "Error:cannot parse file:{}".format(annofileDir)
+                        
+            print 'more details pls refer to %s' %summarize_log_file
+            fp.close()
             os._exit(1)
         cmdQ.task_done() 
             
@@ -360,9 +384,9 @@ def actionOnNewWarning(name,mail,file):
     interface = BoosterClient();
     ret = interface.send(wkresult);
     if ret:
-      #print "[send from client]: "+json.dumps(wkresult.getSendMsg());
-      #print "[recv from server]: "+interface.recv();
-      sendEmail(name,mail,file.getvalue(),CIMailSubject);  
+        #print "[send from client]: "+json.dumps(wkresult.getSendMsg());
+        #print "[recv from server]: "+interface.recv();
+        sendEmail(name,mail,file.getvalue(),CIMailSubject);  
 
       
 if __name__ == "__main__":
