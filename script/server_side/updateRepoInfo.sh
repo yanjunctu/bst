@@ -10,7 +10,7 @@ cd /tmp
 for repo in $REPOS
 do
     repo_name=$(basename $repo | sed 's/\.git//g')
-    field_prefix=Gitlab_${repo_name}_
+    field_prefix=Gitlab_${repo_name^}_
     repo_user_size=0
     repo_branch_cnt=0
 
