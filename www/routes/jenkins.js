@@ -150,6 +150,7 @@ function getPendingReq(project, callback){
             items.forEach(function(item){
                 //if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
                 if (item.blocked || item.stuck) {
+                    var projName = '';
                     var paraArray = item.params.split('\n');
                     //console.log('array=',paraArray);
                     paraArray.forEach(function(itr){
