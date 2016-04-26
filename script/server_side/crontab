@@ -14,3 +14,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 52 6	1 * *	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
 0 23    * * *   root    cd /opt/booster_project/script/server_side && sh gitlabbackup.sh >> /var/log/gitlabbackup.log 2>&1
 0  0    * * *   root    bash /opt/booster_project/script/server_side/updateRepoInfo.sh
+40 10   * * *   root    python /opt/booster_project/script/jenkins/parseJenkinsBuildHistory.py
+*/5 *   * * *   root    python /opt/booster_project/script/sitemonitor/sitemonitor.py -u booster
+

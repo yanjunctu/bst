@@ -11,12 +11,12 @@ block content
             div(class="col-sm-12")
               div(class="tabbable tabs-below")
                 ul(class="nav nav-tabs")
-                  li(class="active")
-                    a(href="#ciTabEmer" data-toggle="tab") Emerald CI
                   li
-                    a(href="#ciTabNonEmer" data-toggle="tab") Non-Emerald CI
+                    a(href="#ciTabEmer" data-toggle="tab") Emerald CI
+                  li(class="active")
+                    a(href="#ciTabNonEmer" data-toggle="tab") REPT2.7 CI(old nonEmerald)
                 div(class="tab-content")
-                  div(class="tab-pane active" id="ciTabEmer")
+                  div(class="tab-pane" id="ciTabEmer")
                     - var escapseRow=0
                     while escapseRow<2
                       br
@@ -116,7 +116,7 @@ block content
                         | Status:
                         span(class="statusStr") not start
                   
-                  div(class="tab-pane" id="ciTabNonEmer" )   
+                  div(class="tab-pane active" id="ciTabNonEmer" )   
                     - var escapseRow=0
                     while escapseRow<2
                       br
@@ -244,8 +244,32 @@ block content
         div(class="panel panel-primary")
           div(class="panel-heading") 
             h3 <span class="glyphicon glyphicon-envelope"></span> Major updates
-          div(class="panel-body")
-          
+          div(class="panel-body" style="height:420px;overflow:auto")
+            h3(class="text-primary") V1.2:
+               img(src="/images/new_icon_yellow.gif")
+            ol
+              li
+                span 
+                  | Translate Repo server from Gitlab to BitBucket, 
+                  | you can follow up this doc to do the transition                  
+                  i(class="fa fa-hand-o-right fa-3x")
+                  a(href="/doc/Migrate from gitlab to bitBucket.docx")
+                    |click me
+              li
+                | Combine emerald and NonEmerald CI to 2.7 CI, this release contain the first step, combine nonEmerald CI to 2.7 CI, emerald CI will keep in this release.
+              li
+                | Step to submit CI, refer to below
+                ul
+                  li
+                    | If you from Emerald,keep the old way to submit IR:
+                    div(class="well well-sm")
+                      | git push origin DEV_BRANCH_NAME:IR_Emerald_xxx
+                  li  
+                    | If you from NonEmrald, use below update  to submit IR:
+                    div(class="well well-sm")
+                      | git push origin DEV_BRANCH_NAME:IR_2.7_xxx
+            
+            hr(border-color=black)
             h3(class="text-primary") V1.1:
             h4(class="text-primary") highlight
             ol
@@ -296,7 +320,7 @@ block content
         div(class="panel panel-primary")
           div(class="panel-heading")
             h3 <span class="glyphicon glyphicon-edit"></span> Feedback
-          div(class="panel-body")
+          div(class="panel-body" style="height:420px")
             form(id="feedback_form" role="form")
               div(class="form-group")
                 h4 Do you like our system:

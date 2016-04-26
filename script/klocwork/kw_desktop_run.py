@@ -37,6 +37,7 @@ def local_kw_print(logfile):
 
     with open(logfile, 'r') as f:
         content = f.read()
+        f.close()
 
     matches = local_kw_pattern.finditer(content)
 
@@ -66,9 +67,9 @@ if __name__ == "__main__":
     
     match = re.search(PATTERN_EMER, args.ci_Branch) 
     if match:
-        kw_project = 'REPT2.7_nonEmerald';
-    else:
         kw_project = 'REPT2.7_Emerald';
+    else:
+        kw_project = 'REPT2.7';
     
     #get change file
     print 'get the file change list...'
@@ -108,6 +109,7 @@ if __name__ == "__main__":
     kw_log =args.drive+KW_LOG
     f = open(kw_log, 'w')
     ret = subprocess.call(cmd_kw,shell=True,stdout=f,stderr=f)
+    f.close()
     # stdout=f,
     if ret!=0:  
         print 'ERROR:klocwork is fail!!!'

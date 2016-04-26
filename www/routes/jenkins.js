@@ -162,18 +162,54 @@ function getPendingReq(project, callback){
             }
 
             var items = data.items;
-            var prjName = "PROJECT_NAME=".concat(project);
+            //var prjName = "PROJECT_NAME=".concat(project);
+            //var prjName = "PROJECT_NAME="+project+"&|$"
             items.forEach(function(item){
-                if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
+                //if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
+                if (item.blocked || item.stuck) {
+                    var projName = '';
+                    var paraArray = item.params.split('\n');
+                    //console.log('array=',paraArray);
+                    paraArray.forEach(function(itr){
+                        var keyValue = itr.split('=');
+                        
+                        if(keyValue[0] == 'PROJECT_NAME')
+                        {
+                            projName = keyValue[1];
+                        }
+                        if(keyValue[0] == 'SUBMITTER')
+                        {
+                            submitter = keyValue[1];
+                        }
+                        if(keyValue[0] == 'PUSH_TIME')
+                        {
+                            pushTime = keyValue[1];
+                        }
+                   
+                    });
+                    
+                    if(projName == project){
+                        var jobName = /pcr-rept-0-multijob(-emerald)?/ig.exec(item.task.name);
+                        if (jobName && submitter && pushTime){
+                     
+                            console.log('jobname:'+item.task.name);
+                                        console.log(submitter,pushTime);
+                            result.queue.push({"submitter":submitter, "subTime":pushTime});
+                        }     
+                    }
+                    /*
+                    var projName = /PROJECT_NAME=(.*)[&]/ig.exec(item.params);
                     var submitter = /SUBMITTER=(.*)/ig.exec(item.params);
                     var pushTime = /PUSH_TIME=(.*)/ig.exec(item.params);
-                    var jobName = /pcr-rept-0-multijob-(emerald|nonemerald)/ig.exec(item.task.name);
+                    var jobName = /pcr-rept-0-multijob(-emerald)?/ig.exec(item.task.name);
 
-                    if (jobName && submitter && pushTime){
+                    if (projName && jobName && submitter && pushTime){
                         result.queue.push({"submitter":submitter[1], "subTime":pushTime[1]});
                     }
+                    */
                 }
             });
+
             callback(null, result);
         });
     }catch(e){
@@ -321,7 +357,7 @@ submitter.push(getSubmitterName(data));
 function getJobDuration(job,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
-	var nonEmerStr ="REPT2.7_nonEmerald";
+	var emerStr ="REPT2.7_Emerald";
 	var durationDic = {"id_em":[],"duration_em":[],"submitter_em":[],"timestamp_em":[],"id_non":[],"duration_non":[],"submitter_non":[],"timestamp_non":[]};
 	
 	
@@ -342,14 +378,15 @@ function getJobDuration(job,days,callback){
 		   if(data[i].result == "SUCCESS")
 		   {
 		       //parameter=data[i].actions[0].parameters;
-			   if(getProjectName(data[i]) == nonEmerStr)
+			   if(getProjectName(data[i]) == emerStr)
 			   {
-			       pushdata(durationDic.id_non,durationDic.duration_non,durationDic.submitter_non,durationDic.timestamp_non,data[i]);
+			       pushdata(durationDic.id_em,durationDic.duration_em,durationDic.submitter_em,durationDic.timestamp_em,data[i]);
+			   
 			   }
 			   else
 			   {
-			       pushdata(durationDic.id_em,durationDic.duration_em,durationDic.submitter_em,durationDic.timestamp_em,data[i]);
-			   }
+                   pushdata(durationDic.id_non,durationDic.duration_non,durationDic.submitter_non,durationDic.timestamp_non,data[i]); 
+               }
 		   }
 		}
 		else
@@ -448,10 +485,10 @@ var updateLatestBuildInfo = function(job){
     
         var project = getProjectName(data);//data.actions[0].parameters[0].value;
         var ciStatus;
-        if (project=="REPT2.7_nonEmerald"){
-          ciStatus = nonEmeraldStatus;      
+        if (project=="REPT2.7_Emerald"){
+          ciStatus = emeraldStatus;      
         }else{
-          ciStatus = emeraldStatus;
+          ciStatus = nonEmeraldStatus;
         }
         updateStatus(ciStatus,data);  
         });
@@ -615,7 +652,7 @@ var updateCIHistoryInfo = function() {
 setInterval(function(){
     
     updateLatestBuildInfo('PCR-REPT-0-MultiJob-Emerald');
-    updateLatestBuildInfo('PCR-REPT-0-MultiJob-nonEmerald');    
+    updateLatestBuildInfo('PCR-REPT-0-MultiJob');    
     updateCIHistoryInfo();
 
 },GET_JENKINS_INTERVAL);
@@ -648,7 +685,7 @@ router.get('/getNonEmerStatus', function(req, res, next) {
 
 router.get('/getNonEmerPendingReq', function(req, res, next){
     console.log("getnonEmerPendingReq");
-    getPendingReq("REPT2.7_nonEmerald", function(err, data){
+    getPendingReq("REPT2.7", function(err, data){
         if (err) { return res.end(); }
         data.current.submitter = nonEmeraldStatus.overall.current.branch;
         data.current.subTime = nonEmeraldStatus.overall.current.subTime;
@@ -691,7 +728,7 @@ router.get('/getTheWholeCI_emerald', function(req, res, next){
 })
 
 router.get('/getTheWholeCI_nonemerald', function(req, res, next){
-  getJobDuration('PCR-REPT-0-MultiJob-nonEmerald',days,function(err,data){
+  getJobDuration('PCR-REPT-0-MultiJob',days,function(err,data){
     return res.json(data);
   });
 })
@@ -703,7 +740,7 @@ router.get('/getEmeraldFailInfo', function(req, res, next){
 })
 
 router.get('/getNonEmeraldFailInfo', function(req, res, next){
-  getJobFailureInfo('PCR-REPT-0-MultiJob-nonEmerald',days,function(err,data){
+  getJobFailureInfo('PCR-REPT-0-MultiJob',days,function(err,data){
     return res.json(data);
   });
 })

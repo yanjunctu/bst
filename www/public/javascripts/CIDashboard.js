@@ -31,7 +31,7 @@
 	$bc1.addClass("text-center");
 	$addBrow1.append($bc1);
 	
-	var $bc2 = $("<td>").text("nonEmerlad");
+	var $bc2 = $("<td>").text("REPT 2.7");
 	$bc2.addClass("text-center");
 	$addBrow2.append($bc2);
 	
@@ -39,10 +39,10 @@
     $.get("/jenkins/getEmeraldFailInfo",function (emerald){
 	    var $bca1= $("<td>").text(emerald.allBuildNumber);
 		$bca1.addClass("text-center");
-	    percent =(emerald.allBuildNumber ==0)? NA:Math.round((emerald.failureNumber/emerald.allBuildNumber)*100);
+	    percent =(emerald.allBuildNumber ==0)? "NA":Math.round((emerald.failureNumber/emerald.allBuildNumber)*100);
 	    var $bcf1= $("<td>").text(emerald.failureNumber+"("+percent+"%)");
 		$bcf1.addClass("text-center");
-	    percent =(emerald.allBuildNumber ==0)? NA:Math.round((emerald.abortedNumber/emerald.allBuildNumber)*100);
+	    percent =(emerald.allBuildNumber ==0)? "NA":Math.round((emerald.abortedNumber/emerald.allBuildNumber)*100);
 	    var $bct1= $("<td>").text(emerald.abortedNumber+"("+percent+"%)");
 		$bct1.addClass("text-center");
 		$addBrow1.append($bca1);
@@ -53,10 +53,10 @@
 	    $.get("/jenkins/getNonEmeraldFailInfo",function (nonEmerald){
 			var $bca2= $("<td>").text(nonEmerald.allBuildNumber);
 			$bca2.addClass("text-center");
-			percent =(nonEmerald.allBuildNumber ==0)? NA:Math.round((nonEmerald.failureNumber/nonEmerald.allBuildNumber)*100);
+			percent =(nonEmerald.allBuildNumber ==0)? "NA":Math.round((nonEmerald.failureNumber/nonEmerald.allBuildNumber)*100);
 			var $bcf2= $("<td>").text(nonEmerald.failureNumber+"("+percent+"%)");
 			$bcf2.addClass("text-center");
-			percent =(nonEmerald.allBuildNumber ==0)? NA:Math.round((nonEmerald.abortedNumber/nonEmerald.allBuildNumber)*100);
+			percent =(nonEmerald.allBuildNumber ==0)? "NA":Math.round((nonEmerald.abortedNumber/nonEmerald.allBuildNumber)*100);
 			var $bct2= $("<td>").text(nonEmerald.abortedNumber+"("+percent+"%)");
 			$bct2.addClass("text-center");
 			$addBrow2.append($bca2);
@@ -73,12 +73,12 @@
 					$hc.addClass(titleFormat);
 					$addHrow.append($hc);
 					
-                    percent =(emerald.allBuildNumber ==0)? NA:Math.round((emerald.failBuildNum[i]/emerald.allBuildNumber)*100);	
+                    percent =(emerald.allBuildNumber ==0)? "NA":Math.round((emerald.failBuildNum[i]/emerald.allBuildNumber)*100);	
 					var $bc3 = $("<td>").text(emerald.failBuildNum[i]+"("+percent+"%)");
 	                $bc3.addClass("text-center");
 					$addBrow1.append($bc3);
 					
-                    percent =(nonEmerald.allBuildNumber ==0)? NA:Math.round((nonEmerald.failBuildNum[i]/nonEmerald.allBuildNumber)*100);	
+                    percent =(nonEmerald.allBuildNumber ==0)? "NA":Math.round((nonEmerald.failBuildNum[i]/nonEmerald.allBuildNumber)*100);	
 					var $bc4 = $("<td>").text(nonEmerald.failBuildNum[i]+"("+percent+"%)");
 	                $bc4.addClass("text-center");
 					$addBrow2.append($bc4);
@@ -139,7 +139,7 @@ var main = function(){
 	var trace2 = {
 		x: result.id_non,
 		y: result.duration_non,
-		name: 'nonEerald'
+		name: 'REPT 2.7'
    }; 
 	data = [trace1,trace2];
 	Plotly.newPlot('onTargetbuild', data, layout);
@@ -157,7 +157,7 @@ var main = function(){
 	var trace2 = {
 		x: result.id_non,
 		y: result.duration_non,
-		name: 'nonEerald'
+		name: 'REPT 2.7'
    }; 
 	data = [trace1,trace2];
 	Plotly.newPlot('onTargetTest', data, layout);
@@ -174,7 +174,7 @@ var main = function(){
 	var trace2 = {
 		x: result.id_non,
 		y: result.duration_non,
-		name: 'nonEerald'
+		name: 'REPT 2.7'
    }; 
 	data = [trace1,trace2];
 	Plotly.newPlot('offTargetbuild', data, layout);
@@ -191,7 +191,7 @@ var main = function(){
 	var trace2 = {
 		x: result.id_non,
 		y: result.duration_non,
-		name: 'nonEerald'
+		name: 'REPT 2.7'
    }; 
 	data = [trace1,trace2];
 	Plotly.newPlot('offTargetTest', data, layout);
