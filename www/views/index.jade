@@ -16,7 +16,7 @@ block content
                   li(class="active")
                     a(href="#ciTabNonEmer" data-toggle="tab") REPT2.7 CI(old nonEmerald)
                 div(class="tab-content")
-                  div(class="tab-pane active" id="ciTabEmer")
+                  div(class="tab-pane" id="ciTabEmer")
                     - var escapseRow=0
                     while escapseRow<2
                       br
@@ -116,7 +116,7 @@ block content
                         | Status:
                         span(class="statusStr") not start
                   
-                  div(class="tab-pane" id="ciTabNonEmer" )   
+                  div(class="tab-pane active" id="ciTabNonEmer" )   
                     - var escapseRow=0
                     while escapseRow<2
                       br
