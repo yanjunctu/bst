@@ -144,6 +144,30 @@ var CIStateLookup = {
   },
 };
 
+var ciTable = $("#ciHistoryTbl").DataTable({
+        order: [[1, "desc"]],
+        columns: [
+            {
+                data: "buildResult",
+                render: function(data, type, row) {
+                    if (data == "SUCCESS")
+                        return '<img src="/images/blue.png" />';
+                    else
+                        return '<img src="/images/red.png" />';
+                }
+            },
+            {data: "buildID"},
+            {data: "submitter"},
+            {data: "rlsTime"},
+            {data: "onTargetBuild"},
+            {data: "offTargetBuild"},
+            {data: "win32UT"},
+            {data: "win32IT"},
+            {data: "codeStaticCheck"},
+            {data: "onTargetSanity"},
+            {data: "extRegressionTest"}
+    ]
+});
 
 var refreshCi = function(status)
 {
@@ -247,6 +271,15 @@ var refreshQ = function(QueueInfo)
     
   });
 };
+
+var refreshCIHistory = function(ciHistory) {
+    var currentPage = ciTable.page();
+
+    ciTable.clear();
+    ciTable.rows.add(ciHistory);
+    ciTable.draw(false);
+};
+
 var acquireJenkinsAllInfo = function(){
       try
       {
@@ -279,8 +312,9 @@ var acquireJenkinsAllInfo = function(){
             //result = {"current":{"submitter":"JunJun","subTime":1456127340000},"queue":[{"submitter":"JunJun1","subTime":1456127340000},{"submitter":"JunJun2","subTime":1456127340000},{"submitter":"JunJun3","subTime":1456127340000}]}            
             //refreshQ(result);
           }            
-
-          
+          $.get("/jenkins/getCIHistory", function (result) {
+              refreshCIHistory(result);
+          })
       }
       catch(err)
       {
