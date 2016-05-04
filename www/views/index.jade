@@ -301,39 +301,40 @@ block content
           div(class="panel-heading")
             h3 <span class="glyphicon glyphicon-edit"></span> Feedback
           div(class="panel-body" style="height:420px")
-            form(id="feedback_form" role="form")
-              div(class="form-group")
-                h4 Do you like our system:
-                div(class="row")
-                  label(class="radio-inline col-md-2 col-md-offset-2") 
-                    img(src="/images/like.png" class="img-circle" width="30" height="30")
-                    br
-                    input(type="radio" name="GitUsage" value="Git_Excellent")
-                    | Like
-                  label(class="radio-inline col-md-2")
-                    img(src="/images/neutral.png" class="img-circle" width="30" height="30")
-                    br                
-                    input(type="radio" name="GitUsage" value="Git_Not_Bad")
-                    | Neutral   
-                  label(class="radio-inline col-md-2")
-                    img(src="/images/dislike.png" class="img-circle" width="30" height="30")
-                    br                
-                    input(type="radio" name="GitUsage" value="Git_Poor")
-                    | Dislike  
-              
-              div(class="form-group")
-                h4(for="comment") Welcome your comment and suggestion:
-                textarea(class="form-control" rows="5" id="comment")
-                
-              div(class="form-group")
-                h4 Core ID (Good comment and suggestion have Moto Coin):
-                input(type="text" class="form-control" id="Feedback_coreId")
-                
-              
-              button(id="submit_btn" type="submit" class="btn btn-info") Submit
-              | &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-              a(href="/feedback/gitall" class="text-info")              
-              h3(id="feedback_status",class="text-primary")
+            ul
+              li 
+                strong JIRA
+                | &nbsp is used to tracking suggestion and issue instead
+              br
+              li JIRA Submit Tips
+                ol
+                    li
+                      span(style="color:red;") *
+                      | &nbsp items is required, you can ignore other fields
+                    li Pls follow below guide to fill the required items:
+                      ul
+                        li
+                          | Issue Type 
+                          span(style="color:red;") *
+                          ul
+                            li If submit is a suggestion choose: <mark>Story</mark>
+                            li If submit is a defect choose: <mark>Defect</mark>     
+                        li
+                          | Component/s 
+                          span(style="color:red;") *
+                          ul
+                            choose: <mark>Booster Scrum Team</mark>   
+                        li
+                          | Releasable Product 
+                          span(style="color:red;") *
+                          ul
+                            choose: <mark>Infra_Booster</mark> 
+              br
+              br
+              a(href="https://jira.mot-solutions.com/secure/CreateIssue!default.jspa" class="btn btn-default btn-lg active" role="button") Start Submit In JIRA
+            //| &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+            //a(href="/feedback/gitall" class="text-info")              
+            //h3(id="feedback_status",class="text-primary")
               
     
 block userdefinejs
