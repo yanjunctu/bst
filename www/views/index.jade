@@ -220,6 +220,26 @@ block content
           
                 
     div.row-fluid
+      div(class="col-sm-12")
+        div(class="panel panel-primary")
+          div(class="panel-heading") 
+            h3 <span class="glyphicon glyphicon-th-list"></span> CI history 
+          div(class="panel-body")
+            table(class="table table-striped table-bordered table-hover table-condensed" id="ciHistoryTbl")
+              thead
+                tr
+                  th(class="text-center") Result
+                  th(class="text-center") Build ID 
+                  th(class="text-center") Submitter
+                  th(class="text-center") Release Time
+                  th(class="text-center") On-Target Build
+                  th(class="text-center") Off-Target Build
+                  th(class="text-center") Win32 UT 
+                  th(class="text-center") Win32 IT 
+                  th(class="text-center") Code Static Check
+                  th(class="text-center") On-Target Sanity Test
+                  th(class="text-center") Extended Regression Test
+              tbody(id="historyList")
       div(class="col-sm-6")
         div(class="panel panel-primary")
           div(class="panel-heading") 
