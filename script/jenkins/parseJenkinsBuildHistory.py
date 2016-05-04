@@ -1,342 +1,144 @@
 #Below is dependency python lib needed by this script
 #sudo pip install python-jenkins
-#sudo pip install xlwt
-#sudo pip install xlrd
-#sudo pip install xlutils
+#sudo pip install ssl
+#sudo pip install pymongo
 
-try:
-    import xml.etree.cElementTree as ET
-    from xml.etree.cElementTree import ElementTree,SubElement
-except ImportError:
-    import xml.etree.ElementTree as ET
-    from xml.etree.ElementTree import ElementTree,SubElement
-    
-
-
-
- 
 from jenkins import Jenkins
 from jenkins import JenkinsException
-from six.moves.urllib.error import HTTPError
-from six.moves.urllib.error import URLError
-from six.moves.urllib.request import Request, urlopen
-from six.moves.urllib.parse import quote, urlencode, urljoin, urlparse
-import socket
 import ssl
-import pprint
-import json
-import xlwt
-import datetime
-import time
+from pymongo import MongoClient
 
-import sys
-import os
-import xmlrpclib
-from xlrd import open_workbook
-from xlutils.copy import copy
+JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
+JENKINS_USERNAME = 'jhv384'
+JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
+JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald']
+BOOSTER_DB_NAME = 'booster'
 
-
-
-JOB_ALL_BUILDS_INFO = '%(folder_url)sjob/%(short_name)s/api/json?tree=allBuilds[id,timestamp,result,duration,subBuilds[*],actions[parameters[*]]]'
-
-JENKINS_FILE_DIR = '/var/opt/booster/jenkins.xls'
-JOBLIST_DIR='/var/opt/booster/JobList.xml'
-#JENKINS_FILE_DIR = 'D:\\GitRepos\\I_booster\\booster_project\\script\\jenkins\\jenkins.xls'
-#JOBLIST_DIR='D:\\GitRepos\\I_booster\\booster_project\\script\\jenkins\\JobList.xml'
-#JENKINS_FILE_DIR = '/mnt/gitlabbackup/jenkins.xls'
-ID_COL=0
-PROJNA_COL=1
-SUBMIT_COL=2
-PUSHT_COL=3
-START_COL=4
-DUR_COL=5
-RESULT_COL=6
-SUBSTART_COL=7
-
-# This line is needed as if our server will report SSL failure if SSL true
-ssl._create_default_https_context = ssl._create_unverified_context
-
-#---------------------------------------------------------------------------------------------------------------
-# define class BoosterJenkins  Inherite from class Jenkins
-#----------------------------------------------------------------------------------------------------------------
-class BoosterJenkins(Jenkins):
+class BoosterJenkins():
     def __init__(self, url, username=None, password=None):
-      Jenkins.__init__(self,url,username,password)
+        self.server = Jenkins(url, username, password)
         
-    def get_job_all_builds(self, name):
-        ''' To prevent Jenkins from having to load all builds from disk, normally only return 50 builds, if have to retrieve all,
-            add ?tree=allBuilds[]
-        '''
-        
-        folder_url, short_name = self._get_job_folder(name)
-       
+    def getJobInfo(self, name):
+        ret = {}
+
         try:
-            response = self.jenkins_open(Request(
-                self._build_url(JOB_ALL_BUILDS_INFO, locals())
-            ))
-            if response:
-                return json.loads(response)
-            else:
-                raise JenkinsException('job[%s] does not exist' % name)
-        except HTTPError:
-            raise JenkinsException('job[%s] does not exist' % name)
-        except ValueError:
-            raise JenkinsException(
-                "Could not parse JSON info for job[%s]" % name)
-#-----------------------------------------------------------------------------------------------------------
-# define class BoosterJenkins end
-#------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------
-# define class job list handler
-#------------------------------------------------------------------------------------------------------------
-class jobList(object):
-    def __init__(self, xmlfile):
-        try:
-            self.xmlfile = xmlfile
-            self.tree = ET.parse(self.xmlfile) 
-            self.root = self.tree.getroot()
-        except Exception, e:
-            print "Error:cannot parse file:{}".format(xmlfile)
-            sys.exit(1) 
-        self.currentJob=None
-    def setCurrenJobNode(self,currentJob):
-        self.currentJobNode = currentJob
-        
-    def check_node_text_exist(self,parentNode,childNode,newNodepara):
-        for child in parentNode.findall(childNode):
-            if newNodepara == child.text:
-                return True
-        return False
-            
-    def check_node_attrib_exist(self,parentNode,childNode,attribType,newNodepara):
-        for child in parentNode.findall(childNode):
-            if newNodepara == child.attrib[attribType]:
-                return True
-        return False
-    
-    def update(self,newNodename):
-            #update the joblist.xml
-            if not self.check_node_text_exist(self.currentJobNode,"subJob",newNodename):
-                SubElement(self.currentJobNode,"subJob").text = newNodename
-                #add a subelemnt to root
-                if not self.check_node_attrib_exist(self.root,"job","title",newNodename):
-                    item=SubElement(self.root,"job",{"title":newNodename})
-                    SubElement(item,"name").text = newNodename
-                    self.tree.write(self.xmlfile)
-                    
-#-----------------------------------------------------------------------------------------------------------
-# define class job list handler end
-#------------------------------------------------------------------------------------------------------------
+            jobInfo = self.server.get_job_info(name)
+        except JenkinsException, je:
+            print 'Failed to get job info for job {}: {}'.format(parentJob, str(je))
+            return None 
 
-#-----------------------------------------------------------------------------------------------------------
-# define class jenkins data
-#------------------------------------------------------------------------------------------------------------
-class JenkinsDataXLS(object):
-    def __init__(self,jobListRoot,jenkins_file_dir):
-        if False == os.path.exists(jenkins_file_dir):
-            self.JenkinsFileCreate(jobListRoot)
-        self.jenkinsFileDir= jenkins_file_dir  
-        self.jenkinsFileObj = open_workbook(self.jenkinsFileDir,formatting_info=True)
-        self.jenkinsFileObjCP = copy(self.jenkinsFileObj)
-    
-    def JenkinsFileCreate(self,jobListRoot):
-        # create workbook instance and setup title in first row
-        wb = xlwt.Workbook()
-        
-        warnings ={}
+        ret['name'] = name
+        ret['firstBuild'] = jobInfo['firstBuild']['number'] if 'firstBuild' in jobInfo else 0
+        ret['lastBuild'] = jobInfo['lastCompletedBuild']['number'] if 'lastCompletedBuild' in jobInfo else 0
+        ret['subJobs'] = []
+        if 'lastSuccessfulBuild' in jobInfo:
+            info = jobInfo['lastSuccessfulBuild']
 
-        for job in jobListRoot.findall('job'):
-        
-            #init excel sheet handler
-            sheetName = job.attrib['title']
-            xlsHandler= wb.add_sheet(sheetName)
-
-            # write title firstly
-            self.createTitle(xlsHandler) 
-            # write the subBuilds title
-            col=SUBSTART_COL
-            for sub in job.findall('subJob'):
-            
-                xlsHandler.write(0, col, sub.text)
-                col+=1
-      
-        wb.save(JENKINS_FILE_DIR)
-
-    def createTitle(self,xlsHandler):
-
-        xlsHandler.write(0, ID_COL, 'build id')
-        xlsHandler.write(0, PROJNA_COL, 'project name')
-        xlsHandler.write(0, SUBMIT_COL, 'submitter')
-        xlsHandler.write(0, PUSHT_COL, 'push time')    
-        xlsHandler.write(0, START_COL, 'start time')
-        xlsHandler.write(0, DUR_COL, 'build duration')
-        xlsHandler.write(0, RESULT_COL, 'build result') 
-        
-    def timeConvert(self,origTime):
-        x = origTime / 1000
-        seconds = x % 60
-        x /= 60
-        minutes = x % 60
-        x /= 60
-        hours = x % 24
-        converTime = "%d:%d:%d"%(hours,minutes,seconds)
-        return converTime
-            
-    def dataSave(self,joblistXML):
-    
-        #jenkins_url = 'https://cars01:8080'
-        jenkins_url = 'https://10.193.226.152:8080'
-        # password is use token 
-        jenkinsServer = BoosterJenkins(jenkins_url, username='jhv384', password='4aff12c2c2c0fba8342186ef0fd9e60c')
-
-        for job in joblistXML.root.findall('job'):
-            #init excel sheet handler
-            sheetName = job.attrib['title']
-            #get excel sheet handler
-            try:
-                sheetHandler = self.jenkinsFileObj.sheet_by_name(sheetName)
-            except:
-                print 'no sheet named {}'.format(sheetName)
-                continue
- 
-            sheetHandlerCP = self.jenkinsFileObjCP.get_sheet(self.jenkinsFileObj.sheet_names().index(sheetName)) 
-            #get the rows number
-            rows_num = sheetHandler.nrows
-            cols_num =sheetHandler.ncols
-            if 0 == rows_num:
-                # file title not exist creat the file
-                self.JenkinsFileCreate()
-            elif 1 == rows_num:
-                #only title 
-                maxBuildId = 0;
-            else:
-                #get the last build id
-                maxBuildId=sheetHandler.cell(rows_num-1,0).value
-
-            #retrieve all builds info from jenkins
-            jobname = job.find('name').text
- 
-            jobInfo = jenkinsServer.get_job_all_builds(jobname) 
-            #write retrieved info into excel
-            curExcelRow = rows_num
-            buildArray = jobInfo["allBuilds"]
-            lenBuildArray = len(buildArray)
-            #print buildArray
-    
-            for buildIndex in range(lenBuildArray):
-            # save id
-                buildId = buildArray[lenBuildArray-buildIndex-1]["id"]
-              
-                if int(buildId) > int(maxBuildId):
-                    sheetHandlerCP.write(curExcelRow,ID_COL,buildId)
-                    submitter=None
-                    projName=None
-                    pushTime=None
-
-                    # get project name and submitter
-                    actions = buildArray[lenBuildArray-buildIndex-1]["actions"]
-                    for parameters in actions:
-                        if parameters!= {}:
-                            parameter=parameters["parameters"]
-                            for para in parameter:
-                                if para["name"]=="SUBMITTER":
-                                    submitter = para["value"]
-                                elif para["name"]=="PROJECT_NAME":
-                                    projName =  para["value"]
-                                elif para["name"]=="PUSH_TIME":
-                                    pushTime =  para["value"]
-
-                    sheetHandlerCP.write(curExcelRow,PROJNA_COL,projName)
-                    sheetHandlerCP.write(curExcelRow,SUBMIT_COL,submitter)
-                    #the origin push time's unit is second
-                    if (pushTime != None) and (pushTime != ""):
-                        pushTime = time.strftime("%c", time.localtime(float(pushTime)/1000))
-                        sheetHandlerCP.write(curExcelRow,PUSHT_COL,pushTime)
-                    # save timestamp
-                    stamp = buildArray[lenBuildArray-buildIndex-1]["timestamp"]
-                    #print stamp
-                    stamp = time.strftime("%c", time.localtime(float(stamp)/1000))
-                    sheetHandlerCP.write(curExcelRow,START_COL,stamp)
-                    # save duration, duration unit is ms
-                    dur=self.timeConvert(buildArray[lenBuildArray-buildIndex-1]["duration"])
-                    sheetHandlerCP.write(curExcelRow,DUR_COL,dur)
-                    #save result 
-                    sheetHandlerCP.write(curExcelRow,RESULT_COL,buildArray[lenBuildArray-buildIndex-1]["result"])
-
-                    if buildArray[lenBuildArray-buildIndex-1].has_key("subBuilds"):
-                        joblistXML.setCurrenJobNode(job)
-                        isAddNewSub = self.saveSubBuilds(curExcelRow,cols_num,sheetHandlerCP,sheetHandler,buildArray[lenBuildArray-buildIndex-1]["subBuilds"],joblistXML)
-                        if isAddNewSub:
-                            self.updateJenkinsFile()
-                            try:
-                                sheetHandler = self.jenkinsFileObj.sheet_by_name(sheetName)
-                            except:
-                                print 'no sheet named {}'.format(sheetName)
-                                continue
-                            sheetHandlerCP = self.jenkinsFileObjCP.get_sheet(self.jenkinsFileObj.sheet_names().index(sheetName)) 
-                            #get the rows number
-                            rows_num = sheetHandler.nrows
-                            cols_num =sheetHandler.ncols
-                            if 0 == rows_num:
-                                # file title not exist creat the file
-                                self.JenkinsFileCreate()
-                            elif 1 == rows_num:
-                                #only title 
-                                maxBuildId = 0;
-                            else:
-                                #get the last build id
-                                maxBuildId=sheetHandler.cell(rows_num-1,0).value
-                                
-                    curExcelRow = curExcelRow+1  
-        self.updateJenkinsFile()
-    
-    def updateJenkinsFile(self):
-        os.remove(self.jenkinsFileDir)
-        self.jenkinsFileObjCP.save(self.jenkinsFileDir) 
-        #sys.exit(1) 
-        self.jenkinsFileObj = open_workbook(self.jenkinsFileDir,formatting_info=True)
-        self.jenkinsFileObjCP = copy(self.jenkinsFileObj)
-        
-    def saveSubBuilds(self,curExcelRow,cols_num,writeHandler,readHandler,subBuilds,joblistXML):
-        write_cols_num = cols_num
-        isAddNewSub = False
-        for build in subBuilds:
-            jobname = build["jobName"]
-       
-            isSubExist = False
-            for i in range(SUBSTART_COL,cols_num):
-        
-                if readHandler.cell(0,i).value == jobname:
-                    writeHandler.write(curExcelRow,i,build["buildNumber"])
-                    isSubExist = True
-            #if the subbuilds not exist in the sheet,need to add the subbuild to sheet and joblist
-            if isSubExist == False:
-                #update the workbook.xls
-                writeHandler.write(0, write_cols_num, jobname)
-                writeHandler.write(curExcelRow,cols_num,build["buildNumber"])
-                write_cols_num = write_cols_num+1
-                try:
-                    xlsHandler= self.jenkinsFileObjCP.add_sheet(jobname)
-                    # write title firstly
-                    self.createTitle(xlsHandler)
-                except:
-                    print 'the sheet {} already exist'.format(jobname)
+            if 'subBuilds' in info:
+                for build in info['subBuilds']:
+                    ret['subJobs'].append(build['jobName'])
+        else: 
+            for subJob in jobInfo['downstreamProjects']:
+                ret['subJobs'].append(subJob['name'])
                 
-                #update the joblist.xml
-                joblistXML.update(jobname)
-                isAddNewSub = True
-                #self.updateJenkinsFile()
-        return isAddNewSub
+        return ret 
 
-#-----------------------------------------------------------------------------------------------------------
-# define class jenkins data end
-#------------------------------------------------------------------------------------------------------------                       
+    def getBuildInfo(self, job, buildNum):
+        ret = {}
+
+        try:
+            buildInfo = self.server.get_build_info(job, buildNum)
+        except JenkinsException, je:
+            print 'Failed to get build info[{}, {}]: {}'.format(job, buildNum, str(je))
+            return None
+
+        ret['name'] = job 
+        ret['build id'] = buildNum
+        ret['build result'] = buildInfo['result']
+        ret['start time'] = buildInfo['timestamp']
+        ret['build duration'] = buildInfo['duration']
+        # Some parameters we are interested in
+        for action in buildInfo['actions']:
+            if 'parameters' in action:
+                allParams = action['parameters']
+
+                for obj in allParams:
+                    if obj['name'] == 'SUBMITTER':
+                        ret['submitter'] = obj['value']
+                    elif obj['name'] == 'PUSH_TIME':
+                        ret['push time'] = obj['value']
+                    elif obj['name'] == 'PROJECT_NAME':
+                        ret['project name'] = obj['value']
+                    elif obj['name'] == 'NEW_BASELINE':
+                        ret['release tag'] = obj['value']
+        # Sub-builds info of current build
+        if 'subBuilds' in buildInfo:
+            for build in buildInfo['subBuilds']:
+                ret[build['jobName']] = build['buildNumber']
+
+        return ret
+
+
+class BoosterDB():
+    def __init__(self, dbClient, dbName):
+        self.db = dbClient[dbName]
+
+    def insertOne(self, collection, data):
+        (self.db)[collection].insert_one(data)
+
+        return True
+
+    def getLastBuildInfo(self, collection):
+        if collection not in self.db.collection_names() or 0 == (self.db)[collection].count:
+            return None
+
+        return (self.db)[collection].find_one(sort=[('build id', -1)])
+
+
+def saveAllCI2DB(server, db):
+    i = 0
+    allJobs = JENKINS_TRIGGER_JOBS
+    jobSet = set(JENKINS_TRIGGER_JOBS)
+   
+    # Get all the info of tirgger jobs and their downstream jobs
+    while i < len(allJobs):
+        job = allJobs[i]
+        jobInfo = server.getJobInfo(job)
+        
+        if not jobInfo:
+            i += 1
+            continue
+
+        # Find the new builds of the job and save them to DB
+        lastBuildSaved = db.getLastBuildInfo(job)
+        start = (lastBuildSaved['build id']+1) if lastBuildSaved else jobInfo['firstBuild']
+        end = jobInfo['lastBuild']
+        while start <= end:
+            buildInfo = server.getBuildInfo(job, start)
+
+            if buildInfo:
+                db.insertOne(job, buildInfo)
+
+            start += 1
+
+        # A CI consists of multiple jobs, so append each related sub-job to job array to get its info
+        for subJob in jobInfo['subJobs']:
+            if subJob not in jobSet:
+                jobSet.add(subJob)
+                allJobs.append(subJob)
+        
+        i += 1
+
 
 if __name__ == "__main__":
-    
-    #init joblist class
-    joblistXML = jobList(JOBLIST_DIR)
-    #init Jenkins Data class
-    JenkinsData = JenkinsDataXLS(joblistXML.root,JENKINS_FILE_DIR)
-    JenkinsData.dataSave(joblistXML)
+    try:
+        ssl._create_default_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+
+    server = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
+    dbClient = MongoClient()
+    db = BoosterDB(dbClient, BOOSTER_DB_NAME)
+
+    saveAllCI2DB(server, db)
 
