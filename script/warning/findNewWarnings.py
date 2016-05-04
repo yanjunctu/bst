@@ -226,6 +226,7 @@ def process_argument():
     parser.add_argument('-b',dest="ci_Branch")
     parser.add_argument('-n',dest="CIUserName")
     parser.add_argument('-e',dest="CIUserEmail")
+    parser.add_argument('-t',dest="releaseTag")
     
     args = parser.parse_args()
     try:
@@ -379,8 +380,9 @@ def print_log(changes,warnings,new_warnings,logfile,drive):
             print>>fp, new_warnings[(file_name, line)]
 
             
-def actionOnNewWarning(name,mail,file):
-    wkresult = WarnKlocCheckResult(engineerName=name,engineerMail=mail,buildWarningCnt=len(ALL_NEW_WARNINGS),klocworkCnt=0);
+def actionOnNewWarning(tag,name,mail,file):
+    wkresult=
+    WarnKlocCheckResult(releaseTag=tag,engineerName=name,engineerMail=mail,buildWarningCnt=len(ALL_NEW_WARNINGS),klocworkCnt=0);
     interface = BoosterClient();
     ret = interface.send(wkresult);
     if ret:
@@ -457,5 +459,5 @@ if __name__ == "__main__":
 
     if args.mode == 'CI' and len(ALL_NEW_WARNINGS)>0:
         sys.stdout = stdout #recover sys.stdout
-        actionOnNewWarning(args.CIUserName,args.CIUserEmail,stdOutfile)
+        actionOnNewWarning(args.releaseTag,args.CIUserName,args.CIUserEmail,stdOutfile)
         

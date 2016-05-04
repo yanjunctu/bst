@@ -138,7 +138,8 @@ class WarnKlocCheckResult(BoosterMsg):
   """  
   OPCODE = KLOCWORK_WARNING_CHECK_OPCODE;
   
-  def __init__(self,engineerName,engineerMail,buildWarningCnt=0,klocworkCnt=0):
+  def __init__(self,releaseTag,engineerName,engineerMail,buildWarningCnt=0,klocworkCnt=0):
+    self.releaseTag = releaseTag;
     self.engineerName = engineerName;
     self.engineerMail = engineerMail;
     self.buildWarningCnt = buildWarningCnt;
@@ -149,7 +150,7 @@ class WarnKlocCheckResult(BoosterMsg):
 
   def getSendMsg(self):
     msg = BoosterMsg.getSendMsg(self);
-    payload = {"engineerName":self.engineerName,"engineerMail":self.engineerMail,"date":self.date,"buildWarningCnt":self.buildWarningCnt,"klocworkCnt":self.klocworkCnt};
+    payload = {"releaseTag":self.releaseTag,"engineerName":self.engineerName,"engineerMail":self.engineerMail,"date":self.date,"buildWarningCnt":self.buildWarningCnt,"klocworkCnt":self.klocworkCnt};
     msg["data"]= payload;
     return msg;
     

@@ -25,6 +25,7 @@ my $viewdrive = "";
 my $kw_project = "";
 my $check_file = "";
 my $FCL_file_dir = "";
+my $baseline = "";
 #my $check_file ="Y:\\pcr_srp\\code\\phyrCe\\Code\\Neptune\\IP_Interface\\PH_NeptuneIPInterface.cpp";
 if (scalar(@ARGV) == 3)
 {
@@ -36,13 +37,23 @@ if (scalar(@ARGV) == 3)
     $log->info("viewdrive: $viewdrive");
     $log->info("kw_project: $kw_project");
 }
+elsif (scalar(@ARGV) == 4)
+{
+    $viewdrive = $ARGV[0];
+    $kw_project = $ARGV[1];
+    $FCL_file_dir = $ARGV[2];
+    $baseline = $ARGV[3]; 
+    # Remove ':' from view driver
+    $viewdrive =~ s/\://;
+    $log->info("viewdrive: $viewdrive");
+    $log->info("kw_project: $kw_project");
+}
 else
 {
     $log->error("Usage: $PERL $current_script Driver_letter KW_project_name");
     $log->error("For example: $PERL $current_script S NGR_DSP");
     exit 1;
 }
-
 open (FILE,"<",$FCL_file_dir) or die $!;
 {
     local $/=undef;
@@ -69,9 +80,17 @@ my $kw_host = $cfg->val("$kw_project", "kw_host");
 my $kw_port = $cfg->val("$kw_project", "kw_port");
 my $kw_user_home = $cfg->val("$kw_project", "kw_user_home");
 my $kw_server_home = $cfg->val("$kw_project", "kw_server_home");
-
 my $is_kw_out_exist_vob = $cfg->val("$kw_project", "is_kw_out_exist_vob");
-my $latest_kw_out = $cfg->val("$kw_project", "latest_kw_out");
+
+my $kw_out_dir = $cfg->val("$kw_project", "kw_out_dir");
+if(!$baseline)
+{
+    $baseline = $cfg->val("$kw_project", "baseline");
+}
+my $build_spec = $cfg->val("$kw_project", "build_spec");
+
+my $latest_kw_out = "$kw_out_dir\\$baseline\\$build_spec";
+
 my $project_vob = $cfg->val("$kw_project", "project_vob");
 
 #=================================================
