@@ -1,17 +1,19 @@
 var indexArray = ["idleState","preCheckState","buildFwState","testFwState","buildWin32State","testWin32State","preReleaseState"];
-var statusArray = ["not start","running","done"]
+var statusArray = ["not start","running","done","blocking"]
 var GET_JENKINS_INTERVAL = 15000;// each 15 seconds to get a jenkins status
 var CIStateLookup = {
   "idleState": {
     "icon":{
       "not start":"fa fa-coffee fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-coffee fa-lg"
+      "done":"fa fa-coffee fa-lg",
+      "blocking":"fa fa-exclamation-triangle fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary"      
+      "done":"btn btn-md btn-primary",
+      "blocking":"btn btn-md btn-danger" 
     },
     "curIcon":{
       "ciTabEmer":"fa fa-coffee fa-lg",
@@ -26,12 +28,14 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-download fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-download fa-lg"
+      "done":"fa fa-download fa-lg",
+      "blocking":"fa fa-exclamation-triangle fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary"      
+      "done":"btn btn-md btn-primary",
+      "blocking":"btn btn-md btn-danger" 
     },
     "curIcon":{
       "ciTabEmer":"fa fa-download fa-lg",
@@ -46,12 +50,14 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-building fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-building fa-lg"
+      "done":"fa fa-building fa-lg",
+      "blocking":"fa fa-exclamation-triangle fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary"      
+      "done":"btn btn-md btn-primary",   
+      "blocking":"btn btn-md btn-danger" 
     },
     "curIcon":{
       "ciTabEmer":"fa fa-building fa-lg",
@@ -66,12 +72,14 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-flask fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-flask fa-lg"
+      "done":"fa fa-flask fa-lg",
+      "blocking":"fa fa-exclamation-triangle fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary"      
+      "done":"btn btn-md btn-primary",
+      "blocking":"btn btn-md btn-danger" 
     },
     "curIcon":{
       "ciTabEmer":"fa fa-flask fa-lg",
@@ -86,12 +94,14 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-building fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-building fa-lg"
+      "done":"fa fa-building fa-lg",
+      "blocking":"fa fa-exclamation-triangle fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary"      
+      "done":"btn btn-md btn-primary",
+      "blocking":"btn btn-md btn-danger" 
     },
     "curIcon":{
       "ciTabEmer":"fa fa-building fa-lg",
@@ -106,12 +116,14 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-flask fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-flask fa-lg"
+      "done":"fa fa-flask fa-lg",
+      "blocking":"fa fa-exclamation-triangle fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary"      
+      "done":"btn btn-md btn-primary",
+      "blocking":"btn btn-md btn-danger" 
     },
     "curIcon":{
       "ciTabEmer":"fa fa-flask fa-lg",
@@ -126,12 +138,14 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-check-square-o fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-check-square-o fa-lg"
+      "done":"fa fa-check-square-o fa-lg",
+      "blocking":"fa fa-exclamation-triangle fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary"      
+      "done":"btn btn-md btn-primary",
+      "blocking":"btn btn-md btn-danger" 
     },
     "curIcon":{
       "ciTabEmer":"fa fa-check-square-o fa-lg",
@@ -147,26 +161,51 @@ var CIStateLookup = {
 
 var refreshCi = function(status)
 {
+   status.isCIBlocked.status = true
+  if(status.isCIBlocked.status == true){
+      sel = ".tab-pane.active div."+"warningImg";
+      $(sel)[0].style.display="";
+      
+      sel = ".tab-pane.active div."+"alert";
+      $(sel)[0].style.display="";
+      
+      sel = ".tab-pane.active div."+"alert"+" .submitterStr";
+      $(sel).text(status.isCIBlocked.submitter);
+
+      sel = ".tab-pane.active div."+"alert"+" .releaseTagStr";
+      $(sel).text(status.isCIBlocked.releaseTag);
+      
+  }
+  else{
+      sel = ".tab-pane.active div."+"warningImg";
+      $(sel)[0].style.display="none";
+      
+      sel = ".tab-pane.active div."+"info";
+      $(sel)[0].style.display="none";
+
+  }
   //console.log(status);
   $.each(status,function(i){
     var key = i;
     var value = status[i];
-    
+
     if (-1 != $.inArray(key,indexArray) && -1 != $.inArray(value.status,statusArray))
     {
       sel = ".tab-pane.active a."+key;
+      //console.log(self)
       var tabID = $(".tab-pane.active").attr("id");
       $(sel).removeClass(CIStateLookup[key].curBtn[tabID]);
       CIStateLookup[key].curBtn[tabID] = CIStateLookup[key].btn[value.status];
       $(sel).addClass(CIStateLookup[key].curBtn[tabID]);
       
       sel = ".tab-pane.active a."+key+" i";
+      //console.log(self)
       $(sel).removeClass(CIStateLookup[key].curIcon[tabID]);
       CIStateLookup[key].curIcon[tabID] = CIStateLookup[key].icon[value.status];
       $(sel).addClass(CIStateLookup[key].curIcon[tabID]);  
       
       sel = ".tab-pane.active a."+key+" .statusStr";
-      //console.log($(sel));
+
       $(sel).text(value.status);
       
       
@@ -178,7 +217,7 @@ var refreshCi = function(status)
 
 var refreshQ = function(QueueInfo)
 {
-  console.log(QueueInfo);
+  //console.log(QueueInfo);
   
   var $tblBody = undefined;
   
@@ -192,7 +231,6 @@ var refreshQ = function(QueueInfo)
   $tblBody = $("#nonEmerTbl");
   $tblBody.empty()  
   }
-  
   //create running CI row info
   $c1 = $("<td>").text("running CI");
   $c1.addClass("text-center");

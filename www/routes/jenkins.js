@@ -5,6 +5,9 @@ var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var days=30;
 
+var onTargetTestStatus_emer ={"id":0,"result":"SUCCESS","submitter":"na","releaseTag":"na"}
+var onTargetTestStatus_REPT2_7 ={"id":0,"result":"SUCCESS","submitter":"na","releaseTag":"na"}
+
 var emeraldStatus = {
   "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
@@ -13,6 +16,7 @@ var emeraldStatus = {
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
+  "isCIBlocked":{"status":false,"submitter":"na","releaseTag":"na"},
   "overall":{"current":{"branch":"na","subTime":"na"}}
 };  
 
@@ -24,6 +28,7 @@ var nonEmeraldStatus = {
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
+  "isCIBlocked":{"status":false,"submitter":"na","releaseTag":"na"},
   "overall":{"current":{"branch":"na","subTime":"na"}}
 };  
 
@@ -201,7 +206,7 @@ function getPendingReq(project, callback){
     }
 }
 
-var updateStatus = function(ciStatus,data){
+var updateStatus = function(ciStatus,data,onTargetTestStatus){
     
     ciStatus.idleState.status="not start";
     ciStatus.preCheckState.status="not start";
@@ -212,10 +217,24 @@ var updateStatus = function(ciStatus,data){
     ciStatus.preReleaseState.status="not start";   
     ciStatus.overall.current.branch="na";
     ciStatus.overall.current.subTime="na";
-	
-	  
-	  
-    if (data.building==false){
+    ciStatus.isCIBlocked.status=false;
+
+    
+    onTargetTestStatus.result = "FAILURE";
+    
+	if(onTargetTestStatus.result == "FAILURE"){
+      ciStatus.idleState.status="blocking";
+      ciStatus.preCheckState.status="blocking";
+      ciStatus.buildFwState.status="blocking";
+      ciStatus.testFwState.status="blocking";
+      ciStatus.buildWin32State.status="blocking";
+      ciStatus.testWin32State.status="blocking";
+      ciStatus.preReleaseState.status="blocking"; 
+      ciStatus.isCIBlocked.status=true;
+      ciStatus.isCIBlocked.submitter=onTargetTestStatus.submitter;
+      ciStatus.isCIBlocked.releaseTag=onTargetTestStatus.releaseTag;
+    }
+    else if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
     }else {
@@ -456,6 +475,35 @@ function getJobFailureInfo(job,days,callback){
 	return;
 	})
 }
+var updateOnTargetTestStatus = function(onTargetTestStatus,data){
+    if(data.id > onTargetTestStatus.id){
+        onTargetTestStatus.id = data.id;
+        onTargetTestStatus.result = data.result;
+        //onTargetTestStatus.submitter=data.submitter;
+        onTargetTestStatus.submitter=ruong.huang;
+        onTargetTestStatus.releaseTag="v1";
+    }
+}
+var onTargertTestInfo = function(job){
+    var param = 'id,result,actions[parameters[*]]'
+    var emerStr ="REPT2.7_Emerald";
+    getAllBuild(job,param,function(err,data){
+        if(err) 
+        {
+            console.log("err in onTargertTestInfo");
+            return;
+        }
+	   for (var i = 0; i < data.length; i++){
+            if(getProjectName(data[i]) == emerStr){
+			     onTargetTestStatus = onTargetTestStatus_emer;
+            }
+            else{
+				 onTargetTestStatus = onTargetTestStatus_REPT2_7;
+            }
+            updateOnTargetTestStatus(onTargetTestStatus,data[i]);
+	   }    
+    });
+}
 
 
 var updateLatestBuildInfo = function(job){
@@ -470,16 +518,19 @@ var updateLatestBuildInfo = function(job){
         var project = getProjectName(data);//data.actions[0].parameters[0].value;
         var ciStatus;
         if (project=="REPT2.7_Emerald"){
-          ciStatus = emeraldStatus;      
+          ciStatus = emeraldStatus;
+          onTargetTestStatus = onTargetTestStatus_emer;
         }else{
           ciStatus = nonEmeraldStatus;
+          onTargetTestStatus = onTargetTestStatus_REPT2_7;
         }
-        updateStatus(ciStatus,data);  
+        updateStatus(ciStatus,data,onTargetTestStatus); 
+        console.log(ciStatus);
         });
 }
 
 setInterval(function(){
-    
+    onTargertTestInfo('PCR-REPT-On_Target_MultiJob');
     updateLatestBuildInfo('PCR-REPT-0-MultiJob-Emerald');
     updateLatestBuildInfo('PCR-REPT-0-MultiJob');    
 
@@ -572,5 +623,6 @@ router.get('/getNonEmeraldFailInfo', function(req, res, next){
     return res.json(data);
   });
 })
+
 
 module.exports = router;
