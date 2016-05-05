@@ -147,17 +147,17 @@ var CIStateLookup = {
 
 var refreshCi = function(status)
 {
-
-  if(status.isCIBlocked.status == true){
+   //status.ciBlockInfo.result = "FAILURE"
+  if(status.ciBlockInfo.result == "FAILURE"){
       
       sel = ".tab-pane.active div."+"alert";
       $(sel)[0].style.display="";
       
       sel = ".tab-pane.active div."+"alert"+" .submitterStr";
-      $(sel).text(status.isCIBlocked.submitter);
+      $(sel).text(status.ciBlockInfo.submitter);
 
       sel = ".tab-pane.active div."+"alert"+" .releaseTagStr";
-      $(sel).text(status.isCIBlocked.releaseTag);
+      $(sel).text(status.ciBlockInfo.releaseTag);
       
   }
   else{

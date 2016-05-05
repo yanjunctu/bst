@@ -5,9 +5,6 @@ var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var days=30;
 
-var onTargetTestStatus_emer ={"id":0,"result":"SUCCESS","submitter":"na","releaseTag":"na"}
-var onTargetTestStatus_REPT2_7 ={"id":0,"result":"SUCCESS","submitter":"na","releaseTag":"na"}
-
 var emeraldStatus = {
   "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
@@ -16,7 +13,7 @@ var emeraldStatus = {
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
-  "isCIBlocked":{"status":false,"submitter":"na","releaseTag":"na"},
+  "ciBlockInfo":{"result":"SUCCESS","id":0,"submitter":"na","releaseTag":"na"},
   "overall":{"current":{"branch":"na","subTime":"na"}}
 };  
 
@@ -28,7 +25,7 @@ var nonEmeraldStatus = {
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
-  "isCIBlocked":{"status":false,"submitter":"na","releaseTag":"na"},
+  "ciBlockInfo":{"result":"SUCCESS","id":0,"submitter":"na","releaseTag":"na"},
   "overall":{"current":{"branch":"na","subTime":"na"}}
 };  
 
@@ -154,7 +151,7 @@ function getPendingReq(project, callback){
     }
 }
 
-var updateStatus = function(ciStatus,data,onTargetTestStatus){
+var updateStatus = function(ciStatus,data){
     
     ciStatus.idleState.status="not start";
     ciStatus.preCheckState.status="not start";
@@ -165,16 +162,7 @@ var updateStatus = function(ciStatus,data,onTargetTestStatus){
     ciStatus.preReleaseState.status="not start";   
     ciStatus.overall.current.branch="na";
     ciStatus.overall.current.subTime="na";
-    ciStatus.isCIBlocked.status=false;
 
-    
-    onTargetTestStatus.result = "FAILURE";
-    
-    if(onTargetTestStatus.result == "FAILURE"){
-      ciStatus.isCIBlocked.status=true;
-      ciStatus.isCIBlocked.submitter=onTargetTestStatus.submitter;
-      ciStatus.isCIBlocked.releaseTag=onTargetTestStatus.releaseTag;
-    }
     if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
@@ -416,15 +404,14 @@ function getJobFailureInfo(job,days,callback){
 	return;
 	})
 }
-var updateOnTargetTestStatus = function(onTargetTestStatus,data){
+var updateOnTargetTestStatus = function(ciBlockInfo,data){
     var id = parseInt(data.id)
-    if(id > onTargetTestStatus.id){
+    if(id > ciBlockInfo.id){
         
-        onTargetTestStatus.id = id;
-        onTargetTestStatus.result = data.result;
-        //onTargetTestStatus.submitter=data.submitter;
-        onTargetTestStatus.submitter=getParameterValue(data,"SUBMITTER");
-        onTargetTestStatus.releaseTag=getParameterValue(data,"NEW_BASELINE");
+        ciBlockInfo.id = id;
+        ciBlockInfo.result = data.result;
+        ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
+        ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
     }
 }
 var onTargertTestInfo = function(job){
@@ -438,12 +425,12 @@ var onTargertTestInfo = function(job){
         }
 	   for (var i = 0; i < data.length; i++){
             if(getParameterValue(data[i],"PROJECT_NAME") == emerStr){
-			     onTargetTestStatus = onTargetTestStatus_emer;
+			     ciStatus = emeraldStatus;
             }
             else{
-				 onTargetTestStatus = onTargetTestStatus_REPT2_7;
+				 ciStatus = nonEmeraldStatus;
             }
-            updateOnTargetTestStatus(onTargetTestStatus,data[i]);
+            updateOnTargetTestStatus(ciStatus.ciBlockInfo,data[i]);
 	   }    
     });
 }
@@ -462,12 +449,10 @@ var updateLatestBuildInfo = function(job){
         var ciStatus;
         if (project=="REPT2.7_Emerald"){
           ciStatus = emeraldStatus;
-          onTargetTestStatus = onTargetTestStatus_emer;
         }else{
           ciStatus = nonEmeraldStatus;
-          onTargetTestStatus = onTargetTestStatus_REPT2_7;
         }
-        updateStatus(ciStatus,data,onTargetTestStatus); 
+        updateStatus(ciStatus,data); 
        
         });
 }

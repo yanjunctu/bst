@@ -4,8 +4,10 @@ import string
 import subprocess
 import datetime
 from sys import path
+import StringIO
 
 PATTERN_EMER = r' *(.*)/(REPT_2\.7_Emerald_INT)\n'
+PATTERN_EMER_CI = r'REPT_Emerald_.+'
 FCL_FILE = '\\temp_log\\temp_FCL.txt'
 SCRIPT_DIR = '\\ltd\\tools\\booster\\warning'
 REPORT_FILE = '\\temp_log\\\\kw_check.report'
@@ -23,9 +25,19 @@ WelcomeWords = '''
 #                                                                             #
 #           Welcome to new klocwork issues self check tool                    #
 #This tool is used before you submit CI to find new klocwork issues introduced#
-#by your new changes. You 'd better reslove these new warnings before CI,     #
+#by your new changes. You 'd better reslove these new issues before CI,       #
 #otherwise, CI system will note down.                                         #
 ###############################################################################
+'''
+CIMailSubject = '[Notice!] Found new klocwork issue from your submitted code'
+
+
+CIMailHeader = '''
+This mail is sent as CI detected new klocwork issues be introduced from your submit code. 
+Please click /checkKlocwork.bat to do self audit before you submit IR to make sure no new klocwork issues there.
+
+Below is the raw output from the klocwork check tool, pls refer to it:
+#############################################
 '''
 
 
@@ -40,11 +52,11 @@ def local_kw_print(logfile):
         f.close()
 
     matches = local_kw_pattern.finditer(content)
-
+    
+    length =0
     if not matches:
         print "[PASS]:no new klovwork issue"
     else:
-        length =0
         for match in matches:
             kwissue=match.group(0).replace('\\', '/')
             length =length+1
@@ -53,24 +65,10 @@ def local_kw_print(logfile):
             print "[PASS]:no new klovwork issue"
         else:
             print "[NOTICE!!!]:Found {number} new klovwork issue in total".format(number=length)
-
-if __name__ == "__main__":
-    
-    tStart = datetime.datetime.now()
-    
-    args = process_argument()
-
-    args = pre_check(args)
-    
-    os.system("cls") # clear screen
-    print WelcomeWords;
-    
-    match = re.search(PATTERN_EMER, args.ci_Branch) 
-    if match:
-        kw_project = 'REPT2.7_Emerald';
-    else:
-        kw_project = 'REPT2.7';
-    
+            
+    return length
+            
+def getFCL(fcl_file,args):
     #get change file
     print 'get the file change list...'
     diff_parser = DiffParser(args.drive)
@@ -79,7 +77,6 @@ if __name__ == "__main__":
         print 'failed to get FCL'
         sys.exit()
         
-    fcl_file=args.drive+FCL_FILE
     fp=open(fcl_file,'w')
     file_number =0
     
@@ -102,8 +99,51 @@ if __name__ == "__main__":
         sys.exit()
     else:
         print '{number} files change'.format(number = file_number)
+
+def actionOnNewKWissue(tag,name,mail,file,number):
+    wkresult = WarnKlocCheckResult(releaseTag=tag,engineerName=name,engineerMail=mail,buildWarningCnt=0,klocworkCnt=number);
+    interface = BoosterClient();
+    ret = interface.send(wkresult);
+    if ret:
+        sendEmail(name,mail,file.getvalue(),CIMailSubject); 
+        
+if __name__ == "__main__":
     
+    tStart = datetime.datetime.now()
+    
+    args = process_argument()
+
+    args = pre_check(args)
+    
+    if (args.mode == 'preCI'):
+        os.system("cls") # clear screen
+        print WelcomeWords;
+    
+        pattern = PATTERN_EMER 
+      
+    else:
+        pattern = PATTERN_EMER_CI
+        stdout = sys.stdout
+        sys.stdout = stdOutfile = StringIO.StringIO()
+        print CIMailHeader
+    #get project name    
+    match = re.search(pattern, args.ci_Branch) 
+    if match:
+        kw_project = 'REPT2.7_Emerald';
+    else:
+        kw_project = 'REPT2.7';
+        
+    #get FCL
+    fcl_file=args.drive+FCL_FILE
+    getFCL(fcl_file,args)
+    
+    #if(args.mode == 'preCI'):
     cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file)
+    #else:
+        #REPT_Emerald_I02.07.01.84 convert to REPT_Emerald_I02_07_01_84
+        #args.ci_Branch = args.ci_Branch.replace('.','_')
+        #args.ci_Branch = 'LATEST'
+        #cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file,args.ci_Branch)
     print 'start to run klocwork,this will take some time,please wait...'
     
     kw_log =args.drive+KW_LOG
@@ -115,16 +155,20 @@ if __name__ == "__main__":
         print 'ERROR:klocwork is fail!!!'
         sys.exit(1)
     logfile = args.drive+REPORT_FILE
-    local_kw_print(logfile)
+    number = local_kw_print(logfile)
+    
+
     tEnd = datetime.datetime.now()
-    """
-    try:
-        os.remove(fcl_file)
-    except:
-        print 'can not remove the file {}'.format(fcl_file)
-    """
+
 
     print '\nKlocwork check is done!'
     print '\nMore information pls refer to {}'.format(logfile)
     print 'Totally use {minute} minutes {seconds} seconds\n'.format(minute = int((tEnd-tStart).total_seconds() / 60),seconds = int((tEnd-tStart).total_seconds() % 60))
+    
+    if args.mode == 'CI':
+        from boosterSocket import WarnKlocCheckResult,BoosterClient,sendEmail
+        sys.stdout = stdout #recover sys.stdout
+        if number >0:
+            actionOnNewKWissue(args.releaseTag,args.CIUserName,args.CIUserEmail,stdOutfile,number) 
+    
     
