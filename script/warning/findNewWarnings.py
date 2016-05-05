@@ -381,8 +381,7 @@ def print_log(changes,warnings,new_warnings,logfile,drive):
 
             
 def actionOnNewWarning(tag,name,mail,file):
-    wkresult=
-    WarnKlocCheckResult(releaseTag=tag,engineerName=name,engineerMail=mail,buildWarningCnt=len(ALL_NEW_WARNINGS),klocworkCnt=0);
+    wkresult=WarnKlocCheckResult(releaseTag=tag,engineerName=name,engineerMail=mail,buildWarningCnt=len(ALL_NEW_WARNINGS),klocworkCnt=0);
     interface = BoosterClient();
     ret = interface.send(wkresult);
     if ret:

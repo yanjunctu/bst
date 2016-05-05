@@ -36,7 +36,7 @@ CIMailHeader = '''
 This mail is sent as CI detected new klocwork issues be introduced from your submit code. 
 Please click /checkKlocwork.bat to do self audit before you submit IR to make sure no new klocwork issues there.
 
-Below is the raw output from the warning check tool, pls refer to it:
+Below is the raw output from the klocwork check tool, pls refer to it:
 #############################################
 '''
 
@@ -137,14 +137,13 @@ if __name__ == "__main__":
     fcl_file=args.drive+FCL_FILE
     getFCL(fcl_file,args)
     
-    if(args.mode == 'preCI'):
-        cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file)
-    else:
+    #if(args.mode == 'preCI'):
+    cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file)
+    #else:
         #REPT_Emerald_I02.07.01.84 convert to REPT_Emerald_I02_07_01_84
-        args.ci_Branch = args.ci_Branch.replace('.','_')
-        args.ci_Branch = 'LATEST'
-        cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file,args.ci_Branch)
- 
+        #args.ci_Branch = args.ci_Branch.replace('.','_')
+        #args.ci_Branch = 'LATEST'
+        #cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file,args.ci_Branch)
     print 'start to run klocwork,this will take some time,please wait...'
     
     kw_log =args.drive+KW_LOG
