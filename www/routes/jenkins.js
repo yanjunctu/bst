@@ -60,6 +60,33 @@ var getAllBuild = function (job,param,callback)
   });  
 };
 
+function getParameterValue(data,parameter){
+  var actions = data.actions;
+  var found;
+  
+  actions.forEach(function(action){
+    if (action.hasOwnProperty("parameters")) {
+      var paras = action.parameters;
+      paras.forEach(function(para){
+        //console.log(para.name);
+        if(para.name==parameter){
+          //console.log("found",para.value)
+          found = para.value;
+          return;
+        }
+        {
+          //console.log()
+        }
+          
+      })
+    }
+  }
+  );
+  return found;
+}
+
+
+
 function getProjectName(data){
   var actions = data.actions;
   var found;
@@ -123,6 +150,31 @@ function getSubmitterName(data){
       paras.forEach(function(para){
         //console.log(para.name);
         if(para.name=="SUBMITTER"){
+          //console.log("found",para.value)
+          found = para.value;
+          return;
+        }
+        {
+          //console.log()
+        }
+          
+      })
+    }
+  }
+  );
+  return found;
+}
+function getReleaseTag(data){
+  
+  var actions = data.actions;
+  var found;
+  
+  actions.forEach(function(action){
+    if (action.hasOwnProperty("parameters")) {
+      var paras = action.parameters;
+      paras.forEach(function(para){
+        //console.log(para.name);
+        if(para.name=="NEW_BASELINE"){
           //console.log("found",para.value)
           found = para.value;
           return;
@@ -223,18 +275,11 @@ var updateStatus = function(ciStatus,data,onTargetTestStatus){
     onTargetTestStatus.result = "FAILURE";
     
 	if(onTargetTestStatus.result == "FAILURE"){
-      ciStatus.idleState.status="blocking";
-      ciStatus.preCheckState.status="blocking";
-      ciStatus.buildFwState.status="blocking";
-      ciStatus.testFwState.status="blocking";
-      ciStatus.buildWin32State.status="blocking";
-      ciStatus.testWin32State.status="blocking";
-      ciStatus.preReleaseState.status="blocking"; 
       ciStatus.isCIBlocked.status=true;
       ciStatus.isCIBlocked.submitter=onTargetTestStatus.submitter;
       ciStatus.isCIBlocked.releaseTag=onTargetTestStatus.releaseTag;
     }
-    else if (data.building==false){
+    if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
     }else {
@@ -480,8 +525,8 @@ var updateOnTargetTestStatus = function(onTargetTestStatus,data){
         onTargetTestStatus.id = data.id;
         onTargetTestStatus.result = data.result;
         //onTargetTestStatus.submitter=data.submitter;
-        onTargetTestStatus.submitter=ruong.huang;
-        onTargetTestStatus.releaseTag="v1";
+        onTargetTestStatus.submitter=getSubmitterName(data);
+        onTargetTestStatus.releaseTag=getReleaseTag(data);
     }
 }
 var onTargertTestInfo = function(job){

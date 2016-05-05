@@ -6,14 +6,12 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-coffee fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-coffee fa-lg",
-      "blocking":"fa fa-exclamation-triangle fa-lg"
+      "done":"fa fa-coffee fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary",
-      "blocking":"btn btn-md btn-danger" 
+      "done":"btn btn-md btn-primary"
     },
     "curIcon":{
       "ciTabEmer":"fa fa-coffee fa-lg",
@@ -28,14 +26,12 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-download fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-download fa-lg",
-      "blocking":"fa fa-exclamation-triangle fa-lg"
+      "done":"fa fa-download fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary",
-      "blocking":"btn btn-md btn-danger" 
+      "done":"btn btn-md btn-primary"
     },
     "curIcon":{
       "ciTabEmer":"fa fa-download fa-lg",
@@ -50,14 +46,12 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-building fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-building fa-lg",
-      "blocking":"fa fa-exclamation-triangle fa-lg"
+      "done":"fa fa-building fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary",   
-      "blocking":"btn btn-md btn-danger" 
+      "done":"btn btn-md btn-primary"  
     },
     "curIcon":{
       "ciTabEmer":"fa fa-building fa-lg",
@@ -72,14 +66,12 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-flask fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-flask fa-lg",
-      "blocking":"fa fa-exclamation-triangle fa-lg"
+      "done":"fa fa-flask fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary",
-      "blocking":"btn btn-md btn-danger" 
+      "done":"btn btn-md btn-primary"
     },
     "curIcon":{
       "ciTabEmer":"fa fa-flask fa-lg",
@@ -94,14 +86,12 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-building fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-building fa-lg",
-      "blocking":"fa fa-exclamation-triangle fa-lg"
+      "done":"fa fa-building fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary",
-      "blocking":"btn btn-md btn-danger" 
+      "done":"btn btn-md btn-primary"
     },
     "curIcon":{
       "ciTabEmer":"fa fa-building fa-lg",
@@ -116,14 +106,12 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-flask fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-flask fa-lg",
-      "blocking":"fa fa-exclamation-triangle fa-lg"
+      "done":"fa fa-flask fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary",
-      "blocking":"btn btn-md btn-danger" 
+      "done":"btn btn-md btn-primary"
     },
     "curIcon":{
       "ciTabEmer":"fa fa-flask fa-lg",
@@ -138,14 +126,12 @@ var CIStateLookup = {
     "icon":{
       "not start":"fa fa-check-square-o fa-lg",
       "running":"fa fa-refresh fa-spin fa-lg",
-      "done":"fa fa-check-square-o fa-lg",
-      "blocking":"fa fa-exclamation-triangle fa-lg"
+      "done":"fa fa-check-square-o fa-lg"
     },
     "btn":{
       "not start":"btn btn-md btn-default",
       "running":"btn btn-md btn-success",
-      "done":"btn btn-md btn-primary",
-      "blocking":"btn btn-md btn-danger" 
+      "done":"btn btn-md btn-primary"
     },
     "curIcon":{
       "ciTabEmer":"fa fa-check-square-o fa-lg",
@@ -163,8 +149,6 @@ var refreshCi = function(status)
 {
    status.isCIBlocked.status = true
   if(status.isCIBlocked.status == true){
-      sel = ".tab-pane.active div."+"warningImg";
-      $(sel)[0].style.display="";
       
       sel = ".tab-pane.active div."+"alert";
       $(sel)[0].style.display="";
@@ -177,12 +161,9 @@ var refreshCi = function(status)
       
   }
   else{
-      sel = ".tab-pane.active div."+"warningImg";
-      $(sel)[0].style.display="none";
-      
-      sel = ".tab-pane.active div."+"info";
-      $(sel)[0].style.display="none";
 
+      sel = ".tab-pane.active div."+"alert";
+      $(sel)[0].style.display="none";
   }
   //console.log(status);
   $.each(status,function(i){
