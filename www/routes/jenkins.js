@@ -85,6 +85,7 @@ function getParameterValue(data,parameter){
   return found;
 }
 
+
 function getPendingReq(project, callback){
     var result = {"current":{"submitter":"","subTime":0},"queue":[]};
 
@@ -416,12 +417,16 @@ function getJobFailureInfo(job,days,callback){
 	})
 }
 var updateOnTargetTestStatus = function(onTargetTestStatus,data){
-    if(data.id > onTargetTestStatus.id){
-        onTargetTestStatus.id = data.id;
+    var id = parseInt(data.id)
+    if(id > onTargetTestStatus.id){
+        console.log(id)
+        console.log(onTargetTestStatus.id)
+        onTargetTestStatus.id = id;
         onTargetTestStatus.result = data.result;
         //onTargetTestStatus.submitter=data.submitter;
         onTargetTestStatus.submitter=getParameterValue(data,"SUBMITTER");
         onTargetTestStatus.releaseTag=getParameterValue(data,"NEW_BASELINE");
+        console.log(onTargetTestStatus)
     }
 }
 var onTargertTestInfo = function(job){
@@ -465,7 +470,7 @@ var updateLatestBuildInfo = function(job){
           onTargetTestStatus = onTargetTestStatus_REPT2_7;
         }
         updateStatus(ciStatus,data,onTargetTestStatus); 
-        console.log(ciStatus);
+       
         });
 }
 
