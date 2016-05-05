@@ -85,111 +85,6 @@ function getParameterValue(data,parameter){
   return found;
 }
 
-
-
-function getProjectName(data){
-  var actions = data.actions;
-  var found;
-  
-  actions.forEach(function(action){
-    if (action.hasOwnProperty("parameters")) {
-      var paras = action.parameters;
-      paras.forEach(function(para){
-        //console.log(para.name);
-        if(para.name=="PROJECT_NAME"){
-          //console.log("found",para.value)
-          found = para.value;
-          return;
-        }
-        {
-          //console.log()
-        }
-          
-      })
-    }
-  }
-  );
-  return found;
-}
-
-function getBranchName(data){
-  
-  var actions = data.actions;
-  var found;
-  
-  actions.forEach(function(action){
-    if (action.hasOwnProperty("parameters")) {
-      var paras = action.parameters;
-      paras.forEach(function(para){
-        //console.log(para.name);
-        if(para.name=="IR_BRANCH"){
-          //console.log("found",para.value)
-          found = para.value;
-          return;
-        }
-        {
-          //console.log()
-        }
-          
-      })
-    }
-  }
-  );
-  return found;
-}
-
-
-function getSubmitterName(data){
-  
-  var actions = data.actions;
-  var found;
-  
-  actions.forEach(function(action){
-    if (action.hasOwnProperty("parameters")) {
-      var paras = action.parameters;
-      paras.forEach(function(para){
-        //console.log(para.name);
-        if(para.name=="SUBMITTER"){
-          //console.log("found",para.value)
-          found = para.value;
-          return;
-        }
-        {
-          //console.log()
-        }
-          
-      })
-    }
-  }
-  );
-  return found;
-}
-function getReleaseTag(data){
-  
-  var actions = data.actions;
-  var found;
-  
-  actions.forEach(function(action){
-    if (action.hasOwnProperty("parameters")) {
-      var paras = action.parameters;
-      paras.forEach(function(para){
-        //console.log(para.name);
-        if(para.name=="NEW_BASELINE"){
-          //console.log("found",para.value)
-          found = para.value;
-          return;
-        }
-        {
-          //console.log()
-        }
-          
-      })
-    }
-  }
-  );
-  return found;
-}
-
 function getPendingReq(project, callback){
     var result = {"current":{"submitter":"","subTime":0},"queue":[]};
 
@@ -284,7 +179,7 @@ var updateStatus = function(ciStatus,data,onTargetTestStatus){
       ciStatus.idleState.status="running";
     }else {
       ciStatus.idleState.status="done";
-      ciStatus.overall.current.branch= getSubmitterName(data);//data.actions[0].parameters[1].value;
+      ciStatus.overall.current.branch= getParameterValue(data,"SUBMITTER");//data.actions[0].parameters[1].value;
       ciStatus.overall.current.subTime = data.timestamp;   
       
       data.subBuilds.forEach(function(element, index, array){
@@ -397,7 +292,7 @@ function pushdata(id,duration,submitter,timestamp,data){
 	//parameter=data.actions[0].parameters;
 	//console.log(parameters);
 
-submitter.push(getSubmitterName(data)); 
+submitter.push(getParameterValue(data,"SUBMITTER")); 
 
 }
 
@@ -425,7 +320,7 @@ function getJobDuration(job,days,callback){
 		   if(data[i].result == "SUCCESS")
 		   {
 		       //parameter=data[i].actions[0].parameters;
-			   if(getProjectName(data[i]) == emerStr)
+			   if(getParameterValue(data[i],"PROJECT_NAME") == emerStr)
 			   {
 			       pushdata(durationDic.id_em,durationDic.duration_em,durationDic.submitter_em,durationDic.timestamp_em,data[i]);
 			   
@@ -501,7 +396,7 @@ function getJobFailureInfo(job,days,callback){
 					}
 			   }
 
-				failureInfoDic.failSubmitter.push(getSubmitterName(data[i])); 
+				failureInfoDic.failSubmitter.push(getParameterValue(data[i],"SUBMITTER")); 
    
 		   }
 		   else if(data[i].result== "ABORTED")
@@ -525,8 +420,8 @@ var updateOnTargetTestStatus = function(onTargetTestStatus,data){
         onTargetTestStatus.id = data.id;
         onTargetTestStatus.result = data.result;
         //onTargetTestStatus.submitter=data.submitter;
-        onTargetTestStatus.submitter=getSubmitterName(data);
-        onTargetTestStatus.releaseTag=getReleaseTag(data);
+        onTargetTestStatus.submitter=getParameterValue(data,"SUBMITTER");
+        onTargetTestStatus.releaseTag=getParameterValue(data,"NEW_BASELINE");
     }
 }
 var onTargertTestInfo = function(job){
@@ -539,7 +434,7 @@ var onTargertTestInfo = function(job){
             return;
         }
 	   for (var i = 0; i < data.length; i++){
-            if(getProjectName(data[i]) == emerStr){
+            if(getParameterValue(data[i],"PROJECT_NAME") == emerStr){
 			     onTargetTestStatus = onTargetTestStatus_emer;
             }
             else{
@@ -560,7 +455,7 @@ var updateLatestBuildInfo = function(job){
           return;
         }
     
-        var project = getProjectName(data);//data.actions[0].parameters[0].value;
+        var project = getParameterValue(data,"PROJECT_NAME");//data.actions[0].parameters[0].value;
         var ciStatus;
         if (project=="REPT2.7_Emerald"){
           ciStatus = emeraldStatus;
