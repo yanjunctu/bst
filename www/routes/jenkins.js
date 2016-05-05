@@ -170,7 +170,7 @@ var updateStatus = function(ciStatus,data,onTargetTestStatus){
     
     onTargetTestStatus.result = "FAILURE";
     
-	if(onTargetTestStatus.result == "FAILURE"){
+    if(onTargetTestStatus.result == "FAILURE"){
       ciStatus.isCIBlocked.status=true;
       ciStatus.isCIBlocked.submitter=onTargetTestStatus.submitter;
       ciStatus.isCIBlocked.releaseTag=onTargetTestStatus.releaseTag;
@@ -419,14 +419,12 @@ function getJobFailureInfo(job,days,callback){
 var updateOnTargetTestStatus = function(onTargetTestStatus,data){
     var id = parseInt(data.id)
     if(id > onTargetTestStatus.id){
-        console.log(id)
-        console.log(onTargetTestStatus.id)
+        
         onTargetTestStatus.id = id;
         onTargetTestStatus.result = data.result;
         //onTargetTestStatus.submitter=data.submitter;
         onTargetTestStatus.submitter=getParameterValue(data,"SUBMITTER");
         onTargetTestStatus.releaseTag=getParameterValue(data,"NEW_BASELINE");
-        console.log(onTargetTestStatus)
     }
 }
 var onTargertTestInfo = function(job){

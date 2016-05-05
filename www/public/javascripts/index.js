@@ -1,5 +1,5 @@
 var indexArray = ["idleState","preCheckState","buildFwState","testFwState","buildWin32State","testWin32State","preReleaseState"];
-var statusArray = ["not start","running","done","blocking"]
+var statusArray = ["not start","running","done"]
 var GET_JENKINS_INTERVAL = 15000;// each 15 seconds to get a jenkins status
 var CIStateLookup = {
   "idleState": {
@@ -147,7 +147,7 @@ var CIStateLookup = {
 
 var refreshCi = function(status)
 {
-   status.isCIBlocked.status = true
+
   if(status.isCIBlocked.status == true){
       
       sel = ".tab-pane.active div."+"alert";
