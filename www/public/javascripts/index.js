@@ -157,13 +157,34 @@ var ciTable = $("#ciHistoryTbl").DataTable({
                 }
             },
             {data: "buildID"},
+            {data: "rlsTag"},
             {data: "submitter"},
             {data: "rlsTime"},
             {data: "onTargetBuild"},
             {data: "offTargetBuild"},
             {data: "win32UT"},
-            {data: "win32IT"},
-            {data: "codeStaticCheck"},
+            {
+                data: "win32IT",
+                render: function(data, type, row) {
+                    var part1 = data["win32ITPart1"], part2 = data["win32ITPart1"];
+
+                    if ("SUCCESS" == part1 && "SUCCESS" == part2)
+                        return "SUCCESS";
+                    else if ("--" == part1 && "--" == part2)
+                        return "--";
+                    else
+                        return "FAILURE";
+                }
+            },
+            {
+                data: "codeStaticCheck",
+                render: function(data, type, row) {
+                    if ("build" in data && "klocwork" in data)
+                        return "build warnings: "+data["build"]+"\nkw warnings: "+data["klocwork"];
+                    else
+                        return "";
+                }
+            },
             {data: "onTargetSanity"},
             {data: "extRegressionTest"}
     ]

@@ -2,7 +2,8 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var fs = require('fs');
-var xlsjs = require('xlsjs');
+var fiber = require('fibers');
+var server = require('mongo-sync').Server;
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var days=30;
@@ -30,19 +31,30 @@ var nonEmeraldStatus = {
 };  
 
 // Variables for CI history info
-const CI_INFO_FILE = "/var/opt/booster/jenkins.xls";
-const CI_TRIGGER_SHEET = "emerald_multiJob";
-const CI_ON_TARGET_SHEET = "onTarget_multiJob";
-const CI_ON_TAEGET_BUILD_SHEET = "onTarget_build_multiJob";
-const CI_OFF_TARGET_SHEET = "offTarget_multi_job";
-const CI_OFF_TARGET_BUILD_SHEET = "offTarget_build_job";
-const CI_OFF_TARGET_TEST_SHEET = "offTarget_test_multiJob";
-const CI_OFF_TARGET_UT_SHEET = "offTarget_test_ut_job";
-const CI_OFF_TARGET_IT_SHEET = "offTarget_test_it_job";
-var CIFileMTime = 0;
+const CI_TRIGGER_JOB= "PCR-REPT-0-MultiJob";
+const CI_ON_TARGET_JOB= "PCR-REPT-On_Target_MultiJob";
+const CI_ON_TAEGET_BUILD_JOB= "PCR-REPT-On_Target_Build_MultiJob";
+const CI_OFF_TARGET_JOB= "PCR-REPT-Off_Target_MultiJob";
+const CI_OFF_TARGET_BUILD_JOB= "PCR-REPT-Off_Target_Build_MultiJob";
+const CI_OFF_TARGET_TEST_JOB= "PCR-REPT-Off_Target_Test_MultiJob";
+const CI_OFF_TARGET_UT_JOB= "PCR-REPT-Win32_UT";
+const CI_OFF_TARGET_IT_PART1_JOB = "PCR-REPT-Win32_IT-TEST-Part1";
+const CI_OFF_TARGET_IT_PART2_JOB = "PCR-REPT-Win32_IT-TEST-Part2";
+const CI_RELEASE_JOB = "PCR-REPT-Git-Release";
+const CI_WARNING_COLL_NAME = "warningKlocwork";
 var CIHistory = [];
-var CIOnTargetAllJobs = {"multiJob": [], "build": []};
-var CIOffTargetAllJobs = {"multiJob": [], "build": [], "test": [], "win32UT": [], "win32IT": []};
+var CIOnTargetBuildChain = [CI_ON_TARGET_JOB, CI_ON_TAEGET_BUILD_JOB];
+var CIOffTargetBuildChain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_BUILD_JOB];
+var CIOffTargetUTChain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_TEST_JOB, CI_OFF_TARGET_UT_JOB];
+var CIOffTargetITPart1Chain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_TEST_JOB, CI_OFF_TARGET_IT_PART1_JOB];
+var CIOffTargetITPart2Chain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_TEST_JOB, CI_OFF_TARGET_IT_PART2_JOB];
+var CIAllChains = {
+    "onTargetBuild": CIOnTargetBuildChain,
+    "offTargetBuild": CIOffTargetBuildChain,
+    "win32UT": CIOffTargetUTChain,
+    "win32ITPart1": CIOffTargetITPart1Chain,
+    "win32ITPart2": CIOffTargetITPart2Chain
+};
 
 var getJobLastBuild = function(job,callback)
 {
@@ -494,159 +506,78 @@ var updateLatestBuildInfo = function(job){
         });
 }
 
-var getObjByElement = function(objs, key, value) {
-    var i = objs.length - 1;
+var getValueOfBuildChain = function(db, doc, buildChain, key) {
+    var i = 0;
+    var buildInfo = doc;
+    
+    for (; i < buildChain.length && buildInfo && buildChain[i] in buildInfo; ++i) {
+        var nextBuildColl = db.getCollection(buildChain[i]);
+        var nextBuildID = buildInfo[buildChain[i]];
 
-    if (!value) {
-        return;
-    }
-    while (i >= 0) {
-        if (objs[i][key] == value) {
-            return objs[i];
+        if (!nextBuildColl || !nextBuildID) {
+            break;
         }
-        --i;
+        buildInfo = nextBuildColl.findOne({"build id": nextBuildID});
+    }
+    if (i == buildChain.length && buildInfo && key in buildInfo) {
+        return buildInfo[key];
     }
 
     return;
 }
 
-var getBuildStatus = function(jobs, jobID, type) {
-    var res = "na";
-    var multiJob = jobs["multiJob"];
-    var target = "PCR-REPT-On_Target_Build_MultiJob";
+var refreshCIHistory = function(db, doc) {
+    var entry = {"buildResult": "--", "buildID": 0, "rlsTag":"--", "submitter": "--", "rlsTime": "--", "onTargetBuild": "--","offTargetBuild": "--", "win32UT": "--", "win32IT": {"win32ITPart1": "--", "win32ITPart2": "--"}, "codeStaticCheck": {}, "onTargetSanity": "--", "extRegressionTest": "--"};
+    var rlsDate = new Date(doc["start time"] + doc["build duration"]);
+    var rlsInfo = db.getCollection(CI_RELEASE_JOB).findOne({"build id": doc[CI_RELEASE_JOB]});
+    var itValue = {"win32ITPart1": "", "win32ITPart2": ""};
 
-    if ("off-target" == type) {
-        target = "PCR-REPT-Off_Target_Build_MultiJob";
-    } var targetJobInfo = getObjByElement(multiJob, "build id", jobID);
-    if (targetJobInfo) {
-        var buildJob = jobs["build"];
-        var targetBuildInfo = getObjByElement(buildJob, "build id", targetJobInfo[target]);
+    entry["buildID"] = doc["build id"];
+    entry["buildResult"] = doc["build result"];
+    entry["submitter"] = doc["submitter"];
+    if (entry["buildResult"] == "SUCCESS") {
+        entry["rlsTime"] = rlsDate.toLocaleDateString() + " " + rlsDate.toLocaleTimeString();
+        if (rlsInfo && "release tag" in rlsInfo) {
+            var buildWarnings = 0, klocworkWarnings = 0;
+            var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsInfo["release tag"]}).toArray();
 
-        if (targetBuildInfo) {
-            res = targetBuildInfo["build result"];
+            entry["rlsTag"] = rlsInfo["release tag"];
+            for (var i = 0; i < warnings.length; ++i) {
+                buildWarnings += warnings["buildWarningCnt"];
+                klocworkWarnings += warnings["klocworkCnt"];
+            }
+            entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
         }
     }
+    for (var key in CIAllChains) {
+        var value = getValueOfBuildChain(db, doc, CIAllChains[key], "build result");
 
-    return res;
-}
-
-var getTestStatus = function(jobs, jobID, type) {
-    var res = {"UT": "", "IT": ""};
-    var target = "PCR-REPT-On_Target_Test_MultiJob";
-    var ut = "", it = "";
-
-    // For now, only off target is supported
-    if ("off-target" == type) {
-        target = "PCR-REPT-Off_Target_Test_MultiJob";
-        ut = "PCR-REPT-Win32_UT";
-        it = "PCR-REPT-Win32_IT";
-    }
-
-    var targetJobInfo = getObjByElement(jobs["multiJob"], "build id", jobID);
-    if (targetJobInfo) {
-        var targetTestInfo = getObjByElement(jobs["test"], "build id", targetJobInfo[target]);
-
-        if (targetTestInfo) {
-            var utInfo = getObjByElement(jobs["win32UT"], "build id", targetTestInfo[ut]);
-            var itInfo = getObjByElement(jobs["win32IT"], "build id", targetTestInfo[it]);
-
-            if (utInfo) {
-                res["UT"] = utInfo["build result"];
-            }
-            if (itInfo) {
-                res["IT"] = itInfo["build result"];
-            }
+        if (value) {
+            if ("win32ITPart1" == key || "win32ITPart2" == key)
+                entry["win32IT"][key] = value;
+            else
+                entry[key] = value;
         }
     }
-
-    return res;
-}
-
-var refreshCIJobs = function(workbook) {
-    CIOnTargetAllJobs["multiJob"] = xlsjs.utils.sheet_to_json(workbook.Sheets[CI_ON_TARGET_SHEET]);
-    CIOnTargetAllJobs["build"] = xlsjs.utils.sheet_to_json(workbook.Sheets[CI_ON_TAEGET_BUILD_SHEET]);
-    CIOffTargetAllJobs["multiJob"] = xlsjs.utils.sheet_to_json(workbook.Sheets[CI_OFF_TARGET_SHEET]);
-    CIOffTargetAllJobs["build"] = xlsjs.utils.sheet_to_json(workbook.Sheets[CI_OFF_TARGET_BUILD_SHEET]);
-    CIOffTargetAllJobs["test"] = xlsjs.utils.sheet_to_json(workbook.Sheets[CI_OFF_TARGET_TEST_SHEET]);
-    CIOffTargetAllJobs["win32UT"] = xlsjs.utils.sheet_to_json(workbook.Sheets[CI_OFF_TARGET_UT_SHEET]);
-    CIOffTargetAllJobs["win32IT"] = xlsjs.utils.sheet_to_json(workbook.Sheets[CI_OFF_TARGET_IT_SHEET]);
-}
-
-var refreshCIHistory = function(workbook) {
-    var triggerSheet = workbook.Sheets[CI_TRIGGER_SHEET];
-
-    // Each CI job begins with a trigger job
-    if (triggerSheet) {
-        var allTriggerJobs = xlsjs.utils.sheet_to_json(triggerSheet);
-        var start = allTriggerJobs.length;
-        var lastBuildID = 0;
-
-        // Find the new trigger jobs since the last update
-        if (CIHistory.length > 0) {
-            lastBuildID = CIHistory[CIHistory.length-1]["buildID"];
-        }
-        while(start>0 && allTriggerJobs[start-1]["build id"]>lastBuildID) {
-            --start;
-        }
-        if (start == allTriggerJobs.length) {
-            return;
-        }
-
-        // Delta refresh CI History with the new CI trigger jobs
-        refreshCIJobs(workbook);
-        while (start < allTriggerJobs.length) {
-            var newTriggerJob = allTriggerJobs[start++];
-            var onTargetJobID = newTriggerJob["PCR-REPT-On_Target_MultiJob"];
-            var offTargetJobID = newTriggerJob["PCR-REPT-Off_Target_MultiJob"];
-            var startTime = newTriggerJob["start time"];
-            var duration = newTriggerJob["build duration"];
-            var buildResult = newTriggerJob["build result"];
-            var entry = {"buildResult": "", "buildID": 0, "submitter": "", "rlsTime": "", "onTargetBuild": "","offTargetBuild": "", "win32UT": "", "win32IT": "", "codeStaticCheck": "", "onTargetSanity": "", "extRegressionTest": ""};
-
-            entry["buildID"] = newTriggerJob["build id"];
-            entry["buildResult"] = newTriggerJob["build result"];
-            if (newTriggerJob["submitter"]) {
-                entry["submitter"] = newTriggerJob["submitter"];
-            }
-            if (startTime && duration && entry["buildResult"] == "SUCCESS") {
-                var tmp = duration.split(':');
-                var durationMs = (parseInt(tmp[0])*3600+parseInt(tmp[1])*60+parseInt(tmp[2]))*1000;
-                var rlsTime = (new Date(startTime)).getTime() + durationMs;
-                var d = new Date(rlsTime);
-
-                entry["rlsTime"] = d.toLocaleDateString() + " " + d.toLocaleTimeString();
-            }
-            if (onTargetJobID) {
-                entry["onTargetBuild"] = getBuildStatus(CIOnTargetAllJobs, onTargetJobID, "on-target");
-            }
-            if (offTargetJobID) {
-                var testStatus = getTestStatus(CIOffTargetAllJobs, offTargetJobID, "off-target");
-
-                entry["offTargetBuild"] = getBuildStatus(CIOffTargetAllJobs, offTargetJobID, "off-target");
-                entry["win32UT"] = testStatus["UT"];
-                entry["win32IT"] = testStatus["IT"];
-            }
-            CIHistory.push(entry);
-        }
-    }
+    CIHistory.push(entry);
 }
 
 var updateCIHistoryInfo = function() {
-    fs.stat(CI_INFO_FILE, function(err, stats) {
-        if (err) {
-            console.log(err);
-            return;
-        }
-        var newMTime = new Date(stats.mtime).getTime();
-        if (newMTime != CIFileMTime) {
-            var workbook = xlsjs.readFile(CI_INFO_FILE);
+    var lastBuildID = 0;
 
-            if (workbook) {
-                refreshCIHistory(workbook);
-                CIFileMTime = newMTime;
-            } 
-        }
-    });
+    // find the new trigger builds since the last update
+    if (CIHistory.length > 0) {
+        lastBuildID = CIHistory[CIHistory.length-1]["buildID"];
+    }
+    
+    fiber(function() {
+        var db = new server("127.0.0.1").db("booster");
+        var docs = db.getCollection(CI_TRIGGER_JOB).find({"build id": {$gt: lastBuildID}}).toArray();
+        
+        docs.forEach(function(doc) {
+            refreshCIHistory(db, doc);
+        });
+    }).run();
 }
 
 setInterval(function(){
@@ -655,7 +586,7 @@ setInterval(function(){
     updateLatestBuildInfo('PCR-REPT-0-MultiJob');    
     updateCIHistoryInfo();
 
-},GET_JENKINS_INTERVAL);
+}, GET_JENKINS_INTERVAL);
 
 
 /* GET feedback about git page. */

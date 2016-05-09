@@ -24,7 +24,7 @@ class BoosterJenkins():
         try:
             jobInfo = self.server.get_job_info(name)
         except JenkinsException, je:
-            print 'Failed to get job info for job {}: {}'.format(parentJob, str(je))
+            print 'Failed to get job info for job {}: {}'.format(name, str(je))
             return None 
 
         ret['name'] = name
@@ -57,6 +57,8 @@ class BoosterJenkins():
         ret['build result'] = buildInfo['result']
         ret['start time'] = buildInfo['timestamp']
         ret['build duration'] = buildInfo['duration']
+        ret['submitter'] = ''
+        ret['push time'] = ''
         # Some parameters we are interested in
         for action in buildInfo['actions']:
             if 'parameters' in action:
