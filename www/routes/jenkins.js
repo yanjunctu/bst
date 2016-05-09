@@ -13,7 +13,7 @@ var emeraldStatus = {
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
-  "overall":{"current":{"branch":"na","subTime":"na"}}
+  "overall":{"current":{"submitter":"na","subBranch":"na","subTime":"na"}}
 };  
 
 var nonEmeraldStatus = {
@@ -24,7 +24,7 @@ var nonEmeraldStatus = {
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
-  "overall":{"current":{"branch":"na","subTime":"na"}}
+  "overall":{"current":{"submitter":"na","subBranch":"na","subTime":"na"}}
 };  
 
 var getJobLastBuild = function(job,callback)
@@ -134,7 +134,7 @@ function getSubmitterName(data){
 }
 
 function getPendingReq(project, callback){
-    var result = {"current":{"submitter":"","subTime":0},"queue":[]};
+    var result = {"current":{"submitter":"","subBranch":"","subTime":0},"queue":[]};
 
     try {
         jenkins.queue(function(err, data){
@@ -164,6 +164,10 @@ function getPendingReq(project, callback){
                         {
                             submitter = keyValue[1];
                         }
+                        if(keyValue[0] == 'IR_BRANCH')
+                        {
+                            branch = keyValue[1];
+                        }                        
                         if(keyValue[0] == 'PUSH_TIME')
                         {
                             pushTime = keyValue[1];
@@ -173,11 +177,11 @@ function getPendingReq(project, callback){
                     
                     if(projName == project){
                         var jobName = /pcr-rept-0-multijob(-emerald)?/ig.exec(item.task.name);
-                        if (jobName && submitter && pushTime){
+                        if (jobName && submitter && branch && pushTime){
                      
                             console.log('jobname:'+item.task.name);
-                                        console.log(submitter,pushTime);
-                            result.queue.push({"submitter":submitter, "subTime":pushTime});
+                                        console.log(submitter,branch,pushTime);
+                            result.queue.push({"submitter":submitter,"subBranch":branch,"subTime":pushTime});
                         }     
                     }
                     /*
@@ -210,8 +214,10 @@ var updateStatus = function(ciStatus,data){
     ciStatus.buildWin32State.status="not start";
     ciStatus.testWin32State.status="not start";
     ciStatus.preReleaseState.status="not start";   
-    ciStatus.overall.current.branch="na";
+    ciStatus.overall.current.submitter="na";
     ciStatus.overall.current.subTime="na";
+    ciStatus.overall.current.subBranch="na";    
+    
 	
 	  
 	  
@@ -220,7 +226,8 @@ var updateStatus = function(ciStatus,data){
       ciStatus.idleState.status="running";
     }else {
       ciStatus.idleState.status="done";
-      ciStatus.overall.current.branch= getSubmitterName(data);//data.actions[0].parameters[1].value;
+      ciStatus.overall.current.submitter= getSubmitterName(data);//data.actions[0].parameters[1].value;
+      ciStatus.overall.current.subBranch= getBranchName(data);//data.actions[0].parameters[1].value;      
       ciStatus.overall.current.subTime = data.timestamp;   
       
       data.subBuilds.forEach(function(element, index, array){
@@ -498,8 +505,9 @@ router.get('/getEmerPendingReq', function(req, res, next){
     console.log("getEmerPendingReq");
     getPendingReq("REPT2.7_Emerald", function(err, data){
         if (err) { return res.end(); }
-        data.current.submitter = emeraldStatus.overall.current.branch;
+        data.current.submitter = emeraldStatus.overall.current.submitter;
         data.current.subTime = emeraldStatus.overall.current.subTime;
+        data.current.subBranch = emeraldStatus.overall.current.subBranch;        
         return res.json(data);
     });
 });
@@ -515,8 +523,9 @@ router.get('/getNonEmerPendingReq', function(req, res, next){
     console.log("getnonEmerPendingReq");
     getPendingReq("REPT2.7", function(err, data){
         if (err) { return res.end(); }
-        data.current.submitter = nonEmeraldStatus.overall.current.branch;
+        data.current.submitter = nonEmeraldStatus.overall.current.submitter;
         data.current.subTime = nonEmeraldStatus.overall.current.subTime;
+        data.current.subBranch = nonEmeraldStatus.overall.current.subBranch;        
         return res.json(data);
     });
 })

@@ -198,24 +198,27 @@ var refreshQ = function(QueueInfo)
   $c1.addClass("text-center");
   $c2 = $("<td>").text(QueueInfo.current.submitter)
   $c2.addClass("text-center");  
+  $c3 = $("<td>").text(QueueInfo.current.subBranch)
+  $c3.addClass("text-center");  
   
   var utcSeconds = parseInt(QueueInfo.current.subTime);
   
   if (!isNaN(utcSeconds)){
     var d = new Date(utcSeconds);
     var n = d.toLocaleTimeString();      
-    $c3 = $("<td>").text(n)
-    $c3.addClass("text-center");    
+    $c4 = $("<td>").text(n)
+    $c4.addClass("text-center");    
   }
   else{
-    $c3 = $("<td>").text("na")
-    $c3.addClass("text-center");    
+    $c4 = $("<td>").text("na")
+    $c4.addClass("text-center");    
   }     
   
   $addrow = $("<tr>");
   $addrow.append($c1)
   $addrow.append($c2)
   $addrow.append($c3)
+  $addrow.append($c4)
   $tblBody.append($addrow)
   
   //create pending row info
@@ -225,24 +228,26 @@ var refreshQ = function(QueueInfo)
     $c1.addClass("text-center");
     $c2 = $("<td>").text(value.submitter);
     $c2.addClass("text-center");
-    
+    $c3 = $("<td>").text(value.subBranch);
+    $c3.addClass("text-center");    
     var utcSeconds = parseInt(value.subTime);
     
     if (!isNaN(utcSeconds)){
       var d = new Date(utcSeconds);
       var n = d.toLocaleTimeString();      
-      $c3 = $("<td>").text(n)
-      $c3.addClass("text-center");
+      $c4 = $("<td>").text(n)
+      $c4.addClass("text-center");
     }
     else{
-      $c3 = $("<td>").text("na")
-      $c3.addClass("text-center");      
+      $c4 = $("<td>").text("na")
+      $c4.addClass("text-center");      
     }     
     
     $addrow = $("<tr>");
     $addrow.append($c1)
     $addrow.append($c2)
     $addrow.append($c3)
+    $addrow.append($c4)    
     $tblBody.append($addrow)
     
   });
