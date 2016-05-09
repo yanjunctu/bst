@@ -527,11 +527,12 @@ var getValueOfBuildChain = function(db, doc, buildChain, key) {
 }
 
 var refreshCIHistory = function(db, doc) {
-    var entry = {"buildResult": "--", "buildID": 0, "rlsTag":"--", "submitter": "--", "rlsTime": "--", "onTargetBuild": "--","offTargetBuild": "--", "win32UT": "--", "win32IT": {"win32ITPart1": "--", "win32ITPart2": "--"}, "codeStaticCheck": {}, "onTargetSanity": "--", "extRegressionTest": "--"};
+    //var entry = {"buildResult": "--", "buildID": 0, "rlsTag":"--", "submitter": "--", "rlsTime": "--", "onTargetBuild": "--","offTargetBuild": "--", "win32UT": "--", "win32IT": {"win32ITPart1": "--", "win32ITPart2": "--"}, "codeStaticCheck": {}, "onTargetSanity": "--", "extRegressionTest": "--"};
+    var entry = {};
     var rlsDate = new Date(doc["start time"] + doc["build duration"]);
     var rlsInfo = db.getCollection(CI_RELEASE_JOB).findOne({"build id": doc[CI_RELEASE_JOB]});
-    var itValue = {"win32ITPart1": "", "win32ITPart2": ""};
-
+    var itValue = {};
+    
     entry["buildID"] = doc["build id"];
     entry["buildResult"] = doc["build result"];
     entry["submitter"] = doc["submitter"];
@@ -554,11 +555,13 @@ var refreshCIHistory = function(db, doc) {
 
         if (value) {
             if ("win32ITPart1" == key || "win32ITPart2" == key)
-                entry["win32IT"][key] = value;
+                itValue[key] = value;
             else
                 entry[key] = value;
         }
     }
+    if ("win32ITPart1" in itValue || "win32ITPart2" in itValue)
+        entry["win32IT"] = itValue;
     CIHistory.push(entry);
 }
 
