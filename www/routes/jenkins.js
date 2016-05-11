@@ -40,21 +40,14 @@ const CI_OFF_TARGET_TEST_JOB= "PCR-REPT-Off_Target_Test_MultiJob";
 const CI_OFF_TARGET_UT_JOB= "PCR-REPT-Win32_UT";
 const CI_OFF_TARGET_IT_PART1_JOB = "PCR-REPT-Win32_IT-TEST-Part1";
 const CI_OFF_TARGET_IT_PART2_JOB = "PCR-REPT-Win32_IT-TEST-Part2";
+const CI_COVERAGE_CHECK_JOB = "PCR-REPT-Win32_COV_CHECK";
 const CI_RELEASE_JOB = "PCR-REPT-Git-Release";
+const CI_SANITY_TEST_JOB = "PCR-REPT-DAT_LATEST";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
 var CIHistory = [];
 var CIOnTargetBuildChain = [CI_ON_TARGET_JOB, CI_ON_TAEGET_BUILD_JOB];
 var CIOffTargetBuildChain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_BUILD_JOB];
-var CIOffTargetUTChain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_TEST_JOB, CI_OFF_TARGET_UT_JOB];
-var CIOffTargetITPart1Chain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_TEST_JOB, CI_OFF_TARGET_IT_PART1_JOB];
-var CIOffTargetITPart2Chain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_TEST_JOB, CI_OFF_TARGET_IT_PART2_JOB];
-var CIAllChains = {
-    "onTargetBuild": CIOnTargetBuildChain,
-    "offTargetBuild": CIOffTargetBuildChain,
-    "win32UT": CIOffTargetUTChain,
-    "win32ITPart1": CIOffTargetITPart1Chain,
-    "win32ITPart2": CIOffTargetITPart2Chain
-};
+var CIOffTargetTestChain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_TEST_JOB];
 
 var getJobLastBuild = function(job,callback)
 {
@@ -506,10 +499,13 @@ var updateLatestBuildInfo = function(job){
         });
 }
 
-var getValueOfBuildChain = function(db, doc, buildChain, key) {
+var getBuildInfoByBuildChain = function(db, doc, buildChain) {
     var i = 0;
     var buildInfo = doc;
     
+    if (!db || !doc || !buildChain || 0 == buildChain.length) {
+        return;
+    }
     for (; i < buildChain.length && buildInfo && buildChain[i] in buildInfo; ++i) {
         var nextBuildColl = db.getCollection(buildChain[i]);
         var nextBuildID = buildInfo[buildChain[i]];
@@ -519,15 +515,14 @@ var getValueOfBuildChain = function(db, doc, buildChain, key) {
         }
         buildInfo = nextBuildColl.findOne({"build id": nextBuildID});
     }
-    if (i == buildChain.length && buildInfo && key in buildInfo) {
-        return buildInfo[key];
+    if (i == buildChain.length) {
+        return buildInfo;
     }
 
     return;
 }
 
 var refreshCIHistory = function(db, doc) {
-    //var entry = {"buildResult": "--", "buildID": 0, "rlsTag":"--", "submitter": "--", "rlsTime": "--", "onTargetBuild": "--","offTargetBuild": "--", "win32UT": "--", "win32IT": {"win32ITPart1": "--", "win32ITPart2": "--"}, "codeStaticCheck": {}, "onTargetSanity": "--", "extRegressionTest": "--"};
     var entry = {};
     var rlsDate = new Date(doc["start time"] + doc["build duration"]);
     var rlsInfo = db.getCollection(CI_RELEASE_JOB).findOne({"build id": doc[CI_RELEASE_JOB]});
@@ -536,11 +531,15 @@ var refreshCIHistory = function(db, doc) {
     entry["buildID"] = doc["build id"];
     entry["buildResult"] = doc["build result"];
     entry["submitter"] = doc["submitter"];
+    // Release time/release tag/code static check/sanity test/extended regression test
     if (entry["buildResult"] == "SUCCESS") {
         entry["rlsTime"] = rlsDate.toLocaleDateString() + " " + rlsDate.toLocaleTimeString();
         if (rlsInfo && "release tag" in rlsInfo) {
             var buildWarnings = 0, klocworkWarnings = 0;
+            // Different key name of the release tag field in different collections
             var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsInfo["release tag"]}).toArray();
+            // Maybe the same release version will be tested many times, we only care the last one
+            var onTargetSanity = db.getCollection(CI_SANITY_TEST_JOB).find({"release tag": rlsInfo["release tag"]}).sort({"build id": -1}).toArray();
 
             entry["rlsTag"] = rlsInfo["release tag"];
             for (var i = 0; i < warnings.length; ++i) {
@@ -548,20 +547,54 @@ var refreshCIHistory = function(db, doc) {
                 klocworkWarnings += warnings["klocworkCnt"];
             }
             entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
+            if (0 != onTargetSanity.length) {
+                entry["onTargetSanity"] = onTargetSanity[0]["build result"];
+            }
         }
     }
-    for (var key in CIAllChains) {
-        var value = getValueOfBuildChain(db, doc, CIAllChains[key], "build result");
+    // Get on-target build result 
+    var buildInfo = getBuildInfoByBuildChain(db, doc, CIOnTargetBuildChain);
+    if (buildInfo && "build result" in buildInfo) 
+        entry["onTargetBuild"] = buildInfo["build result"];
 
-        if (value) {
-            if ("win32ITPart1" == key || "win32ITPart2" == key)
-                itValue[key] = value;
-            else
-                entry[key] = value;
+    // Get off-target build result
+    buildInfo = getBuildInfoByBuildChain(db, doc, CIOffTargetBuildChain);
+    if (buildInfo && "build result" in buildInfo)
+        entry["offTargetBuild"] = buildInfo["build result"];
+
+    // Get off-target ut, it and coverage result 
+    buildInfo = getBuildInfoByBuildChain(db, doc, CIOffTargetTestChain);
+    if (buildInfo) {
+        var jobsMap = {
+                "win32UT": CI_OFF_TARGET_UT_JOB,
+                "win32ITPart1": CI_OFF_TARGET_IT_PART1_JOB,
+                "win32ITPart2": CI_OFF_TARGET_IT_PART2_JOB,
+                "coverage": CI_COVERAGE_CHECK_JOB
+        };
+        var tmpInfo = {};
+        
+        // Build id of ut, it and coverage can be found in build info of off-target test job if any
+        for (var key in jobsMap) {
+            var jobName = jobsMap[key];
+            
+            if (!(jobName in buildInfo)) {
+                continue;
+            }
+            var id = buildInfo[jobName];
+            var info = db.getCollection(jobName).findOne({"build id": id});
+
+            if (info) {
+                if (key == "coverage")
+                    tmpInfo[key] = info["coverage"];
+                else
+                    tmpInfo[key] = info["build result"];
+            }
         }
+        entry["win32UT"] = tmpInfo["win32UT"];
+        entry["win32IT"] = {"win32ITPart1": tmpInfo["win32ITPart1"], "win32ITPart2": tmpInfo["win32ITPart2"]};
+        entry["coverage"] = tmpInfo["coverage"];
     }
-    if ("win32ITPart1" in itValue || "win32ITPart2" in itValue)
-        entry["win32IT"] = itValue;
+
     CIHistory.push(entry);
 }
 

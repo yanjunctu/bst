@@ -179,6 +179,7 @@ var ciTable = $("#ciHistoryTbl").DataTable({
                         return "FAILURE";
                 }
             },
+            {data: "coverage", defaultContent: "--"},
             {
                 data: "codeStaticCheck",
                 render: function(data, type, row) {
@@ -195,7 +196,7 @@ var ciTable = $("#ciHistoryTbl").DataTable({
                 }
             },
             {data: "onTargetSanity", defaultContent: "--"},
-            {data: "extRegressionTest", defaultContent: "--"}
+            {data: "extRegression", defaultContent: "--"}
     ]
 });
 
