@@ -304,8 +304,6 @@ var refreshQ = function(QueueInfo)
 };
 
 var refreshCIHistory = function(ciHistory) {
-    var currentPage = ciTable.page();
-
     ciTable.clear();
     ciTable.rows.add(ciHistory);
     ciTable.draw(false);
