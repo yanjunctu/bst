@@ -13,9 +13,8 @@ import re
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
-JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST']
+JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY']
 JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
-#JENKINS_TRIGGER_JOBS = [JENKINS_COVERAGE_JOB]
 BOOSTER_DB_NAME = 'booster'
 
 class BoosterJenkins():
@@ -41,7 +40,7 @@ class BoosterJenkins():
         if 'lastSuccessfulBuild' in jobInfo:
             info = jobInfo['lastSuccessfulBuild']
 
-            if 'subBuilds' in info:
+            if info and 'subBuilds' in info:
                 for build in info['subBuilds']:
                     ret['subJobs'].append(build['jobName'])
         else: 
@@ -128,10 +127,10 @@ def saveAllCI2DB(server, db):
         job = allJobs[i]
         jobInfo = server.getJobInfo(job)
        
+        print 'process job {}'.format(job)
         if not jobInfo:
             i += 1
             continue
-        print 'process job {}'.format(job)
         # Find the new builds of the job and save them to DB
         lastBuildSaved = db.getLastBuildInfo(job)
         start = (lastBuildSaved['build id']+1) if lastBuildSaved else jobInfo['firstBuild']

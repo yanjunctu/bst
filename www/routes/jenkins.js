@@ -43,6 +43,7 @@ const CI_OFF_TARGET_IT_PART2_JOB = "PCR-REPT-Win32_IT-TEST-Part2";
 const CI_COVERAGE_CHECK_JOB = "PCR-REPT-Win32_COV_CHECK";
 const CI_RELEASE_JOB = "PCR-REPT-Git-Release";
 const CI_SANITY_TEST_JOB = "PCR-REPT-DAT_LATEST";
+const CI_EXT_REGRESSION_JOB = "PCR-REPT-DAT_DAILY";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
 var CIHistory = [];
 var CIOnTargetBuildChain = [CI_ON_TARGET_JOB, CI_ON_TAEGET_BUILD_JOB];
@@ -536,10 +537,12 @@ var refreshCIHistory = function(db, doc) {
         entry["rlsTime"] = rlsDate.toLocaleDateString() + " " + rlsDate.toLocaleTimeString();
         if (rlsInfo && "release tag" in rlsInfo) {
             var buildWarnings = 0, klocworkWarnings = 0;
+            var rlsTag = rlsInfo["release tag"];
             // Different key name of the release tag field in different collections
-            var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsInfo["release tag"]}).toArray();
+            var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
             // Maybe the same release version will be tested many times, we only care the last one
-            var onTargetSanity = db.getCollection(CI_SANITY_TEST_JOB).find({"release tag": rlsInfo["release tag"]}).sort({"build id": -1}).toArray();
+            var onTargetSanity = db.getCollection(CI_SANITY_TEST_JOB).find({"release tag": rlsTag}).sort({"build id": -1}).toArray();
+            var extRegression = db.getCollection(CI_EXT_REGRESSION_JOB).find({"release tag": rlsTag}).sort({"build id": -1}).toArray();
 
             entry["rlsTag"] = rlsInfo["release tag"];
             for (var i = 0; i < warnings.length; ++i) {
@@ -549,6 +552,9 @@ var refreshCIHistory = function(db, doc) {
             entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
             if (0 != onTargetSanity.length) {
                 entry["onTargetSanity"] = onTargetSanity[0]["build result"];
+            }
+            if (0 != extRegression) {
+                entry["extRegression"] = extRegression[0]["build result"];
             }
         }
     }
@@ -591,7 +597,13 @@ var refreshCIHistory = function(db, doc) {
             }
         }
         entry["win32UT"] = tmpInfo["win32UT"];
-        entry["win32IT"] = {"win32ITPart1": tmpInfo["win32ITPart1"], "win32ITPart2": tmpInfo["win32ITPart2"]};
+        if (tmpInfo["win32ITPart1"] || tmpInfo["win32ITPart2"]) {
+            entry["win32IT"] = {};
+            if (tmpInfo["win32ITPart1"])
+                entry["win32IT"]["win32ITPart1"] = tmpInfo["win32ITPart1"];
+            if (tmpInfo["win32ITPart2"])
+                entry["win32IT"]["win32ITPart2"] = tmpInfo["win32ITPart2"];
+        }
         entry["coverage"] = tmpInfo["coverage"];
     }
 
