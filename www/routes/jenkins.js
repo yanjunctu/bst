@@ -621,7 +621,7 @@ var updateCIHistoryInfo = function() {
     fiber(function() {
         var db = new server("127.0.0.1").db("booster");
         var docs = db.getCollection(CI_TRIGGER_JOB).find({"build id": {$gt: lastBuildID}}).toArray();
-        
+         
         docs.forEach(function(doc) {
             refreshCIHistory(db, doc);
         });
