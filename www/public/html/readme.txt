@@ -1,3 +1,4 @@
-why I saved the original xx.doc also?
-ans: In further, if we want to extend the content, we can change the xx.doc, then go to web https://word2cleanhtml.com/
-     to convert doc to html.
+Why save the original docx ?
+
+If you want to change the html next time, you can change the word directly, then saved to html
+format to replace old CheckBeforeCI.html .
