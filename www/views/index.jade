@@ -41,18 +41,7 @@ block content
                     while escapseSpace<110
                       | &nbsp
                       - escapseSpace++
-                                        
-                      
-                    div(class="alert alert-danger" style= "position:absolute;left:60px;top:120px;background: rgba(222,222,222, 0.5);border-color:#ddd;display:none")
-                      p(style="font-size:80px;font-weight: bold") Warning !!! CI blocked
 
-                      p(style="font-size:40px;") 
-                        |Block Reason:  DAT test failed on tag 
-                        span(class="releaseTagStr" style="font-weight: bold") na
-                      p(style="font-size:40px;")
-                        |The Submitter is 
-                        span(class="submitterStr" style="font-weight: bold") na
-                        
                     i(class="fa fa-arrow-circle-right fa-lg")
                     | &nbsp&nbsp              
                     a(class="buildFwState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-On_Target_Build_MultiJob/" target="_blank" style="width: 150px")
@@ -152,15 +141,21 @@ block content
                     while escapseSpace<110
                       | &nbsp
                       - escapseSpace++
-                      
-                    div(class="alert alert-danger" style= "position:absolute;left:60px;top:120px;background: rgba(222,222,222, 0.5);border-color:#ddd;display:none")
+
+                    div(class="warningImg panel-body" style= "position:absolute;left:5px;top:150px;display:none;")
+                      img(src="/images/iWarning.png" class="img-circle" width="100" height="100" style="margin-bottom:0px;")
+                       
+                    div(class="alert alert-danger" style= "position:absolute;left:130px;top:90px;background: rgba(222,222,222, 0.7);border-color:#ddd;display:none;")
                       p(style="font-size:80px;font-weight: bold") Warning !!! CI blocked
 
-                      p(style="font-size:40px;") 
+                      p(style="font-size:40px;color:#000;") 
                         |Block Reason:  DAT test failed on tag 
                         span(class="releaseTagStr" style="font-weight: bold") na
-                      p(style="font-size:40px;")
-                        |The Submitter is 
+                      p(style="font-size:40px;color:#000;") 
+                        |Last Success Tag: 
+                        span(class="successTagStr" style="font-weight: bold") na
+                      p(style="font-size:40px;color:#000;")
+                        |The Submitter(s): 
                         span(class="submitterStr" style="font-weight: bold") na
                         
                     i(class="fa fa-arrow-circle-right fa-lg")

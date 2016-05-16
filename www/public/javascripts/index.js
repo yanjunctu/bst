@@ -147,10 +147,12 @@ var CIStateLookup = {
 
 var refreshCi = function(status)
 {
-   //status.ciBlockInfo.result = "FAILURE"
   if(status.ciBlockInfo.result == "FAILURE"){
       
       sel = ".tab-pane.active div."+"alert";
+      $(sel)[0].style.display="";
+      
+      sel = ".tab-pane.active div."+"warningImg";
       $(sel)[0].style.display="";
       
       sel = ".tab-pane.active div."+"alert"+" .submitterStr";
@@ -159,10 +161,15 @@ var refreshCi = function(status)
       sel = ".tab-pane.active div."+"alert"+" .releaseTagStr";
       $(sel).text(status.ciBlockInfo.releaseTag);
       
+      sel = ".tab-pane.active div."+"alert"+" .successTagStr";
+      $(sel).text(status.ciBlockInfo.lastSuccessTag);
+      
   }
-  else{
+  else if (status.ciBlockInfo.result == "SUCCESS"){
 
       sel = ".tab-pane.active div."+"alert";
+      $(sel)[0].style.display="none";
+      sel = ".tab-pane.active div."+"warningImg";
       $(sel)[0].style.display="none";
   }
   //console.log(status);

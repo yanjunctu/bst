@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
+var fiber = require('fibers');
+var server = require('mongo-sync').Server;
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var days=30;
@@ -13,7 +15,7 @@ var emeraldStatus = {
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
-  "ciBlockInfo":{"result":"SUCCESS","id":0,"submitter":"na","releaseTag":"na"},
+  "ciBlockInfo":{"result":"na","submitter":"na","releaseTag":"na",lastSuccessTag:"na"},
   "overall":{"current":{"branch":"na","subTime":"na"}}
 };  
 
@@ -25,7 +27,7 @@ var nonEmeraldStatus = {
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
-  "ciBlockInfo":{"result":"SUCCESS","id":0,"submitter":"na","releaseTag":"na"},
+  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na"},
   "overall":{"current":{"branch":"na","subTime":"na"}}
 };  
 
@@ -56,6 +58,23 @@ var getAllBuild = function (job,param,callback)
     callback(err,data);
   });  
 };
+var getJobLastCompletedBuild = function(job,callback)
+{
+  var result;
+  jenkins.last_completed_build_info(job, function(err, data) {
+    callback(err,data);
+  });
+
+};
+var getJobLastSuccessBuild = function(job,callback)
+{
+  var result;
+  jenkins.last_success(job, function(err, data) {
+    callback(err,data);
+  });
+
+};
+
 
 function getParameterValue(data,parameter){
   var actions = data.actions;
@@ -404,34 +423,57 @@ function getJobFailureInfo(job,days,callback){
 	return;
 	})
 }
-var updateOnTargetTestStatus = function(ciBlockInfo,data){
-    var id = parseInt(data.id)
-    if(id > ciBlockInfo.id){
-        
-        ciBlockInfo.id = id;
-        ciBlockInfo.result = data.result;
-        ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
-        ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
+var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
+    
+    ciBlockInfo.result = data.result;
+    ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
+    ciBlockInfo.submitter="";
+    ciBlockInfo.lastSuccessTag=""
+    //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
+
+    if (ciBlockInfo.result == "FAILURE"){
+        getJobLastSuccessBuild(job,function(err,data){
+            if(err) {
+                console.log("err in onTargertTestInfo");
+                return;
+            }
+            ciBlockInfo.lastSuccessTag=getParameterValue(data,"NEW_BASELINE");
+
+            fiber(function() {
+
+                var db = new server("127.0.0.1").db("booster");
+                var docS = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.lastSuccessTag}}).toArray();
+                sucessId = docS[0]["build id"];
+                var docF = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.releaseTag}}).toArray();
+                failId = docF[0]["build id"];
+
+                var docs = db.getCollection('PCR-REPT-Git-Release').find({"build id": {$gt:sucessId,$lte:failId}}).toArray();
+
+                var submitter = ""
+                docs.forEach(function(doc) {
+
+                   if(doc["project name"] == "REPT2.7"){
+                       submitter = submitter + doc["submitter"]+";";
+                   }
+                   
+                });
+                ciBlockInfo.submitter=submitter;
+            }).run();
+            
+        });
     }
+    
 }
 var onTargertTestInfo = function(job){
-    var param = 'id,result,actions[parameters[*]]'
-    var emerStr ="REPT2.7_Emerald";
-    getAllBuild(job,param,function(err,data){
+
+    getJobLastCompletedBuild(job,function(err,data){
         if(err) 
         {
             console.log("err in onTargertTestInfo");
             return;
         }
-	   for (var i = 0; i < data.length; i++){
-            if(getParameterValue(data[i],"PROJECT_NAME") == emerStr){
-			     ciStatus = emeraldStatus;
-            }
-            else{
-				 ciStatus = nonEmeraldStatus;
-            }
-            updateOnTargetTestStatus(ciStatus.ciBlockInfo,data[i]);
-	   }    
+
+        updateOnTargetTestStatus(nonEmeraldStatus.ciBlockInfo,data,job);  
     });
 }
 
@@ -453,12 +495,14 @@ var updateLatestBuildInfo = function(job){
           ciStatus = nonEmeraldStatus;
         }
         updateStatus(ciStatus,data); 
+        console.log(project)
+        console.log(ciStatus)
        
         });
 }
 
 setInterval(function(){
-    onTargertTestInfo('PCR-REPT-On_Target_MultiJob');
+    onTargertTestInfo('PCR-REPT-DAT_LATEST');
     updateLatestBuildInfo('PCR-REPT-0-MultiJob-Emerald');
     updateLatestBuildInfo('PCR-REPT-0-MultiJob');    
 
