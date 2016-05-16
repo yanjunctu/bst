@@ -154,6 +154,8 @@ var ciTable = $("#ciHistoryTbl").DataTable({
                         return "--";
                     else if (data == "SUCCESS")
                         return '<img src="/images/blue.png" />';
+                    else if (data == "SUCCESSWITHERRORS")
+                        return '<img src="/images/yellow.png" />';
                     else
                         return '<img src="/images/red.png" />';
                 }
@@ -307,6 +309,14 @@ var refreshQ = function(QueueInfo)
 };
 
 var refreshCIHistory = function(ciHistory) {
+    ciHistory.forEach(function(info) {
+        if (info["buildResult"] == "SUCCESS") {
+            if (info["onTargetSanity"] != "SUCCESS"
+                || info["extRegression"] == "FAILURE") {
+                info["buildResult"] = "SUCCESSWITHERRORS";
+            }
+        }
+    });
     ciTable.clear();
     ciTable.rows.add(ciHistory);
     ciTable.draw(false);
