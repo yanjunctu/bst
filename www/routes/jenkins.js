@@ -122,6 +122,7 @@ function getPendingReq(project, callback){
                     var projName = '';
                     var paraArray = item.params.split('\n');
                     //console.log('array=',paraArray);
+                    console.log(item);
                     paraArray.forEach(function(itr){
                         var keyValue = itr.split('=');
                         
@@ -461,9 +462,17 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             }).run();
             
         });
+        // Cancle all pending CI requests
+        getPendingReq("REPT2.7", function(err, data){
+            if (err) {
+                console.log(err);
+                return;
+            }
+            // Cancle all pending CI reqs
+        });
     }
-    
 }
+
 var onTargertTestInfo = function(job){
 
     getJobLastCompletedBuild(job,function(err,data){
