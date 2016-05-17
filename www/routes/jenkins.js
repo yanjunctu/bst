@@ -121,8 +121,8 @@ function getPendingReq(project, callback){
                 if (item.blocked || item.stuck) {
                     var projName = '';
                     var paraArray = item.params.split('\n');
+                    var id = item['id'];
                     //console.log('array=',paraArray);
-                    console.log(item);
                     paraArray.forEach(function(itr){
                         var keyValue = itr.split('=');
                         
@@ -147,7 +147,7 @@ function getPendingReq(project, callback){
                      
                             console.log('jobname:'+item.task.name);
                                         console.log(submitter,pushTime);
-                            result.queue.push({"submitter":submitter, "subTime":pushTime});
+                            result.queue.push({"id": id, "submitter":submitter, "subTime":pushTime});
                         }     
                     }
                     /*
@@ -469,6 +469,18 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                 return;
             }
             // Cancle all pending CI reqs
+            data["queue"].forEach(function(pendingCI) {
+                var id = pendingCI["id"];
+
+                jenkins.cancel_item(id, function(err) {
+                    if (err) {
+                        console.log("failed to cancel item["+id.toString()+"]"+err);
+                    }
+                    else {
+                        console.log("succeeded to cancel item["+id.toString()+"]"+err);
+                    }
+                });
+            });
         });
     }
 }

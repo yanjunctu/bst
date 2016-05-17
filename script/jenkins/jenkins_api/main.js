@@ -27,6 +27,7 @@ var COMPUTERS = '%s/computer' + API;
 var JOB_OUTPUT = '%s/job/%s/consoleText' + API;
 //var ALL_BUILD = '%s/job/%s' + API + '?tree=allBuilds[id,timestamp,result,duration]'; 
 var ALL_BUILD = '%s/job/%s' + API + '?tree=allBuilds[%s]'; 
+var CANCEL_ITEM = '%s/queue/cancelItem?id=%s';
 
 
 var init = exports.init = function(host, options) {
@@ -338,7 +339,7 @@ var init = exports.init = function(host, options) {
         },
         last_result: function(jobname, callback) {
             /*
-            Get the last result for a job
+            get the last result for a job
             */
             this.job_info(jobname, function(error, data) {
                 var last_result_url = data.lastBuild.url;
@@ -365,6 +366,14 @@ var init = exports.init = function(host, options) {
                 }
                 var data = JSON.parse(body.toString());
                 callback(null, data);
+            });
+        },
+        cancel_item: function(itemID, callback) {
+            /*
+             * Cancel a queued item
+             */
+            request({method: 'POST', url: build_url(CANCEL_ITEM, itemID)}, function(error, response) {
+                callback(error);
             });
         },
         computers: function(callback) {
