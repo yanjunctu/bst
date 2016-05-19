@@ -110,6 +110,7 @@ function getPendingReq(project, callback){
                     var projName = '';
                     var paraArray = item.params.split('\n');
                     //console.log('array=',paraArray);
+                    var id = item['id'];
                     paraArray.forEach(function(itr){
                         var keyValue = itr.split('=');
                         
@@ -138,7 +139,7 @@ function getPendingReq(project, callback){
                      
                             console.log('jobname:'+item.task.name);
                                         console.log(submitter,branch,pushTime);
-                            result.queue.push({"submitter":submitter,"subBranch":branch,"subTime":pushTime});
+                            result.queue.push({"id": id,"submitter":submitter,"subBranch":branch,"subTime":pushTime});
                         }     
                     }
                 }
@@ -404,7 +405,6 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     ciBlockInfo.submitter="";
     ciBlockInfo.lastSuccessTag=""
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
-
     if (ciBlockInfo.result == "FAILURE"){
         getJobLastSuccessBuild(job,function(err,data){
             if(err) {

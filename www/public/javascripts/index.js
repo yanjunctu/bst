@@ -105,6 +105,7 @@ var CIStateLookup = {
 
 var refreshCi = function(status)
 {
+
   if(status.ciBlockInfo.result == "FAILURE"){
       
       sel = "div."+"alert";
