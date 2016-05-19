@@ -16,7 +16,7 @@ var emeraldStatus = {
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
   "overall":{"current":{"branch":"na","subTime":"na"}},
-  "ciBlockInfo":{"result":"na","submitter":"na","releaseTag":"na",lastSuccessTag:"na"},
+  "ciBlockInfo":{"result":"na","submitter":"na","releaseTag":"na",lastSuccessTag:"na"}
 };  
 
 var nonEmeraldStatus = {
@@ -28,7 +28,8 @@ var nonEmeraldStatus = {
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
   "overall":{"current":{"branch":"na","subTime":"na"}},
-  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na"}};  
+  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na"}
+};  
 
 var getJobLastBuild = function(job,callback)
 {
@@ -120,7 +121,6 @@ function getPendingReq(project, callback){
                 if (item.blocked || item.stuck) {
                     var projName = '';
                     var paraArray = item.params.split('\n');
-                    var id = item['id'];
                     //console.log('array=',paraArray);
                     paraArray.forEach(function(itr){
                         var keyValue = itr.split('=');
@@ -186,25 +186,14 @@ var updateStatus = function(ciStatus,data){
     ciStatus.overall.current.submitter="na";
     ciStatus.overall.current.subTime="na";
     ciStatus.overall.current.subBranch="na";    
-<<<<<<< .mine
-
-
-
-
-=======
-    
-	
-	  
-	  
->>>>>>> .theirs
     if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
     }else {
-      ciStatus.idleState.status="done";
-      ciStatus.overall.current.branch= getParameterValue(data,"SUBMITTER");//data.actions[0].parameters[1].value;
-      ciStatus.overall.current.subBranch= getBranchName(data);//data.actions[0].parameters[1].value;      
-      ciStatus.overall.current.subTime = data.timestamp;   
+      ciStatus.idleState.status="done"; 
+      ciStatus.overall.current.submitter= getParameterValue(data,"SUBMITTER");//data.actions[0].parameters[1].value;
+      ciStatus.overall.current.subBranch= getParameterValue(data,"IR_BRANCH");//data.actions[0].parameters[1].value;      
+      ciStatus.overall.current.subTime = data.timestamp; 
       
       data.subBuilds.forEach(function(element, index, array){
         if(element.jobName =='PCR-REPT-Git-Integration'){
