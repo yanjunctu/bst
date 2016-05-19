@@ -13,14 +13,8 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"
     },
-    "curIcon":{
-      "ciTabEmer":"fa fa-coffee fa-lg",
-      "ciTabNonEmer":"fa fa-coffee fa-lg"
-    },
-    "curBtn":{
-      "ciTabEmer":"btn btn-md btn-default",
-      "ciTabNonEmer":"btn btn-md btn-default"      
-    }
+    "curIcon":"fa fa-coffee fa-lg",
+    "curBtn":"btn btn-md btn-default"      
   },
   "preCheckState": {
     "icon":{
@@ -33,14 +27,8 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"
     },
-    "curIcon":{
-      "ciTabEmer":"fa fa-download fa-lg",
-      "ciTabNonEmer":"fa fa-download fa-lg"      
-    },
-    "curBtn":{
-      "ciTabEmer":"btn btn-md btn-default",
-      "ciTabNonEmer":"btn btn-md btn-default"      
-    } 
+    "curIcon":"fa fa-download fa-lg",
+    "curBtn":"btn btn-md btn-default"
   },  
   "buildFwState": {
     "icon":{
@@ -53,14 +41,8 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"  
     },
-    "curIcon":{
-      "ciTabEmer":"fa fa-building fa-lg",
-      "ciTabNonEmer":"fa fa-building fa-lg"        
-    },
-    "curBtn":{
-      "ciTabEmer":"btn btn-md btn-default",
-      "ciTabNonEmer":"btn btn-md btn-default"      
-    }    
+    "curIcon":"fa fa-building fa-lg",
+    "curBtn":"btn btn-md btn-default"
   },
   "testFwState": {
     "icon":{
@@ -73,14 +55,8 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"
     },
-    "curIcon":{
-      "ciTabEmer":"fa fa-flask fa-lg",
-      "ciTabNonEmer":"fa fa-flask fa-lg"         
-    },
-    "curBtn":{
-      "ciTabEmer":"btn btn-md btn-default",
-      "ciTabNonEmer":"btn btn-md btn-default"      
-    }     
+    "curIcon":"fa fa-flask fa-lg",
+    "curBtn":"btn btn-md btn-default"
   },
   "buildWin32State": {
     "icon":{
@@ -93,14 +69,8 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"
     },
-    "curIcon":{
-      "ciTabEmer":"fa fa-building fa-lg",
-      "ciTabNonEmer":"fa fa-building fa-lg"           
-    },
-    "curBtn":{
-      "ciTabEmer":"btn btn-md btn-default",
-      "ciTabNonEmer":"btn btn-md btn-default"      
-    }       
+    "curIcon":"fa fa-building fa-lg",
+    "curBtn":"btn btn-md btn-default"
   },
   "testWin32State": {
     "icon":{
@@ -113,14 +83,8 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"
     },
-    "curIcon":{
-      "ciTabEmer":"fa fa-flask fa-lg",
-      "ciTabNonEmer":"fa fa-flask fa-lg"        
-    },
-    "curBtn":{
-      "ciTabEmer":"btn btn-md btn-default",
-      "ciTabNonEmer":"btn btn-md btn-default"      
-    }        
+    "curIcon":"fa fa-flask fa-lg",
+    "curBtn":"btn btn-md btn-default"
   },
   "preReleaseState": {
     "icon":{
@@ -133,15 +97,9 @@ var CIStateLookup = {
       "running":"btn btn-md btn-success",
       "done":"btn btn-md btn-primary"
     },
-    "curIcon":{
-      "ciTabEmer":"fa fa-check-square-o fa-lg",
-      "ciTabNonEmer":"fa fa-check-square-o fa-lg"          
-    },
-    "curBtn":{
-      "ciTabEmer":"btn btn-md btn-default",
-      "ciTabNonEmer":"btn btn-md btn-default"      
-    }       
-  },
+    "curIcon":"fa fa-check-square-o fa-lg",
+    "curBtn":"btn btn-md btn-default"
+  }
 };
 
 
@@ -149,27 +107,27 @@ var refreshCi = function(status)
 {
   if(status.ciBlockInfo.result == "FAILURE"){
       
-      sel = ".tab-pane.active div."+"alert";
+      sel = "div."+"alert";
       $(sel)[0].style.display="";
       
-      sel = ".tab-pane.active div."+"warningImg";
+      sel = "div."+"warningImg";
       $(sel)[0].style.display="";
       
-      sel = ".tab-pane.active div."+"alert"+" .submitterStr";
+      sel = "div."+"alert"+" .submitterStr";
       $(sel).text(status.ciBlockInfo.submitter);
 
-      sel = ".tab-pane.active div."+"alert"+" .releaseTagStr";
+      sel = "div."+"alert"+" .releaseTagStr";
       $(sel).text(status.ciBlockInfo.releaseTag);
       
-      sel = ".tab-pane.active div."+"alert"+" .successTagStr";
+      sel = "div."+"alert"+" .successTagStr";
       $(sel).text(status.ciBlockInfo.lastSuccessTag);
       
   }
   else if (status.ciBlockInfo.result == "SUCCESS"){
 
-      sel = ".tab-pane.active div."+"alert";
+      sel = "div."+"alert";
       $(sel)[0].style.display="none";
-      sel = ".tab-pane.active div."+"warningImg";
+      sel = "div."+"warningImg";
       $(sel)[0].style.display="none";
   }
   //console.log(status);
@@ -179,23 +137,21 @@ var refreshCi = function(status)
 
     if (-1 != $.inArray(key,indexArray) && -1 != $.inArray(value.status,statusArray))
     {
-      sel = ".tab-pane.active a."+key;
-      //console.log(self)
-      var tabID = $(".tab-pane.active").attr("id");
-      $(sel).removeClass(CIStateLookup[key].curBtn[tabID]);
-      CIStateLookup[key].curBtn[tabID] = CIStateLookup[key].btn[value.status];
-      $(sel).addClass(CIStateLookup[key].curBtn[tabID]);
-      
-      sel = ".tab-pane.active a."+key+" i";
-      //console.log(self)
-      $(sel).removeClass(CIStateLookup[key].curIcon[tabID]);
-      CIStateLookup[key].curIcon[tabID] = CIStateLookup[key].icon[value.status];
-      $(sel).addClass(CIStateLookup[key].curIcon[tabID]);  
-      
-      sel = ".tab-pane.active a."+key+" .statusStr";
+      //chose a tag "a",it's class is key
+      sel ="a."+key;
+      $(sel).removeClass(CIStateLookup[key].curBtn);
 
-      $(sel).text(value.status);
+      CIStateLookup[key].curBtn= CIStateLookup[key].btn[value.status];
+      $(sel).addClass(CIStateLookup[key].curBtn);
       
+      sel ="a."+key+" i";
+      $(sel).removeClass(CIStateLookup[key].curIcon);
+      CIStateLookup[key].curIcon = CIStateLookup[key].icon[value.status];
+      $(sel).addClass(CIStateLookup[key].curIcon);  
+      
+      sel ="a."+key+" .statusStr";
+      //console.log($(sel));
+      $(sel).text(value.status);
       
     }
     
@@ -210,15 +166,9 @@ var refreshQ = function(QueueInfo)
   var $tblBody = undefined;
   
   //clear old tables
-  if($(".tab-pane.active").attr("id")=="ciTabEmer"){
-    console.log("empty emer")
-    $tblBody = $("#emerTbl");
-    $tblBody.empty()
-  }
-  else if($(".tab-pane.active").attr("id")=="ciTabNonEmer"){
-  $tblBody = $("#nonEmerTbl");
-  $tblBody.empty()  
-  }
+  console.log("empty ciQ")
+  $tblBody = $("#ciQTbl");
+  $tblBody.empty()
   //create running CI row info
   $c1 = $("<td>").text("running CI");
   $c1.addClass("text-center");
@@ -281,35 +231,15 @@ var refreshQ = function(QueueInfo)
 var acquireJenkinsAllInfo = function(){
       try
       {
-          var whichCI=undefined;
-          var id = $(".tab-pane.active").attr("id");
-          //console.log(id);
-          if (id == "ciTabEmer")
-          {
-              $.get("/jenkins/getEmerStatus",function (result) {
-                refreshCi(result);
+        $.get("/jenkins/getCIStatus",function (result) {
+            refreshCi(result);
               
-            })
+        })
             
-              $.get("/jenkins/getEmerPendingReq",function (result) {
-                refreshQ(result);
+        $.get("/jenkins/getCIPendingReq",function (result) {
+            refreshQ(result);
               
-            })   
-          }
-          else if (id == "ciTabNonEmer")
-          {
-              $.get("/jenkins/getNonEmerStatus",function (result) {
-                refreshCi(result);
-              
-            })
-            
-              $.get("/jenkins/getNonEmerPendingReq",function (result) {
-                refreshQ(result);
-              
-            })    
-            //result = {"current":{"submitter":"JunJun","subTime":1456127340000},"queue":[{"submitter":"JunJun1","subTime":1456127340000},{"submitter":"JunJun2","subTime":1456127340000},{"submitter":"JunJun3","subTime":1456127340000}]}            
-            //refreshQ(result);
-          }            
+        })              
 
           
       }
@@ -355,9 +285,6 @@ var main = function()
       return false;
   });  
   
-  $('.nav.nav-tabs').bind('click', function(event) {
-      setTimeout(acquireJenkinsAllInfo, 0);
-  });  
   
   $(".testFwState").hide();
   acquireJenkinsAllInfo();

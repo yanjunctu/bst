@@ -1,20 +1,20 @@
 
  var fetchBuildFInfo = function(){
     //$tblBody = $("#emerTbl");
-	var $tblHead = $("#infoHead");
-	var $tblBody = $("#infobody");
-	var name;
-	var percent;
+    var $tblHead = $("#infoHead");
+    var $tblBody = $("#infobody");
+    var name;
+    var percent;
 
-	//clear table
-	$tblHead.empty(); 
+    //clear table
+    $tblHead.empty(); 
     $tblBody.empty(); 
-	
-	var titleFormat = "text-center text-info bg-info";
-	var $hc1 = $("<td>").text(" ");
-	$hc1.addClass(titleFormat);
-	var $hc2 = $("<td>").text("all build number")
-	$hc2.addClass(titleFormat);  
+    
+    var titleFormat = "text-center text-info bg-info";
+    var $hc1 = $("<td>").text(" ");
+    $hc1.addClass(titleFormat);
+    var $hc2 = $("<td>").text("all build number")
+    $hc2.addClass(titleFormat);  
     var $hc3 = $("<td>").text("fail build number")
     $hc3.addClass(titleFormat);   
     var $hc4 = $("<td>").text("abort build number")
@@ -24,80 +24,54 @@
     $addHrow.append($hc2);
     $addHrow.append($hc3); 
     $addHrow.append($hc4); 
-	
-	var $addBrow1 = $("<tr>");
-	var $addBrow2 = $("<tr>");
-	var $bc1 = $("<td>").text("emerlad");
-	$bc1.addClass("text-center");
-	$addBrow1.append($bc1);
-	
-	var $bc2 = $("<td>").text("REPT 2.7");
-	$bc2.addClass("text-center");
-	$addBrow2.append($bc2);
-	
-	
-    $.get("/jenkins/getEmeraldFailInfo",function (emerald){
-	    var $bca1= $("<td>").text(emerald.allBuildNumber);
-		$bca1.addClass("text-center");
-	    percent =(emerald.allBuildNumber ==0)? "NA":Math.round((emerald.failureNumber/emerald.allBuildNumber)*100);
-	    var $bcf1= $("<td>").text(emerald.failureNumber+"("+percent+"%)");
-		$bcf1.addClass("text-center");
-	    percent =(emerald.allBuildNumber ==0)? "NA":Math.round((emerald.abortedNumber/emerald.allBuildNumber)*100);
-	    var $bct1= $("<td>").text(emerald.abortedNumber+"("+percent+"%)");
-		$bct1.addClass("text-center");
-		$addBrow1.append($bca1);
-		$addBrow1.append($bcf1);
-		$addBrow1.append($bct1);
-		
-		
-	    $.get("/jenkins/getNonEmeraldFailInfo",function (nonEmerald){
-			var $bca2= $("<td>").text(nonEmerald.allBuildNumber);
-			$bca2.addClass("text-center");
-			percent =(nonEmerald.allBuildNumber ==0)? "NA":Math.round((nonEmerald.failureNumber/nonEmerald.allBuildNumber)*100);
-			var $bcf2= $("<td>").text(nonEmerald.failureNumber+"("+percent+"%)");
-			$bcf2.addClass("text-center");
-			percent =(nonEmerald.allBuildNumber ==0)? "NA":Math.round((nonEmerald.abortedNumber/nonEmerald.allBuildNumber)*100);
-			var $bct2= $("<td>").text(nonEmerald.abortedNumber+"("+percent+"%)");
-			$bct2.addClass("text-center");
-			$addBrow2.append($bca2);
-			$addBrow2.append($bcf2);
-			$addBrow2.append($bct2);
+    
+    var $addBrow1 = $("<tr>");
+    //var $addBrow2 = $("<tr>");
+    var $bc1 = $("<td>").text("REPT 2.7");
+    $bc1.addClass("text-center");
+    $addBrow1.append($bc1);
+       
+    
+    $.get("/jenkins/getFailInfo",function (data){
+        var $bca1= $("<td>").text(data.allBuildNumber);
+        $bca1.addClass("text-center");
+        percent =(data.allBuildNumber ==0)? "NA":Math.round((data.failureNumber/data.allBuildNumber)*100);
+        var $bcf1= $("<td>").text(data.failureNumber+"("+percent+"%)");
+        $bcf1.addClass("text-center");
+        percent =(data.allBuildNumber ==0)? "NA":Math.round((data.abortedNumber/data.allBuildNumber)*100);
+        var $bct1= $("<td>").text(data.abortedNumber+"("+percent+"%)");
+        $bct1.addClass("text-center");
+        $addBrow1.append($bca1);
+        $addBrow1.append($bcf1);
+        $addBrow1.append($bct1);
+        
 
-			var len =(nonEmerald.failBuildName!=undefined)? nonEmerald.failBuildName.length:emerald.failBuildName.length;
-			for(var i=0;i<len;i++)
-			{
-				if((nonEmerald.failBuildNum[i]!=0)||(emerald.failBuildNum[i]!=0))
-				{
-					name =(nonEmerald.failBuildNum[i]!=0)? nonEmerald.failBuildName[i]:emerald.failBuildName[i];
-					var $hc = $("<td>").text(name);
-					$hc.addClass(titleFormat);
-					$addHrow.append($hc);
-					
-                    percent =(emerald.allBuildNumber ==0)? "NA":Math.round((emerald.failBuildNum[i]/emerald.allBuildNumber)*100);	
-					var $bc3 = $("<td>").text(emerald.failBuildNum[i]+"("+percent+"%)");
-	                $bc3.addClass("text-center");
-					$addBrow1.append($bc3);
-					
-                    percent =(nonEmerald.allBuildNumber ==0)? "NA":Math.round((nonEmerald.failBuildNum[i]/nonEmerald.allBuildNumber)*100);	
-					var $bc4 = $("<td>").text(nonEmerald.failBuildNum[i]+"("+percent+"%)");
-	                $bc4.addClass("text-center");
-					$addBrow2.append($bc4);
-					
-				}				
-			}
-		$tblHead.append($addHrow);
+
+        var len = data.failBuildName.length;
+        for(var i=0;i<len;i++)
+        {
+            if(data.failBuildNum[i]!=0)
+            {
+                name =data.failBuildName[i];
+                var $hc = $("<td>").text(name);
+                $hc.addClass(titleFormat);
+                $addHrow.append($hc);
+                
+                percent =(data.allBuildNumber ==0)? "NA":Math.round((data.failBuildNum[i]/data.allBuildNumber)*100);    
+                var $bc3 = $("<td>").text(data.failBuildNum[i]+"("+percent+"%)");
+                $bc3.addClass("text-center");
+                $addBrow1.append($bc3);
+            }
+        }
+        $tblHead.append($addHrow);
         $tblBody.append($addBrow1);
-        $tblBody.append($addBrow2);
-		
-	    })
-	
     })
 }
 
 
 var main = function(){
 
-	var layout = {
+    var layout = {
         xaxis: {
         title: 'Build Number'},
         yaxis: {
@@ -105,103 +79,62 @@ var main = function(){
         margin: {
         t: 0},
     };
-	fetchBuildFInfo();
-	
-  $.get("/jenkins/getTheWholeCI_emerald",function (result) {
+    fetchBuildFInfo();
+    
+  $.get("/jenkins/getTheWholeCI",function (result) {
 
-    var plotHandler = document.getElementById('theWholeCIemerald');
-	
+    var plotHandler = document.getElementById('theWholeCI');
+    
     Plotly.plot( plotHandler, [{
-        x: result.id_em,
-        y: result.duration_em }], layout)
-
-  })
-  
-    $.get("/jenkins/getTheWholeCI_nonemerald",function (result) {
-
-    var plotHandler = document.getElementById('theWholeCInonemerald');
-
-    Plotly.plot( plotHandler, [{
-        x: result.id_non,
-        y: result.duration_non }], layout)
+        x: result.id,
+        y: result.duration }], layout)
 
   })
 
-
-  
   $.get("/jenkins/getOnTargetBuild",function (result) {
 
-	var trace1 = {
-		x: result.id_em,
-		y: result.duration_em,
-		name: 'Emerald'
-   };
-	var trace2 = {
-		x: result.id_non,
-		y: result.duration_non,
-		name: 'REPT 2.7'
-   }; 
-	data = [trace1,trace2];
-	Plotly.newPlot('onTargetbuild', data, layout);
+    var plotHandler = document.getElementById('onTargetbuild');
+    
+    Plotly.plot( plotHandler, [{
+        x: result.id,
+        y: result.duration }], layout)
 
-  })
-        
+  })  
   
-    $.get("/jenkins/getOnTargetTest",function (result) {
+  $.get("/jenkins/getOnTargetTest",function (result) {
 
-	var trace1 = {
-		x: result.id_em,
-		y: result.duration_em,
-		name: 'Emerald'
-   };
-	var trace2 = {
-		x: result.id_non,
-		y: result.duration_non,
-		name: 'REPT 2.7'
-   }; 
-	data = [trace1,trace2];
-	Plotly.newPlot('onTargetTest', data, layout);
+    var plotHandler = document.getElementById('onTargetTest');
+    Plotly.plot( plotHandler, [{
+        x: result.id,
+        y: result.duration }], layout)
 
-  })
+  })  
+  
+
   
     $.get("/jenkins/getOffTargetBuild",function (result) {
 
-	var trace1 = {
-		x: result.id_em,
-		y: result.duration_em,
-		name: 'Emerald'
-   };
-	var trace2 = {
-		x: result.id_non,
-		y: result.duration_non,
-		name: 'REPT 2.7'
-   }; 
-	data = [trace1,trace2];
-	Plotly.newPlot('offTargetbuild', data, layout);
+    var plotHandler = document.getElementById('offTargetbuild');
+    
+    Plotly.plot( plotHandler, [{
+        x: result.id,
+        y: result.duration }], layout)
 
-  })
+  })  
   
     $.get("/jenkins/getOffTargetTest",function (result) {
 
-	var trace1 = {
-		x: result.id_em,
-		y: result.duration_em,
-		name: 'Emerald'
-   };
-	var trace2 = {
-		x: result.id_non,
-		y: result.duration_non,
-		name: 'REPT 2.7'
-   }; 
-	data = [trace1,trace2];
-	Plotly.newPlot('offTargetTest', data, layout);
+    var plotHandler = document.getElementById('offTargetTest');
+    
+    Plotly.plot( plotHandler, [{
+        x: result.id,
+        y: result.duration }], layout)
 
-  })
-  
-    $.get("/serverInfo/testCaseNum_Emer",function (result) {
-	
-	var plotHandler = document.getElementById('EmerTestCaseNum');
-	var layout = {
+  })  
+    $.get("/serverInfo/testCaseNum",function (result) {
+    
+    var plotHandler = document.getElementById('testCaseNum');
+    var layout = {
         xaxis: {
         title: 'release Number'},
         yaxis: {
@@ -209,35 +142,19 @@ var main = function(){
         margin: {
         t: 0},
     };
-	    Plotly.plot( plotHandler, [{
+        Plotly.plot( plotHandler, [{
         x: result.filename,
         y: result.num }], layout)
-	
-	})
-	
-    $.get("/serverInfo/testCaseNum_nonEmer",function (result) {
-	
-	var plotHandler = document.getElementById('nonEmerTestCaseNum');
-	var layout = {
-        xaxis: {
-        title: 'release Number'},
-        yaxis: {
-        title: 'case number'},
-        margin: {
-        t: 0},
-    };
-	    Plotly.plot( plotHandler, [{
-        x: result.filename,
-        y: result.num }], layout)
-	
-	})
-	
+    
+    })
+    
+    
     $.get("/reposizeinfo/getreposize",function (reposize) {
-	
-	var plotHandlerRepoOriginal = document.getElementById('repoSizeOriginal');
+    
+    var plotHandlerRepoOriginal = document.getElementById('repoSizeOriginal');
     var plotHandlerRepoCheckout = document.getElementById('repoSizeCheckout');
-	var plotHandlerBranch = document.getElementById('branchNumber');
-	var layoutRepo = {
+    var plotHandlerBranch = document.getElementById('branchNumber');
+    var layoutRepo = {
         xaxis: {
         title: 'time'},
         yaxis: {
@@ -245,7 +162,7 @@ var main = function(){
         margin: {
         t: 0},
     };
-	var layoutBranch = {
+    var layoutBranch = {
         xaxis: {
         title: 'time'},
         yaxis: {
@@ -253,33 +170,33 @@ var main = function(){
         margin: {
         t: 0},
     };
-	
-	
-	var trace1 = {
-		x: reposize.timestamp,
-		y: reposize.Gitlab_Comm_OriginSize,
-		name: 'Comm'
+    
+    
+    var trace1 = {
+        x: reposize.timestamp,
+        y: reposize.Gitlab_Comm_OriginSize,
+        name: 'Comm'
    };
-	var trace2 = {
-		x: reposize.timestamp,
-		y: reposize.Gitlab_Comm_UserSize,
-		name: 'Comm'
+    var trace2 = {
+        x: reposize.timestamp,
+        y: reposize.Gitlab_Comm_UserSize,
+        name: 'Comm'
    };  
-	var trace3 = {
-		x: reposize.timestamp,
-		y: reposize.Gitlab_Comm_BranchCnt,
-		name: 'Comm'
-	};  
+    var trace3 = {
+        x: reposize.timestamp,
+        y: reposize.Gitlab_Comm_BranchCnt,
+        name: 'Comm'
+    };  
 
-	var repoDataOriginal = [trace1];
+    var repoDataOriginal = [trace1];
     var repoDataCheckout = [trace2];
-	var branchData = [trace3];
-	
-	Plotly.plot( plotHandlerRepoOriginal, repoDataOriginal, layoutRepo);
-	Plotly.plot( plotHandlerRepoCheckout, repoDataCheckout, layoutRepo);
-	Plotly.plot( plotHandlerBranch, branchData, layoutBranch);	
-	})
-	
+    var branchData = [trace3];
+    
+    Plotly.plot( plotHandlerRepoOriginal, repoDataOriginal, layoutRepo);
+    Plotly.plot( plotHandlerRepoCheckout, repoDataCheckout, layoutRepo);
+    Plotly.plot( plotHandlerBranch, branchData, layoutBranch);    
+    })
+    
 
     $.get("/serverInfo/repoInfo",function (result) {
       
@@ -293,7 +210,7 @@ var main = function(){
         values: [usedSize, unusedSize],
         labels: ['used', 'unused'],
         type: 'pie'
-		}];
+        }];
 
 
       var layout = {
@@ -313,7 +230,7 @@ var main = function(){
         values: [usedSize, unusedSize],
         labels: ['used', 'unused'],
         type: 'pie'
-		}];
+        }];
 
       Plotly.newPlot('userRepoSizePlot', data, layout);
 
@@ -326,7 +243,7 @@ var main = function(){
         values: [usedSize, unusedSize],
         labels: ['used', 'unused'],
         type: 'pie'
-		}];
+        }];
 
       Plotly.newPlot('repoBrhCntPlot', data, layout);
       

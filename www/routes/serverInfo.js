@@ -146,13 +146,7 @@ function fetchTestCaseNum(project,days,callback){
 	});
 }
 
-router.get('/testCaseNum_Emer', function (req, res, next) {
-    fetchTestCaseNum("REPT2.7_Emerald",days,function(err,data){
-    return res.json(data);
-  });
-})
-
-router.get('/testCaseNum_nonEmer', function (req, res, next) {
+router.get('/testCaseNum', function (req, res, next) {
     fetchTestCaseNum("REPT2.7",days,function(err,data){
     return res.json(data);
   });

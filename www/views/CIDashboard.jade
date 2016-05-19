@@ -16,35 +16,31 @@ block content
                         td(class="currentSubmitBranch text-center") 0
                         td(class="currentSubmitTime text-center") 0
                         td(class="currentSubmitTime text-center") 0						
-    h4 [1]-The whole CI emerald duration:
-    div(id="theWholeCIemerald",style="width:600px;height:250px;")
-    h4 [2]-The whole CI REPT2.7 duration:
-    div(id="theWholeCInonemerald",style="width:600px;height:250px;")
-    h4 [3]-On Target Build duration:
+    h4 [1]-The whole CI duration:
+    div(id="theWholeCI",style="width:600px;height:250px;")
+    h4 [2]-On Target Build duration:
     div(id="onTargetbuild",style="width:600px;height:250px;")
-    h4 [4]-On Target Test duration:  
+    h4 [3]-On Target Test duration:  
     div(id="onTargetTest",style="width:600px;height:250px;")  
-    h4 [5]-Off Target Build duration:
+    h4 [4]-Off Target Build duration:
     div(id="offTargetbuild",style="width:600px;height:250px;")
-    h4 [6]-Off Target Test duration:  
+    h4 [5]-Off Target Test duration:  
     div(id="offTargetTest",style="width:600px;height:250px;") 
-    h4 [7]-Emerald test case number:  
-    div(id="EmerTestCaseNum",style="width:600px;height:250px;")
-    h4 [8]-REPT2.7 test case number:  
-    div(id="nonEmerTestCaseNum",style="width:600px;height:250px;")
-    h4 [9]-Original repo size:  
+    h4 [6]-test case number:  
+    div(id="testCaseNum",style="width:600px;height:250px;")
+    h4 [7]-Original repo size:  
     div(id="repoSizeOriginal",style="width:600px;height:250px;")
-    h4 [10]-Checkouted repo size:  
+    h4 [8]-Checkouted repo size:  
     div(id="repoSizeCheckout",style="width:600px;height:250px;")
-    h4 [11]-Branch number:  
+    h4 [9]-Branch number:  
     div(id="branchNumber",style="width:600px;height:250px;")
   
-    h4 [12]-Original repo size usage:  
+    h4 [10]-Original repo size usage:  
     div( id="originRepoSizePlot",style="width:600px;height:400px;") 
-    h4 [13]-Checkouted repo size usage:  
+    h4 [11]-Checkouted repo size usage:  
     div( id="userRepoSizePlot",style="width:600px;height:400px;")      
-    h4 [14]-Repo branch number usage:  
-    div( id="repoBrhCntPlot",style="width:600px;height:400px;")        
+    h4 [12]-Repo branch number usage:  
+    div( id="repoBrhCntPlot",style="width:600px;height:400px;")       
     
 block userdefinejs
     script(src="/javascripts/CIDashboard.js")     
