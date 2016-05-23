@@ -316,9 +316,9 @@ var acquireJenkinsAllInfo = function(){
             refreshQ(result);
               
         })              
-          $.get("/jenkins/getCIHistory", function (result) {
-              refreshCIHistory(result);
-          })
+        $.get("/jenkins/getCIHistory", function (result) {
+            refreshCIHistory(result);
+        })
       }
       catch(err)
       {
