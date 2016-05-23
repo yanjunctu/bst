@@ -9,216 +9,126 @@ block content
             h3 <span class="glyphicon glyphicon-stats"></span> CI status
           div(class="panel-body")
             div(class="col-sm-12")
-              div(class="tabbable tabs-below")
-                ul(class="nav nav-tabs")
-                  li
-                    a(href="#ciTabEmer" data-toggle="tab") Emerald CI
-                  li(class="active")
-                    a(href="#ciTabNonEmer" data-toggle="tab") REPT2.7 CI(old nonEmerald)
-                div(class="tab-content")
-                  div(class="tab-pane" id="ciTabEmer")
-                    - var escapseRow=0
-                    while escapseRow<2
-                      br
-                      - escapseRow++
+                - var escapseRow=0
+                while escapseRow<2
+                   br
+                   - escapseRow++
+                div(class="row")
+                  div(class="col-md-5")
+                    table(class="CIinfoTbl table table-striped table-bordered table-hover table-condensed")
+                      thead
+                        tr
+                          th(class="text-center")                             
+                          th(class="text-center text-info bg-info") submitter
+                          th(class="text-center text-info bg-info") branch                              
+                          th(class="text-center text-info bg-info") submit time
+                      tbody(id="ciQTbl")
+                        tr
+                          th(class="text-center text-info bg-info") running CI                            
+                          td(class="currentSubmitter text-center") na
+                          td(class="currentSubmitBranch text-center") na                              
+                          td(class="currentSubmitTime text-center") na
+                br
+                - var escapseSpace=0
+                while escapseSpace<110
+                  | &nbsp
+                  - escapseSpace++
+
+                div(class="warningImg panel-body" style= "position:absolute;left:5px;top:150px;display:none;")
+                  img(src="/images/iWarning.png" class="img-circle" width="100" height="100" style="margin-bottom:0px;")
+                       
+                div(class="alert alert-danger" style= "position:absolute;left:130px;top:90px;background: rgba(222,222,222, 0.7);border-color:#ddd;display:none;")
+                  p(style="font-size:80px;font-weight: bold") Warning !!! CI blocked
+
+                  p(style="font-size:40px;color:#000;") 
+                    |Block Reason:  DAT test failed on tag 
+                    span(class="releaseTagStr" style="font-weight: bold") na
+                  p(style="font-size:40px;color:#000;") 
+                    |Last Success Tag: 
+                    span(class="successTagStr" style="font-weight: bold") na
+                  p(style="font-size:40px;color:#000;")
+                    |The Submitter(s): 
+                    span(class="submitterStr" style="font-weight: bold") na
+                i(class="fa fa-arrow-circle-right fa-lg")
+                | &nbsp&nbsp              
+                a(class="buildFwState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-On_Target_Build_MultiJob/" target="_blank" style="width: 150px")
+                  i(class="fa fa-building fa-lg")
+                  p(class="text-center" style="margin-bottom:0px") Phase : build fw
+                  p(class="text-center" style="margin-bottom:0px") 
+                    | Status:
+                    span(class="statusStr") not start 
+                | &nbsp&nbsp
+                i(class="fa fa-arrow-circle-right fa-lg")
+                | &nbsp&nbsp
+                a(class="testFwState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-On_Target_Test_MultiJob/" target="_blank" style="width: 150px")
+                  i(class="fa fa-flask fa-lg")
+                  p(class="text-center" style="margin-bottom:0px") Phase : test fw
+                  p(class="text-center" style="margin-bottom:0px") 
+                    | Status:
+                    span(class="statusStr") not start
+                br
+                br
+                | &nbsp&nbsp              
+                a(class="idleState btn btn-md btn-default" href="#" style="width: 150px")
+                  i(class="fa fa-coffee fa-lg")
+                  p(class="text-center" style="margin-bottom:0px") Phase : idle
+                  p(class="text-center" style="margin-bottom:0px") 
+                    | Status:
+                    span(class="statusStr") not start 
+                | &nbsp&nbsp
+                i(class="fa fa-arrow-circle-right fa-lg")
+                | &nbsp&nbsp
+                a(class="preCheckState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Git-Integration/" target="_blank" style="width: 150px")
+                  i(class="fa fa-download fa-lg")
+                  p(class="text-center" style="margin-bottom:0px") Phase : pre check
+                  p(class="text-center" style="margin-bottom:0px") 
+                    | Status:
+                    span(class="statusStr") not start
                     
-                    div(class="row")
-                      div(class="col-md-5")
-                        table(class="CIinfoTbl table table-striped table-bordered table-hover table-condensed")
-                          thead
-                            tr
-                              th(class="text-center")                             
-                              th(class="text-center text-info bg-info") submitter
-                              th(class="text-center text-info bg-info") submit time
-                          tbody(id="emerTbl")
-                            tr
-                              th(class="text-center text-info bg-info") running CI                            
-                              td(class="currentSubmitBranch text-center") na
-                              td(class="currentSubmitTime text-center") na
-                    br
-                    
-                    - var escapseSpace=0
-                    while escapseSpace<110
-                      | &nbsp
-                      - escapseSpace++
+                - escapseSpace=0
+                while escapseSpace<100
+                  | &nbsp
+                  - escapseSpace++
+
+                i(class="fa fa-arrow-circle-right fa-lg")
+                | &nbsp&nbsp
+                a(class="preReleaseState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Git-Release/" target="_blank" style="width: 150px")
+                  i(class="fa fa-check-square-o fa-lg")
+                  p(class="text-center" style="margin-bottom:0px") Phase : pre release
+                  p(class="text-center" style="margin-bottom:0px") 
+                    | Status:
+                    span(class="statusStr") not start 
+                - var escapseRow=0
+                while escapseRow<2
+                   br
+                   - escapseRow++
+                - escapseSpace=0
+                while escapseSpace<90
+                  | &nbsp
+                  - escapseSpace++
                       
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp              
-                    a(class="buildFwState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-On_Target_Build_MultiJob/" target="_blank" style="width: 150px")
-                      i(class="fa fa-building fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : build fw
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start 
-                    | &nbsp&nbsp
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="testFwState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-On_Target_Test_MultiJob/" target="_blank" style="width: 150px")
-                      i(class="fa fa-flask fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : test fw
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start
-                    br
-                    br
-                    | &nbsp&nbsp              
-                    a(class="idleState btn btn-md btn-default" href="#" style="width: 150px")
-                      i(class="fa fa-coffee fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : idle
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start 
-                    | &nbsp&nbsp
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="preCheckState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Git-Integration/" target="_blank" style="width: 150px")
-                      i(class="fa fa-download fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : pre check
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start
-                    
-                    - escapseSpace=0
-                    while escapseSpace<100
-                      | &nbsp
-                      - escapseSpace++
-                      
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="preReleaseState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Git-Release/" target="_blank" style="width: 150px")
-                      i(class="fa fa-check-square-o fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : pre release
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start 
-                    br
-                    br        
-                    - escapseSpace=0
-                    while escapseSpace<90
-                      | &nbsp
-                      - escapseSpace++
-                      
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp              
-                    a(class="buildWin32State btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Off_Target_Build_MultiJob/" target="_blank" style="width: 150px")
-                      i(class="fa fa-building fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : build win32
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start 
-                    | &nbsp&nbsp
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="testWin32State btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Off_Target_Test_MultiJob/" target="_blank" style="width: 150px")
-                      i(class="fa fa-flask fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : test win32
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start
-                  
-                  div(class="tab-pane active" id="ciTabNonEmer" )   
-                    - var escapseRow=0
-                    while escapseRow<2
-                      br
-                      - escapseRow++
-                    
-                    div(class="row")
-                      div(class="col-md-5")
-                        table(class="CIinfoTbl table table-striped table-bordered table-hover table-condensed")
-                          thead
-                            tr
-                              th(class="text-center")                             
-                              th(class="text-center text-info bg-info") submitter
-                              th(class="text-center text-info bg-info") submit time
-                          tbody(id="nonEmerTbl")
-                            tr
-                              th(class="text-center text-info bg-info") running CI                            
-                              td(class="currentSubmitBranch text-center") na
-                              td(class="currentSubmitTime text-center") na
-                    br
-                    
-                    
-                    - var escapseSpace=0
-                    while escapseSpace<110
-                      | &nbsp
-                      - escapseSpace++
-                      
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp              
-                    a(class="buildFwState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-On_Target_Build_MultiJob/" target="_blank" style="width: 150px")
-                      i(class="fa fa-building fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : build fw
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start 
-                    | &nbsp&nbsp
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="testFwState btn btn-md btn-default" href="#" style="width: 150px")
-                      i(class="fa fa-flask fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : test fw
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start
-                    br
-                    br
-                    | &nbsp&nbsp              
-                    a(class="idleState btn btn-md btn-default" href="#" style="width: 150px")
-                      i(class="fa fa-coffee fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : idle
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start 
-                    | &nbsp&nbsp
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="preCheckState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Git-Integration/" target="_blank" style="width: 150px")
-                      i(class="fa fa-download fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : pre check
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start
-                    
-                    - escapseSpace=0
-                    while escapseSpace<100
-                      | &nbsp
-                      - escapseSpace++
-                      
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="preReleaseState btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Git-Release/" target="_blank" style="width: 150px")
-                      i(class="fa fa-check-square-o fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : pre release
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start 
-                    br
-                    br        
-                    - escapseSpace=0
-                    while escapseSpace<90
-                      | &nbsp
-                      - escapseSpace++
-                      
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp              
-                    a(class="buildWin32State btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Off_Target_Build_MultiJob/" target="_blank" style="width: 150px")
-                      i(class="fa fa-building fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : build win32
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start 
-                    | &nbsp&nbsp
-                    i(class="fa fa-arrow-circle-right fa-lg")
-                    | &nbsp&nbsp
-                    a(class="testWin32State btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Off_Target_Test_MultiJob/" target="_blank" style="width: 150px")
-                      i(class="fa fa-flask fa-lg")
-                      p(class="text-center" style="margin-bottom:0px") Phase : test win32
-                      p(class="text-center" style="margin-bottom:0px") 
-                        | Status:
-                        span(class="statusStr") not start
-                  
-          
-                
+                i(class="fa fa-arrow-circle-right fa-lg")
+                | &nbsp&nbsp              
+                a(class="buildWin32State btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Off_Target_Build_MultiJob/" target="_blank" style="width: 150px")
+                  i(class="fa fa-building fa-lg")
+                  p(class="text-center" style="margin-bottom:0px") Phase : build win32
+                  p(class="text-center" style="margin-bottom:0px") 
+                    | Status:
+                    span(class="statusStr") not start 
+                | &nbsp&nbsp
+                i(class="fa fa-arrow-circle-right fa-lg")
+                | &nbsp&nbsp
+                a(class="testWin32State btn btn-md btn-default" href="https://10.193.226.152:8080/view/PCR-REPT-2.7/job/PCR-REPT-Off_Target_Test_MultiJob/" target="_blank" style="width: 150px")
+                  i(class="fa fa-flask fa-lg")
+                  p(class="text-center" style="margin-bottom:0px") Phase : test win32
+                  p(class="text-center" style="margin-bottom:0px") 
+                    | Status:
+                    span(class="statusStr") not start
+                - var escapseRow=0
+                while escapseRow<2
+                   br
+                   - escapseRow++
+            
     div.row-fluid
       div(class="col-sm-12")
         div(class="panel panel-primary")
@@ -247,8 +157,16 @@ block content
           div(class="panel-heading") 
             h3 <span class="glyphicon glyphicon-envelope"></span> Major updates
           div(class="panel-body" style="height:420px;overflow:auto")
-            h3(class="text-primary") V1.2:
+            h3(class="text-primary") V1.3:
                img(src="/images/new_icon_yellow.gif")
+            ol
+              li
+                | Use JIRA to tracking suggestion
+              li
+                | Besides submitter and submit name, display branch name in CI status   
+              li
+                | Fix display time in pending queue not correct issue
+            h3(class="text-primary") V1.2:
             ol
               li
                 span 
@@ -322,40 +240,22 @@ block content
         div(class="panel panel-primary")
           div(class="panel-heading")
             h3 <span class="glyphicon glyphicon-edit"></span> Feedback
-          div(class="panel-body" style="height:420px")
-            form(id="feedback_form" role="form")
-              div(class="form-group")
-                h4 Do you like our system:
-                div(class="row")
-                  label(class="radio-inline col-md-2 col-md-offset-2") 
-                    img(src="/images/like.png" class="img-circle" width="30" height="30")
-                    br
-                    input(type="radio" name="GitUsage" value="Git_Excellent")
-                    | Like
-                  label(class="radio-inline col-md-2")
-                    img(src="/images/neutral.png" class="img-circle" width="30" height="30")
-                    br                
-                    input(type="radio" name="GitUsage" value="Git_Not_Bad")
-                    | Neutral   
-                  label(class="radio-inline col-md-2")
-                    img(src="/images/dislike.png" class="img-circle" width="30" height="30")
-                    br                
-                    input(type="radio" name="GitUsage" value="Git_Poor")
-                    | Dislike  
-              
-              div(class="form-group")
-                h4(for="comment") Welcome your comment and suggestion:
-                textarea(class="form-control" rows="5" id="comment")
-                
-              div(class="form-group")
-                h4 Core ID (Good comment and suggestion have Moto Coin):
-                input(type="text" class="form-control" id="Feedback_coreId")
-                
-              
-              button(id="submit_btn" type="submit" class="btn btn-info") Submit
-              | &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-              a(href="/feedback/gitall" class="text-info")              
-              h3(id="feedback_status",class="text-primary")
+          div(class="panel-body" style="height:auto")
+            ul
+              li 
+                strong JIRA
+                | &nbsp is used to tracking suggestion and issue instead
+              br
+              li Tips
+                ol
+                    li
+                      | To be simple,only
+                      span(style="color:red;") *
+                      | &nbsp items is required, ignore other fields you can
+                    li Only <strong>Summary</strong> field is required currently, recommand fill your detail in <strong>Description</strong> field
+              br
+              br
+              a(href="http://jira.mot-solutions.com/login.jsp?os_destination=%2Fsecure%2FCreateIssueDetails%21init.jspa%3Fpid%3D11005%26issuetype%3D10201%26components%3D11009" class="btn btn-default btn-lg active" role="button") Start Submit In JIRA
               
     
 block userdefinejs

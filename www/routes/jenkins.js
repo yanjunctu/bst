@@ -1,14 +1,13 @@
 var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
-var fs = require('fs');
 var fiber = require('fibers');
 var server = require('mongo-sync').Server;
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var days=30;
 
-var emeraldStatus = {
+var CISTATUS = {
   "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
   "buildFwState":{"status":"not start","duration":3},
@@ -16,18 +15,8 @@ var emeraldStatus = {
   "buildWin32State":{"status":"not start","duration":5},
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
-  "overall":{"current":{"branch":"na","subTime":"na"}}
-};  
-
-var nonEmeraldStatus = {
-  "idleState":{"status":"running","duration":0},
-  "preCheckState":{"status":"not start","duration":2},
-  "buildFwState":{"status":"not start","duration":3},
-  "testFwState":{"status":"not start","duration":4},
-  "buildWin32State":{"status":"not start","duration":5},
-  "testWin32State":{"status":"not start","duration":0},
-  "preReleaseState":{"status":"not start","duration":0},
-  "overall":{"current":{"branch":"na","subTime":"na"}}
+  "overall":{"current":{"branch":"na","subTime":"na"}},
+  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na"}
 };  
 
 // Variables for CI history info
@@ -77,8 +66,25 @@ var getAllBuild = function (job,param,callback)
     callback(err,data);
   });  
 };
+var getJobLastCompletedBuild = function(job,callback)
+{
+  var result;
+  jenkins.last_completed_build_info(job, function(err, data) {
+    callback(err,data);
+  });
 
-function getProjectName(data){
+};
+var getJobLastSuccessBuild = function(job,callback)
+{
+  var result;
+  jenkins.last_success(job, function(err, data) {
+    callback(err,data);
+  });
+
+};
+
+
+function getParameterValue(data,parameter){
   var actions = data.actions;
   var found;
   
@@ -87,7 +93,7 @@ function getProjectName(data){
       var paras = action.parameters;
       paras.forEach(function(para){
         //console.log(para.name);
-        if(para.name=="PROJECT_NAME"){
+        if(para.name==parameter){
           //console.log("found",para.value)
           found = para.value;
           return;
@@ -103,61 +109,9 @@ function getProjectName(data){
   return found;
 }
 
-function getBranchName(data){
-  
-  var actions = data.actions;
-  var found;
-  
-  actions.forEach(function(action){
-    if (action.hasOwnProperty("parameters")) {
-      var paras = action.parameters;
-      paras.forEach(function(para){
-        //console.log(para.name);
-        if(para.name=="IR_BRANCH"){
-          //console.log("found",para.value)
-          found = para.value;
-          return;
-        }
-        {
-          //console.log()
-        }
-          
-      })
-    }
-  }
-  );
-  return found;
-}
-
-
-function getSubmitterName(data){
-  
-  var actions = data.actions;
-  var found;
-  
-  actions.forEach(function(action){
-    if (action.hasOwnProperty("parameters")) {
-      var paras = action.parameters;
-      paras.forEach(function(para){
-        //console.log(para.name);
-        if(para.name=="SUBMITTER"){
-          //console.log("found",para.value)
-          found = para.value;
-          return;
-        }
-        {
-          //console.log()
-        }
-          
-      })
-    }
-  }
-  );
-  return found;
-}
 
 function getPendingReq(project, callback){
-    var result = {"current":{"submitter":"","subTime":0},"queue":[]};
+    var result = {"current":{"submitter":"","subBranch":"","subTime":0},"queue":[]};
 
     try {
         jenkins.queue(function(err, data){
@@ -176,6 +130,7 @@ function getPendingReq(project, callback){
                     var projName = '';
                     var paraArray = item.params.split('\n');
                     //console.log('array=',paraArray);
+                    var id = item['id'];
                     paraArray.forEach(function(itr){
                         var keyValue = itr.split('=');
                         
@@ -187,6 +142,10 @@ function getPendingReq(project, callback){
                         {
                             submitter = keyValue[1];
                         }
+                        if(keyValue[0] == 'IR_BRANCH')
+                        {
+                            branch = keyValue[1];
+                        }                        
                         if(keyValue[0] == 'PUSH_TIME')
                         {
                             pushTime = keyValue[1];
@@ -195,24 +154,14 @@ function getPendingReq(project, callback){
                     });
                     
                     if(projName == project){
-                        var jobName = /pcr-rept-0-multijob(-emerald)?/ig.exec(item.task.name);
-                        if (jobName && submitter && pushTime){
+                        var jobName = /pcr-rept-0-multijob/ig.exec(item.task.name);
+                        if (jobName && submitter && branch && pushTime){
                      
                             console.log('jobname:'+item.task.name);
-                                        console.log(submitter,pushTime);
-                            result.queue.push({"submitter":submitter, "subTime":pushTime});
+                                        console.log(submitter,branch,pushTime);
+                            result.queue.push({"id": id,"submitter":submitter,"subBranch":branch,"subTime":pushTime});
                         }     
                     }
-                    /*
-                    var projName = /PROJECT_NAME=(.*)[&]/ig.exec(item.params);
-                    var submitter = /SUBMITTER=(.*)/ig.exec(item.params);
-                    var pushTime = /PUSH_TIME=(.*)/ig.exec(item.params);
-                    var jobName = /pcr-rept-0-multijob(-emerald)?/ig.exec(item.task.name);
-
-                    if (projName && jobName && submitter && pushTime){
-                        result.queue.push({"submitter":submitter[1], "subTime":pushTime[1]});
-                    }
-                    */
                 }
             });
 
@@ -233,18 +182,17 @@ var updateStatus = function(ciStatus,data){
     ciStatus.buildWin32State.status="not start";
     ciStatus.testWin32State.status="not start";
     ciStatus.preReleaseState.status="not start";   
-    ciStatus.overall.current.branch="na";
+    ciStatus.overall.current.submitter="na";
     ciStatus.overall.current.subTime="na";
-	
-	  
-	  
+    ciStatus.overall.current.subBranch="na";    
     if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
     }else {
-      ciStatus.idleState.status="done";
-      ciStatus.overall.current.branch= getSubmitterName(data);//data.actions[0].parameters[1].value;
-      ciStatus.overall.current.subTime = data.timestamp;   
+      ciStatus.idleState.status="done"; 
+      ciStatus.overall.current.submitter= getParameterValue(data,"SUBMITTER");//data.actions[0].parameters[1].value;
+      ciStatus.overall.current.subBranch= getParameterValue(data,"IR_BRANCH");//data.actions[0].parameters[1].value;      
+      ciStatus.overall.current.subTime = data.timestamp; 
       
       data.subBuilds.forEach(function(element, index, array){
         if(element.jobName =='PCR-REPT-Git-Integration'){
@@ -356,15 +304,14 @@ function pushdata(id,duration,submitter,timestamp,data){
 	//parameter=data.actions[0].parameters;
 	//console.log(parameters);
 
-submitter.push(getSubmitterName(data)); 
+    submitter.push(getParameterValue(data,"SUBMITTER")); 
 
 }
 
 function getJobDuration(job,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
-	var emerStr ="REPT2.7_Emerald";
-	var durationDic = {"id_em":[],"duration_em":[],"submitter_em":[],"timestamp_em":[],"id_non":[],"duration_non":[],"submitter_non":[],"timestamp_non":[]};
+    var durationDic = {"id":[],"duration":[],"submitter":[],"timestamp":[]};
 	
 	
 	var parameters;
@@ -381,18 +328,10 @@ function getJobDuration(job,days,callback){
 	{
 	    if(data[i].timestamp > oldestTimeStamp)
 		{
-		   if(data[i].result == "SUCCESS")
+		   if((data[i].result == "SUCCESS") && ("REPT2.7" == getParameterValue(data[i],"PROJECT_NAME")))
 		   {
-		       //parameter=data[i].actions[0].parameters;
-			   if(getProjectName(data[i]) == emerStr)
-			   {
-			       pushdata(durationDic.id_em,durationDic.duration_em,durationDic.submitter_em,durationDic.timestamp_em,data[i]);
-			   
-			   }
-			   else
-			   {
-                   pushdata(durationDic.id_non,durationDic.duration_non,durationDic.submitter_non,durationDic.timestamp_non,data[i]); 
-               }
+               pushdata(durationDic.id,durationDic.duration,durationDic.submitter,durationDic.timestamp,data[i]);
+
 		   }
 		}
 		else
@@ -460,7 +399,7 @@ function getJobFailureInfo(job,days,callback){
 					}
 			   }
 
-				failureInfoDic.failSubmitter.push(getSubmitterName(data[i])); 
+				failureInfoDic.failSubmitter.push(getParameterValue(data[i],"SUBMITTER")); 
    
 		   }
 		   else if(data[i].result== "ABORTED")
@@ -479,6 +418,78 @@ function getJobFailureInfo(job,days,callback){
 	return;
 	})
 }
+var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
+    
+    ciBlockInfo.result = data.result;
+    ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
+    ciBlockInfo.submitter="";
+    ciBlockInfo.lastSuccessTag=""
+    //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
+    if (ciBlockInfo.result == "FAILURE"){
+        getJobLastSuccessBuild(job,function(err,data){
+            if(err) {
+                console.log("err in onTargertTestInfo");
+                return;
+            }
+            ciBlockInfo.lastSuccessTag=getParameterValue(data,"NEW_BASELINE");
+
+            fiber(function() {
+
+                var db = new server("127.0.0.1").db("booster");
+                var docS = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.lastSuccessTag}}).toArray();
+                sucessId = docS[0]["build id"];
+                var docF = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.releaseTag}}).toArray();
+                failId = docF[0]["build id"];
+
+                var docs = db.getCollection('PCR-REPT-Git-Release').find({"build id": {$gt:sucessId,$lte:failId}}).toArray();
+
+                var submitter = ""
+                docs.forEach(function(doc) {
+
+                   if(doc["project name"] == "REPT2.7"){
+                       submitter = submitter + doc["submitter"]+";";
+                   }
+                   
+                });
+                ciBlockInfo.submitter=submitter;
+            }).run();
+            
+        });
+        // Cancle all pending CI requests
+        getPendingReq("REPT2.7", function(err, data){
+            if (err) {
+                console.log(err);
+                return;
+            }
+            // Cancle all pending CI reqs
+            data["queue"].forEach(function(pendingCI) {
+                var id = pendingCI["id"];
+
+                jenkins.cancel_item(id, function(err) {
+                    if (err) {
+                        console.log("failed to cancel item["+id.toString()+"]"+err);
+                    }
+                    else {
+                        console.log("succeeded to cancel item["+id.toString()+"]"+err);
+                    }
+                });
+            });
+        });
+    }
+}
+
+var onTargertTestInfo = function(job){
+
+    getJobLastCompletedBuild(job,function(err,data){
+        if(err) 
+        {
+            console.log("err in onTargertTestInfo");
+            return;
+        }
+
+        updateOnTargetTestStatus(CISTATUS.ciBlockInfo,data,job);  
+    });
+}
 
 var updateLatestBuildInfo = function(job){
     
@@ -489,15 +500,9 @@ var updateLatestBuildInfo = function(job){
           return;
         }
     
-        var project = getProjectName(data);//data.actions[0].parameters[0].value;
-        var ciStatus;
-        if (project=="REPT2.7_Emerald"){
-          ciStatus = emeraldStatus;      
-        }else{
-          ciStatus = nonEmeraldStatus;
-        }
-        updateStatus(ciStatus,data);  
-        });
+        updateStatus(CISTATUS,data); 
+       
+    });
 }
 
 var getBuildInfoByBuildChain = function(db, doc, buildChain) {
@@ -629,8 +634,7 @@ var updateCIHistoryInfo = function() {
 }
 
 setInterval(function(){
-    
-    updateLatestBuildInfo('PCR-REPT-0-MultiJob-Emerald');
+    onTargertTestInfo('PCR-REPT-DAT_LATEST');
     updateLatestBuildInfo('PCR-REPT-0-MultiJob');    
     updateCIHistoryInfo();
 
@@ -638,39 +642,24 @@ setInterval(function(){
 
 
 /* GET feedback about git page. */
-router.get('/getEmerStatus', function(req, res, next) {
+router.get('/getCIStatus', function(req, res, next) {
 
-  console.log("getEmerStatus"); 
+  console.log("getCIStatus"); 
 
-  return res.json(emeraldStatus);      
+  return res.json(CISTATUS);      
 });
 
-router.get('/getEmerPendingReq', function(req, res, next){
-    console.log("getEmerPendingReq");
-    getPendingReq("REPT2.7_Emerald", function(err, data){
-        if (err) { return res.end(); }
-        data.current.submitter = emeraldStatus.overall.current.branch;
-        data.current.subTime = emeraldStatus.overall.current.subTime;
-        return res.json(data);
-    });
-});
-  
-router.get('/getNonEmerStatus', function(req, res, next) {
-
-  console.log("getNonEmerStatus");
-
-  return res.json(nonEmeraldStatus);       
-});
-
-router.get('/getNonEmerPendingReq', function(req, res, next){
-    console.log("getnonEmerPendingReq");
+router.get('/getCIPendingReq', function(req, res, next){
+    console.log("getCIPendingReq");
     getPendingReq("REPT2.7", function(err, data){
         if (err) { return res.end(); }
-        data.current.submitter = nonEmeraldStatus.overall.current.branch;
-        data.current.subTime = nonEmeraldStatus.overall.current.subTime;
+        data.current.submitter = CISTATUS.overall.current.submitter;
+        data.current.subTime = CISTATUS.overall.current.subTime;
+        data.current.subBranch = CISTATUS.overall.current.subBranch;   
         return res.json(data);
     });
-})
+});
+
 
 router.get('/dashboard', function(req, res, next){
     res.render('CIDashboard',{ title: 'CI DashBoard' });
@@ -683,7 +672,7 @@ router.get('/getOnTargetBuild', function(req, res, next){
 })
 
 router.get('/getOnTargetTest', function(req, res, next){
-  getJobDuration('PCR-REPT-DAT_REAL',days,function(err,data){
+  getJobDuration('PCR-REPT-DAT_LATEST',days,function(err,data){
     return res.json(data);
   });
 })
@@ -700,25 +689,14 @@ router.get('/getOffTargetTest', function(req, res, next){
   });
 })
 
-router.get('/getTheWholeCI_emerald', function(req, res, next){
-  getJobDuration('PCR-REPT-0-MultiJob-Emerald',days,function(err,data){
-    return res.json(data);
-  });
-})
-
-router.get('/getTheWholeCI_nonemerald', function(req, res, next){
+router.get('/getTheWholeCI', function(req, res, next){
   getJobDuration('PCR-REPT-0-MultiJob',days,function(err,data){
     return res.json(data);
   });
 })
 
-router.get('/getEmeraldFailInfo', function(req, res, next){
-  getJobFailureInfo('PCR-REPT-0-MultiJob-Emerald',days,function(err,data){
-    return res.json(data);
-  });
-})
 
-router.get('/getNonEmeraldFailInfo', function(req, res, next){
+router.get('/getFailInfo', function(req, res, next){
   getJobFailureInfo('PCR-REPT-0-MultiJob',days,function(err,data){
     return res.json(data);
   });
@@ -727,5 +705,6 @@ router.get('/getNonEmeraldFailInfo', function(req, res, next){
 router.get('/getCIHistory', function(req, res, next){
         return res.json(CIHistory);
 })
+
 
 module.exports = router;

@@ -339,7 +339,7 @@ var init = exports.init = function(host, options) {
         },
         last_result: function(jobname, callback) {
             /*
-            Get the last result for a job
+            get the last result for a job
             */
             this.job_info(jobname, function(error, data) {
                 var last_result_url = data.lastBuild.url;
