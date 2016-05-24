@@ -157,8 +157,19 @@ block content
           div(class="panel-heading") 
             h3 <span class="glyphicon glyphicon-envelope"></span> Major updates
           div(class="panel-body" style="height:420px;overflow:auto")
-            h3(class="text-primary") V1.3:
+            h3(class="text-primary") V2.0:
                img(src="/images/new_icon_yellow.gif")
+            ol
+              li
+                | Remove emerald CI,only keep one CI for 2.7 now, all teamates need to submit CI with below pattern:
+                | <br>e.g:  <strong>git push origin yourlocalBranch:IR_2.7_xxx</strong>
+              li
+                | CI history and visualization,display all CI records in a table
+              li
+                | Block CI with the right indication when on target test fail  
+              li
+                | Poll latest I release to do on target test                     
+            h3(class="text-primary") V1.3:
             ol
               li
                 | Use JIRA to tracking suggestion
