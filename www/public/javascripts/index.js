@@ -144,13 +144,13 @@ var ciTable = $("#ciHistoryTbl").DataTable({
             {
                 data: "codeStaticCheck",
                 render: function(data, type, row) {
-                    var buildWarnings = "--", kwWarnings = "--";
+                    var buildWarnings = "0", kwWarnings = "0";
 
                     if (!data)
                         return "--";
 
                     if (data["build"] == 0 && data["klocwork"] == 0)
-                        return "SUCCESS"
+                        return "SUCCESS";
 
                     if (data["build"])
                         buildWarnings = data["build"].toString();
