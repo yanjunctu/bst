@@ -152,9 +152,9 @@ var ciTable = $("#ciHistoryTbl").DataTable({
                     if (data["build"] == 0 && data["klocwork"] == 0)
                         return "SUCCESS"
 
-                    if ("build" in data)
+                    if (data["build"])
                         buildWarnings = data["build"].toString();
-                    if ("klocwork" in data)
+                    if (data["klocwork"])
                         kwWarnings = data["klocwork"].toString();
                     return "build warnings: " + buildWarnings + " kw warnings: " + kwWarnings;
                 }

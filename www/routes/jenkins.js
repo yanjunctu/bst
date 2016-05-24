@@ -552,8 +552,8 @@ var refreshCIHistory = function(db, doc) {
 
             entry["rlsTag"] = rlsInfo["release tag"];
             for (var i = 0; i < warnings.length; ++i) {
-                buildWarnings += warnings["buildWarningCnt"];
-                klocworkWarnings += warnings["klocworkCnt"];
+                buildWarnings += warnings[i]["buildWarningCnt"];
+                klocworkWarnings += warnings[i]["klocworkCnt"];
             }
             entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
             if (0 != onTargetSanity.length) {
