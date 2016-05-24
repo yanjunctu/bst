@@ -1,6 +1,7 @@
 var indexArray = ["idleState","preCheckState","buildFwState","testFwState","buildWin32State","testWin32State","preReleaseState"];
 var statusArray = ["not start","running","done"]
 var GET_JENKINS_INTERVAL = 15000;// each 15 seconds to get a jenkins status
+var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
 var CIStateLookup = {
   "idleState": {
     "icon":{
@@ -290,7 +291,7 @@ var refreshQ = function(QueueInfo)
   });
 };
 
-var refreshCIHistory = function(ciHistory) {
+var refreshCIHistoryInfo = function(ciHistory) {
     ciHistory.forEach(function(info) {
         if (info["buildResult"] == "SUCCESS") {
             if (info["onTargetSanity"] != "SUCCESS"
@@ -316,15 +317,25 @@ var acquireJenkinsAllInfo = function(){
             refreshQ(result);
               
         })              
-        $.get("/jenkins/getCIHistory", function (result) {
-            refreshCIHistory(result);
-        })
       }
       catch(err)
       {
         console.log(err.message)
       }
       
+};
+
+var acquireCIHistoryInfo = function() {
+    try
+    {
+        $.get("/jenkins/getCIHistory", function(result) {
+            refreshCIHistoryInfo(result);
+        })              
+    }
+    catch(err)
+    {
+        console.log(err.message)
+    }
 };
 
 var main = function()
@@ -365,8 +376,10 @@ var main = function()
   
   $(".testFwState").hide();
   acquireJenkinsAllInfo();
+  acquireCIHistoryInfo();
   
   setInterval(acquireJenkinsAllInfo, GET_JENKINS_INTERVAL);  
+  setInterval(acquireCIHistoryInfo, CI_HISTORY_INTERVAL);
 };
 
 $(document).ready(main);

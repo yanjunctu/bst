@@ -5,6 +5,7 @@ var fiber = require('fibers');
 var server = require('mongo-sync').Server;
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
+var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
 var days=30;
 
 var CISTATUS = {
@@ -636,9 +637,12 @@ var updateCIHistoryInfo = function() {
 setInterval(function(){
     onTargertTestInfo('PCR-REPT-DAT_LATEST');
     updateLatestBuildInfo('PCR-REPT-0-MultiJob');    
-    updateCIHistoryInfo();
 
 }, GET_JENKINS_INTERVAL);
+
+setInterval(function() {
+    updateCIHistoryInfo();
+}, CI_HISTORY_INTERVAL);
 
 
 /* GET feedback about git page. */
@@ -703,7 +707,11 @@ router.get('/getFailInfo', function(req, res, next){
 })
 
 router.get('/getCIHistory', function(req, res, next){
-        return res.json(CIHistory);
+    if (0 == CIHistory.length) {
+        updateCIHistoryInfo();
+    }
+
+    return res.json(CIHistory);
 })
 
 
