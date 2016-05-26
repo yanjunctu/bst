@@ -262,21 +262,6 @@ def pre_check(args):
         if re.match(valid_current_path_pattern,current_path_drive) == None:
             print("pls mount git repo to a drive, then get back to run this script")
             sys.exit()
-        while True:
-        # Get User from which team
-            choose_team = raw_input('''Tell me which team are you from, input 1 or 2: 
-1: emerald  2: nonEmerald\n''');
-
-            if choose_team in ['1','2']:
-                if choose_team == '1':
-                    pattern = r' *(.*)/(REPT_2\.7_Emerald_INT)\n';
-                    break;
-                else:
-                    pattern = r' *(.*)/(REPT_2\.7_INT)\n';
-                    break;
-            else:
-                print("input wrong")
-                sys.exit()
                 
         f = open(os.devnull, 'w')
         subprocess.call('git fetch --all', stdout=f, stderr=f)
@@ -286,6 +271,7 @@ def pre_check(args):
         except:
             print('failed to get remote branches, make sure you are in the correct repo directory')
             sys.exit()
+        pattern =  r' *(.*)/(REPT_2\.7_INT)\n';
         match = re.search(pattern, remote_branches) 
         if match:
             args.ci_Branch = match.group(0).strip()

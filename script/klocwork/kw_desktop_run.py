@@ -6,7 +6,7 @@ import datetime
 from sys import path
 import StringIO
 
-PATTERN_EMER = r' *(.*)/(REPT_2\.7_Emerald_INT)\n'
+#PATTERN_EMER = r' *(.*)/(REPT_2\.7_Emerald_INT)\n'
 PATTERN_EMER_CI = r'REPT_Emerald_.+'
 FCL_FILE = '\\temp_log\\temp_FCL.txt'
 SCRIPT_DIR = '\\ltd\\tools\\booster\\warning'
@@ -96,7 +96,8 @@ def getFCL(fcl_file,args):
 	
     if file_number == 0:
         print 'No .cpp/.c/.h file change,Klocwork issues self check END '
-        sys.exit()
+        #sys.exit(0)
+        os._exit(0)
     else:
         print '{number} files change'.format(number = file_number)
 
@@ -118,20 +119,14 @@ if __name__ == "__main__":
     if (args.mode == 'preCI'):
         os.system("cls") # clear screen
         print WelcomeWords;
-    
-        pattern = PATTERN_EMER 
       
     else:
-        pattern = PATTERN_EMER_CI
         stdout = sys.stdout
         sys.stdout = stdOutfile = StringIO.StringIO()
         print CIMailHeader
-    #get project name    
-    match = re.search(pattern, args.ci_Branch) 
-    if match:
-        kw_project = 'REPT2.7_Emerald';
-    else:
-        kw_project = 'REPT2.7';
+        
+    #set project name    
+    kw_project = 'REPT2.7';
         
     #get FCL
     fcl_file=args.drive+FCL_FILE
