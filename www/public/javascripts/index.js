@@ -296,7 +296,7 @@ var refreshCIHistoryInfo = function(ciHistory) {
     ciHistory.forEach(function(info) {
         if (info["buildResult"] == "SUCCESS") {
             if (info["onTargetSanity"] != "SUCCESS"
-                || info["extRegression"] == "FAILURE") {
+                || (info["extRegression"] && info["extRegression"] != "SUCCESS")) {
                 info["buildResult"] = "SUCCESSWITHERRORS";
             }
         }

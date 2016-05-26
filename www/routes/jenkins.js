@@ -635,7 +635,9 @@ var updateCIHistoryInfo = function() {
                 if (doc["release tag"] && CIHistory[i]["rlsTag"] == doc["release tag"]) {
                     if (!CIHistory[i]["onTargetSanity"]) {
                         CIHistory[i]["onTargetSanity"] = doc["build result"];
-                        CILastSanityBuildID = doc["build id"];
+                        if (doc["build id"] > CILastSanityBuildID) {
+                            CILastSanityBuildID = doc["build id"];
+                        }
                     }
                     break;
                 }
@@ -646,7 +648,9 @@ var updateCIHistoryInfo = function() {
                 if (doc["release tag"] && CIHistory[i]["rlsTag"] == doc["release tag"]) {
                     if (!CIHistory[i]["extRegression"]){
                         CIHistory[i]["extRegression"] = doc["build result"];
-                        CILastExtRegressionBuildID = doc["build id"];
+                        if (doc["build id"] > CILastExtRegressionBuildID) {
+                            CILastExtRegressionBuildID = doc["build id"];
+                        }
                     }
                     break;
                 }
