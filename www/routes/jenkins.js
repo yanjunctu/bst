@@ -32,6 +32,7 @@ const CI_OFF_TARGET_IT_PART1_JOB = "PCR-REPT-Win32_IT-TEST-Part1";
 const CI_OFF_TARGET_IT_PART2_JOB = "PCR-REPT-Win32_IT-TEST-Part2";
 const CI_COVERAGE_CHECK_JOB = "PCR-REPT-Win32_COV_CHECK";
 const CI_RELEASE_JOB = "PCR-REPT-Git-Release";
+const CI_PRECHECK_JOB = "PCR-REPT-Git-Integration";
 const CI_SANITY_TEST_JOB = "PCR-REPT-DAT_LATEST";
 const CI_EXT_REGRESSION_JOB = "PCR-REPT-DAT_DAILY";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
@@ -533,15 +534,19 @@ var refreshCIHistory = function(db, doc) {
     var entry = {};
     var rlsDate = new Date(doc["start time"] + doc["build duration"]);
     var rlsInfo = db.getCollection(CI_RELEASE_JOB).findOne({"build id": doc[CI_RELEASE_JOB]});
+    var precheck = db.getCollection(CI_PRECHECK_JOB).findOne({"build id": doc[CI_PRECHECK_JOB]});
     var itValue = {};
     
     entry["buildID"] = doc["build id"];
     entry["buildResult"] = doc["build result"];
     entry["submitter"] = doc["submitter"];
+    if (precheck && precheck["build result"]) {
+        entry["precheck"] = precheck["build result"];
+    }
     // Release time/release tag/code static check/sanity test/extended regression test
     if (entry["buildResult"] == "SUCCESS") {
         entry["rlsTime"] = rlsDate.toLocaleDateString() + " " + rlsDate.toLocaleTimeString();
-        if (rlsInfo && "release tag" in rlsInfo) {
+        if (rlsInfo && rlsInfo["release tag"]) {
             var buildWarnings = 0, klocworkWarnings = 0;
             var rlsTag = rlsInfo["release tag"];
             // Different key name of the release tag field in different collections

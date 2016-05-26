@@ -123,6 +123,7 @@ var ciTable = $("#ciHistoryTbl").DataTable({
             {data: "rlsTag", defaultContent: "--"},
             {data: "submitter", defaultContent: "--"},
             {data: "rlsTime", defaultContent: "--"},
+            {data: "precheck", defaultContent: "--"},
             {data: "onTargetBuild", defaultContent: "--"},
             {data: "offTargetBuild", defaultContent: "--"},
             {data: "win32UT", defaultContent: "--"},
