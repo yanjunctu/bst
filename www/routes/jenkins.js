@@ -36,6 +36,7 @@ const CI_PRECHECK_JOB = "PCR-REPT-Git-Integration";
 const CI_SANITY_TEST_JOB = "PCR-REPT-DAT_LATEST";
 const CI_EXT_REGRESSION_JOB = "PCR-REPT-DAT_DAILY";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
+var CILastTriggerBuildID = 0, CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0;
 var CIHistory = [];
 var CIOnTargetBuildChain = [CI_ON_TARGET_JOB, CI_ON_TAEGET_BUILD_JOB];
 var CIOffTargetBuildChain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_BUILD_JOB];
@@ -551,9 +552,6 @@ var refreshCIHistory = function(db, doc) {
             var rlsTag = rlsInfo["release tag"];
             // Different key name of the release tag field in different collections
             var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
-            // Maybe the same release version will be tested many times, we only care the last one
-            var onTargetSanity = db.getCollection(CI_SANITY_TEST_JOB).find({"release tag": rlsTag}).sort({"build id": -1}).toArray();
-            var extRegression = db.getCollection(CI_EXT_REGRESSION_JOB).find({"release tag": rlsTag}).sort({"build id": -1}).toArray();
 
             entry["rlsTag"] = rlsInfo["release tag"];
             for (var i = 0; i < warnings.length; ++i) {
@@ -561,12 +559,6 @@ var refreshCIHistory = function(db, doc) {
                 klocworkWarnings += warnings[i]["klocworkCnt"];
             }
             entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
-            if (0 != onTargetSanity.length) {
-                entry["onTargetSanity"] = onTargetSanity[0]["build result"];
-            }
-            if (0 != extRegression) {
-                entry["extRegression"] = extRegression[0]["build result"];
-            }
         }
     }
     // Get on-target build result 
@@ -619,22 +611,46 @@ var refreshCIHistory = function(db, doc) {
     }
 
     CIHistory.push(entry);
+    if (entry["buildID"] > CILastTriggerBuildID) {
+        CILastTriggerBuildID = entry["buildID"];
+    }
 }
 
 var updateCIHistoryInfo = function() {
-    var lastBuildID = 0;
-
-    // find the new trigger builds since the last update
-    if (CIHistory.length > 0) {
-        lastBuildID = CIHistory[CIHistory.length-1]["buildID"];
-    }
-    
+    // Delta update
     fiber(function() {
         var db = new server("127.0.0.1").db("booster");
-        var docs = db.getCollection(CI_TRIGGER_JOB).find({"build id": {$gt: lastBuildID}}).toArray();
+        var triggerDocs = db.getCollection(CI_TRIGGER_JOB).find({"build id": {$gt: CILastTriggerBuildID}}).sort({"build id": 1}).toArray();
+        // Maybe the same release version will be tested many times, we only care the last one, so we
+        // sort the results in descending order
+        var sanityDocs = db.getCollection(CI_SANITY_TEST_JOB).find({"build id": {$gt: CILastSanityBuildID}}).sort({"build id": -1}).toArray();
+        var extRegressionDocs = db.getCollection(CI_EXT_REGRESSION_JOB).find({"build id": {$gt: CILastExtRegressionBuildID}}).sort({"build id": -1}).toArray();
          
-        docs.forEach(function(doc) {
+        triggerDocs.forEach(function(doc) {
             refreshCIHistory(db, doc);
+        });
+        // Update the result of on-target sanity test and extended extRegression test
+        sanityDocs.forEach(function(doc) {
+            for (var i = CIHistory.length-1; i >= 0; --i) {
+                if (doc["release tag"] && CIHistory[i]["rlsTag"] == doc["release tag"]) {
+                    if (!CIHistory[i]["onTargetSanity"]) {
+                        CIHistory[i]["onTargetSanity"] = doc["build result"];
+                        CILastSanityBuildID = doc["build id"];
+                    }
+                    break;
+                }
+            }
+        });
+        extRegressionDocs.forEach(function(doc) {
+            for (var i = CIHistory.length-1; i >= 0; --i) {
+                if (doc["release tag"] && CIHistory[i]["rlsTag"] == doc["release tag"]) {
+                    if (!CIHistory[i]["extRegression"]){
+                        CIHistory[i]["extRegression"] = doc["build result"];
+                        CILastExtRegressionBuildID = doc["build id"];
+                    }
+                    break;
+                }
+            }
         });
     }).run();
 }
