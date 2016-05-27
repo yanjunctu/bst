@@ -1,0 +1,126 @@
+2015-07-06 17:31:12,833 DEBUG Program - Parameters are not correct or not engouth.
+
+2015-07-06 17:31:12,842 DEBUG Program - IDATAutoTestTrigger 1.1.0.926d
+2015-07-06 17:31:12,842 DEBUG Program - By Liao Ying-RQT768.
+2015-07-06 17:31:12,842 DEBUG Program - @ Copyright 2014 Motorola Solutions, Inc. All rights reserved.
+2015-07-06 17:31:12,842 DEBUG Program - 
+2015-07-06 17:31:12,842 DEBUG Program - IDATAutoTestTrigger [/?] | [-w] | [/s ServerName /c ClientName /cs CSName [/p priority] [/t times] [/f firmwareFolderOrFileList /fv firmwareVersion] [/r remark] [/e emails] [/wait]]
+2015-07-06 17:31:12,842 DEBUG Program - 
+2015-07-06 17:31:12,843 DEBUG Program - /s /server: serverName
+2015-07-06 17:31:12,843 DEBUG Program - /c /client: clientName
+2015-07-06 17:31:12,843 DEBUG Program - /cs /case /suite: csName
+2015-07-06 17:31:12,843 DEBUG Program - /p /priority: priority, default: 0
+2015-07-06 17:31:12,843 DEBUG Program - /t /times: iteration times, default: 1
+2015-07-06 17:31:12,843 DEBUG Program - /f /firmware: firmware folder, default: [null]
+2015-07-06 17:31:12,843 DEBUG Program - /fv /firmwareVersion: firmware version, default: [null]
+2015-07-06 17:31:12,843 DEBUG Program - /r /remark: Remark, default: [null]
+2015-07-06 17:31:12,843 DEBUG Program - /e /emails: email receivers, default: [null]
+2015-07-06 17:31:12,843 DEBUG Program - /wait: Wait until the task finished.
+2015-07-06 17:31:12,843 DEBUG Program - /? /help: Display help information.
+2015-07-06 17:31:12,843 DEBUG Program - -w -window: Show window UI.
+2015-07-06 17:31:12,843 DEBUG Program - 
+2015-07-06 17:31:50,716 DEBUG Program - Parameters are not correct or not engouth.
+
+2015-07-06 17:31:50,725 DEBUG Program - IDATAutoTestTrigger 1.1.0.926d
+2015-07-06 17:31:50,725 DEBUG Program - By Liao Ying-RQT768.
+2015-07-06 17:31:50,725 DEBUG Program - @ Copyright 2014 Motorola Solutions, Inc. All rights reserved.
+2015-07-06 17:31:50,725 DEBUG Program - 
+2015-07-06 17:31:50,725 DEBUG Program - IDATAutoTestTrigger [/?] | [-w] | [/s ServerName /c ClientName /cs CSName [/p priority] [/t times] [/f firmwareFolderOrFileList /fv firmwareVersion] [/r remark] [/e emails] [/wait]]
+2015-07-06 17:31:50,725 DEBUG Program - 
+2015-07-06 17:31:50,725 DEBUG Program - /s /server: serverName
+2015-07-06 17:31:50,725 DEBUG Program - /c /client: clientName
+2015-07-06 17:31:50,725 DEBUG Program - /cs /case /suite: csName
+2015-07-06 17:31:50,725 DEBUG Program - /p /priority: priority, default: 0
+2015-07-06 17:31:50,725 DEBUG Program - /t /times: iteration times, default: 1
+2015-07-06 17:31:50,725 DEBUG Program - /f /firmware: firmware folder, default: [null]
+2015-07-06 17:31:50,725 DEBUG Program - /fv /firmwareVersion: firmware version, default: [null]
+2015-07-06 17:31:50,725 DEBUG Program - /r /remark: Remark, default: [null]
+2015-07-06 17:31:50,726 DEBUG Program - /e /emails: email receivers, default: [null]
+2015-07-06 17:31:50,726 DEBUG Program - /wait: Wait until the task finished.
+2015-07-06 17:31:50,726 DEBUG Program - /? /help: Display help information.
+2015-07-06 17:31:50,726 DEBUG Program - -w -window: Show window UI.
+2015-07-06 17:31:50,726 DEBUG Program - 
+2015-07-06 17:31:56,924 DEBUG Program - Parameters are not correct or not engouth.
+
+2015-07-06 17:31:56,933 DEBUG Program - IDATAutoTestTrigger 1.1.0.926d
+2015-07-06 17:31:56,933 DEBUG Program - By Liao Ying-RQT768.
+2015-07-06 17:31:56,933 DEBUG Program - @ Copyright 2014 Motorola Solutions, Inc. All rights reserved.
+2015-07-06 17:31:56,933 DEBUG Program - 
+2015-07-06 17:31:56,933 DEBUG Program - IDATAutoTestTrigger [/?] | [-w] | [/s ServerName /c ClientName /cs CSName [/p priority] [/t times] [/f firmwareFolderOrFileList /fv firmwareVersion] [/r remark] [/e emails] [/wait]]
+2015-07-06 17:31:56,933 DEBUG Program - 
+2015-07-06 17:31:56,933 DEBUG Program - /s /server: serverName
+2015-07-06 17:31:56,933 DEBUG Program - /c /client: clientName
+2015-07-06 17:31:56,933 DEBUG Program - /cs /case /suite: csName
+2015-07-06 17:31:56,933 DEBUG Program - /p /priority: priority, default: 0
+2015-07-06 17:31:56,933 DEBUG Program - /t /times: iteration times, default: 1
+2015-07-06 17:31:56,934 DEBUG Program - /f /firmware: firmware folder, default: [null]
+2015-07-06 17:31:56,934 DEBUG Program - /fv /firmwareVersion: firmware version, default: [null]
+2015-07-06 17:31:56,934 DEBUG Program - /r /remark: Remark, default: [null]
+2015-07-06 17:31:56,934 DEBUG Program - /e /emails: email receivers, default: [null]
+2015-07-06 17:31:56,934 DEBUG Program - /wait: Wait until the task finished.
+2015-07-06 17:31:56,934 DEBUG Program - /? /help: Display help information.
+2015-07-06 17:31:56,934 DEBUG Program - -w -window: Show window UI.
+2015-07-06 17:31:56,934 DEBUG Program - 
+2015-07-06 17:44:40,918 DEBUG Program - Parameters are not correct or not engouth.
+
+2015-07-06 17:44:40,927 DEBUG Program - IDATAutoTestTrigger 1.1.0.929d
+2015-07-06 17:44:40,927 DEBUG Program - By Liao Ying-RQT768.
+2015-07-06 17:44:40,927 DEBUG Program - @ Copyright 2014 Motorola Solutions, Inc. All rights reserved.
+2015-07-06 17:44:40,927 DEBUG Program - 
+2015-07-06 17:44:40,927 DEBUG Program - IDATAutoTestTrigger [/?] | [-w] | [/s ServerName /c ClientName /cs CSName [/p priority] [/t times] [/f firmwareFolderOrFileList /fv firmwareVersion] [/r remark] [/e emails] [/wait]]
+2015-07-06 17:44:40,927 DEBUG Program - 
+2015-07-06 17:44:40,927 DEBUG Program - /s /server: serverName
+2015-07-06 17:44:40,927 DEBUG Program - /c /client: clientName
+2015-07-06 17:44:40,927 DEBUG Program - /cs /case /suite: csName
+2015-07-06 17:44:40,927 DEBUG Program - /p /priority: priority, default: 0
+2015-07-06 17:44:40,927 DEBUG Program - /t /times: iteration times, default: 1
+2015-07-06 17:44:40,927 DEBUG Program - /f /firmware: firmware folder, default: [null]
+2015-07-06 17:44:40,927 DEBUG Program - /fv /firmwareVersion: firmware version, default: [null]
+2015-07-06 17:44:40,927 DEBUG Program - /r /remark: Remark, default: [null]
+2015-07-06 17:44:40,928 DEBUG Program - /e /emails: email receivers, default: [null]
+2015-07-06 17:44:40,928 DEBUG Program - /wait: Wait until the task finished.
+2015-07-06 17:44:40,928 DEBUG Program - /? /help: Display help information.
+2015-07-06 17:44:40,928 DEBUG Program - -w -window: Show window UI.
+2015-07-06 17:44:40,928 DEBUG Program - 
+2015-07-06 17:44:45,998 DEBUG Program - Parameters are not correct or not engouth.
+
+2015-07-06 17:44:46,007 DEBUG Program - IDATAutoTestTrigger 1.1.0.929d
+2015-07-06 17:44:46,008 DEBUG Program - By Liao Ying-RQT768.
+2015-07-06 17:44:46,008 DEBUG Program - @ Copyright 2014 Motorola Solutions, Inc. All rights reserved.
+2015-07-06 17:44:46,008 DEBUG Program - 
+2015-07-06 17:44:46,008 DEBUG Program - IDATAutoTestTrigger [/?] | [-w] | [/s ServerName /c ClientName /cs CSName [/p priority] [/t times] [/f firmwareFolderOrFileList /fv firmwareVersion] [/r remark] [/e emails] [/wait]]
+2015-07-06 17:44:46,008 DEBUG Program - 
+2015-07-06 17:44:46,008 DEBUG Program - /s /server: serverName
+2015-07-06 17:44:46,008 DEBUG Program - /c /client: clientName
+2015-07-06 17:44:46,008 DEBUG Program - /cs /case /suite: csName
+2015-07-06 17:44:46,008 DEBUG Program - /p /priority: priority, default: 0
+2015-07-06 17:44:46,008 DEBUG Program - /t /times: iteration times, default: 1
+2015-07-06 17:44:46,008 DEBUG Program - /f /firmware: firmware folder, default: [null]
+2015-07-06 17:44:46,008 DEBUG Program - /fv /firmwareVersion: firmware version, default: [null]
+2015-07-06 17:44:46,008 DEBUG Program - /r /remark: Remark, default: [null]
+2015-07-06 17:44:46,008 DEBUG Program - /e /emails: email receivers, default: [null]
+2015-07-06 17:44:46,008 DEBUG Program - /wait: Wait until the task finished.
+2015-07-06 17:44:46,008 DEBUG Program - /? /help: Display help information.
+2015-07-06 17:44:46,009 DEBUG Program - -w -window: Show window UI.
+2015-07-06 17:44:46,009 DEBUG Program - 
+2015-07-06 17:44:56,036 DEBUG Program - Parameters are not correct or not engouth.
+
+2015-07-06 17:44:56,045 DEBUG Program - IDATAutoTestTrigger 1.1.0.929d
+2015-07-06 17:44:56,045 DEBUG Program - By Liao Ying-RQT768.
+2015-07-06 17:44:56,045 DEBUG Program - @ Copyright 2014 Motorola Solutions, Inc. All rights reserved.
+2015-07-06 17:44:56,046 DEBUG Program - 
+2015-07-06 17:44:56,046 DEBUG Program - IDATAutoTestTrigger [/?] | [-w] | [/s ServerName /c ClientName /cs CSName [/p priority] [/t times] [/f firmwareFolderOrFileList /fv firmwareVersion] [/r remark] [/e emails] [/wait]]
+2015-07-06 17:44:56,046 DEBUG Program - 
+2015-07-06 17:44:56,046 DEBUG Program - /s /server: serverName
+2015-07-06 17:44:56,046 DEBUG Program - /c /client: clientName
+2015-07-06 17:44:56,046 DEBUG Program - /cs /case /suite: csName
+2015-07-06 17:44:56,046 DEBUG Program - /p /priority: priority, default: 0
+2015-07-06 17:44:56,046 DEBUG Program - /t /times: iteration times, default: 1
+2015-07-06 17:44:56,046 DEBUG Program - /f /firmware: firmware folder, default: [null]
+2015-07-06 17:44:56,046 DEBUG Program - /fv /firmwareVersion: firmware version, default: [null]
+2015-07-06 17:44:56,046 DEBUG Program - /r /remark: Remark, default: [null]
+2015-07-06 17:44:56,046 DEBUG Program - /e /emails: email receivers, default: [null]
+2015-07-06 17:44:56,046 DEBUG Program - /wait: Wait until the task finished.
+2015-07-06 17:44:56,046 DEBUG Program - /? /help: Display help information.
+2015-07-06 17:44:56,047 DEBUG Program - -w -window: Show window UI.
+2015-07-06 17:44:56,047 DEBUG Program - 
