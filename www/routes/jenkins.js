@@ -483,7 +483,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             });
         });
     }
-    else if(ciBlockInfo.result == "SUCCESS")
+    else if(ciBlockInfo.result == "SUCCESS"){
         //let CI unblocked
         if (preResult == "FAILURE"){
 	
