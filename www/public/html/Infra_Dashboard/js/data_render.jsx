@@ -7,23 +7,45 @@ var SubmitList = React.createClass ({
         return {data:[]};
     },
     loadServer: function(){
-   		console.log("loading server...");  
+    	
+    	ciPending();
+    	ciStatus();
+    	
+    	
         $.ajax({
             url: this.props.url,
             dataType:'json',
             success: function(data){
                 if (data != null) {
-                    data.splice(16,3);
-                    this.setState({data: data});
-                }
 
+                    CIHistory = eval(data);
+                    CIHistory.reverse();
+
+					//todo: move.
+					//add running & queuing task
+					if(CIPendingReq.current)
+					{
+						CIPendingReq.current.buildResult = "RUNNING";
+						CIHistory.unshift(CIPendingReq.current);					
+					}
+
+					for (var i=0;i<CIPendingReq.queue.length;i++)
+					{
+						CIPendingReq.queue[i].buildResult = "QUEUING";
+						CIHistory.unshift(CIPendingReq.queue[i]);
+					}
+					//
+										
+					this.setState({data: CIHistory.slice(0,15)});
+                }
             }.bind(this),
             error: function(xhr,status,err){
                 console.log(this.props.url,status,err.toString());
             }.bind(this)
-        });
+        }); 
     },
     componentDidMount: function(){
+    	console.log("request: " + this.props.url); 
         if(this.props.url != "")
         {
 	        this.loadServer();
@@ -38,14 +60,16 @@ var SubmitList = React.createClass ({
     },
     
     renderTbody() {
-        return this.state.data.map((item, i)=>{
+         
+        
+        var history_data = this.state.data.map((item, i)=>{
             var statusStyle = {backgroundColor: "lightskyblue", fontSize: "27px", color: "black"};
-/*            if (item.status == "pending") {
+            if (item.buildResult == "QUEUING") {
                 statusStyle = {backgroundColor: "sandybrown", fontSize: "27px", color: "black"};
-            }*/
+            }
 
-            if (item.status == "ABORTED") {
-                statusStyle = {backgroundColor: "lightskyblue", fontSize: "27px", color: "black"};
+            if (item.buildResult == "ABORTED") {
+                statusStyle = {backgroundColor: "lightgrey", fontSize: "27px", color: "black"};
             }
 
             if (item.buildResult == "SUCCESS") {
@@ -77,6 +101,9 @@ var SubmitList = React.createClass ({
                 </tr>
             );
         })
+        
+        
+        return history_data;
     },
 
     render() {
@@ -112,6 +139,10 @@ var SubmitList = React.createClass ({
 		document.getElementById('overall_failure_rate').textContent = parseInt(failed/(failed + completed) * 100);
 		document.getElementById('last30_failure_rate').textContent = parseInt(failed_last30/(failed_last30 + completed_last30) * 100);
 
+		var a = $('rel');//.innerText = "abc";
+		a.text("aa");
+		console.log(JSON.stringify(a));
+
 
 		//temp code finished
 		
@@ -139,7 +170,7 @@ var SubmitList = React.createClass ({
 
 
 //var SubmitListApi = hostname + "/api/metrics/gated_test/submit_list_tile";
-var SubmitListApi = "";
+var SubmitListApi = hostname + "/jenkins/getCIHistory";
 ReactDOM.render(
     <SubmitList url={SubmitListApi} pollInterval={5000}/>,
     document.getElementById('submit_list_tile')

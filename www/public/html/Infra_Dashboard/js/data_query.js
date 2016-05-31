@@ -1,3 +1,29 @@
+
+var configuration = {
+	apihostname: 'http://booster',
+	testhostname: 'http://localhost:8888'
+};
+
+var hostname = configuration.testhostname;
+
+
+
+function ciStatus()
+{
+        $.ajax({
+            url: hostname + "/jenkins/getCIStatus",
+            dataType:'json',
+            success: function(data){
+                if (data != null) {
+                    CIStatus = eval(data);
+                }
+            },
+            error: function(xhr,status,err){
+                console.log(err.toString());
+            }
+        }); 	
+}
+
 //http://booster/jenkins/getCIStatus
 var CIStatus = eval({
 	"idleState": {
@@ -44,17 +70,41 @@ var CIStatus = eval({
 	}
 });
 
+function ciPending()
+{
+        $.ajax({
+            url: hostname + "/jenkins/getCIPendingReq",
+            dataType:'json',
+            success: function(data){
+                if (data != null) {
+                    CIPendingReq = eval(data);
+                }
+            },
+            error: function(xhr,status,err){
+                console.log(err.toString());
+            }
+        }); 	
+}
+
 //http://booster/jenkins/getCIPendingReq
 var CIPendingReq = eval(
 {
 	"current": {
-		"submitter": "na",
-		"subBranch": "na",
-		"subTime": "na"
+		"submitter": "Essen-A4741C",
+		"subBranch": "IR_2.7_a5421c_regInfoBackup_fix",
+		"subTime": 1464666588094
 	},
-	"queue": []
+	"queue": [
+/*		{
+			"submitter": "Essen-A5421C",
+			"subBranch": "IR_2.7_a5421c_regInfoBackup_fix",
+			"subTime": 1464666588094
+		},
+*/
+	]
 }
 );
+
 
 //http://booster/jenkins/getCIHistory
 var CIHistory = eval(
