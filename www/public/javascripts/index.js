@@ -133,7 +133,7 @@ var ciTable = $("#ciHistoryTbl").DataTable({
                     if (!data)
                         return "--";
 
-                    var part1 = data["win32ITPart1"], part2 = data["win32ITPart1"];
+                    var part1 = data["win32ITPart1"], part2 = data["win32ITPart2"];
 
                     if ("SUCCESS" == part1 && "SUCCESS" == part2)
                         return "SUCCESS";
