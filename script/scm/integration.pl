@@ -55,21 +55,21 @@ my $rs                = "";
 my @output_array      = ();
 my @change_list_array = ();
 my @comments_array    = ();
-my $UNIX_GREP = "$win_script_home\\tools\\grep.exe";
-
-chdir("$repo_home\\..");
-system("unjunction.bat");
-chdir("$repo_home");
+my $UNIX_GREP         = "$win_script_home\\tools\\grep.exe";
 
 ##################################################
 # Clean repo
 ##################################################
+chdir("$repo_home\\..");
+system("unjunction.bat");
+chdir("$repo_home");
+
 #while ( -e "$repo_home\\.git\\index.lock" )
 #{
 #    print "[INFO] $repo_home\\.git\\index.lock exist, please wait 1 minutes\n";
 #    sleep(60);
 #}
-if (-e "$repo_home\\.git\\index.lock")
+if ( -e "$repo_home\\.git\\index.lock" )
 {
     unlink("$repo_home\\.git\\index.lock");
 }
@@ -88,6 +88,7 @@ $cmd = "git clean -d -fx";
 if ( $rs != 0 )
 {
     Utilities::log_error("Meet error when $cmd");
+    print "[INFO] GIT clean result: $rs\n";
     Utilities::record_log( "$log_dir\\$ENV{BUILD_TAG}.failed", "$cmd failed: $ENV{BUILD_URL}console" );
     exit 1;
 }
@@ -102,15 +103,6 @@ system("cd");
 # sync the repo
 ##################################################
 $cmd = "git fetch origin";
-( $rs, @output_array ) = Utilities::my_system($cmd);
-if ( $rs != 0 )
-{
-    Utilities::log_error("Meet error when $cmd");
-    Utilities::record_log( "$log_dir\\$ENV{BUILD_TAG}.failed", "$cmd failed: $ENV{BUILD_URL}console" );
-    exit 1;
-}
-
-$cmd = "git submodule init && git submodule update";
 ( $rs, @output_array ) = Utilities::my_system($cmd);
 if ( $rs != 0 )
 {
@@ -193,7 +185,8 @@ if ( $rs != 0 )
 ##################################################
 # record into config file to transfer to downlowd job
 ##################################################
-$comments     = Utilities::array_to_string(@comments_array);
+$comments = Utilities::array_to_string(@comments_array);
+
 # combine mulit-lines to one line for comments
 #foreach (@comments_array)
 #{
@@ -224,12 +217,17 @@ if ( $rs != 0 )
 }
 
 ##################################################
+# Submodule check
+##################################################
+submodule_check();
+
+##################################################
 # Update version file
 ##################################################
-my @ver_files_array      = Utilities::get_file_list_array($ver_files);
+my @ver_files_array = Utilities::get_file_list_array($ver_files);
 foreach my $ver_file (@ver_files_array)
 {
-    $rs = Utilities::replace_version_file($ver_file, $new_baseline);
+    $rs = Utilities::replace_version_file( $ver_file, $new_baseline );
     if ( $rs != 0 )
     {
         Utilities::log_error("Meet error when update version");
@@ -337,6 +335,105 @@ sub record_baseline
     print INFO "LAST_BASELINE=$last_baseline\n";
     print INFO "NEW_BASELINE=$new_baseline\n";
     close(INFO);
+}
+
+sub submodule_check
+{
+    my @submodule_current_list = ();
+    my @submodule_latest_list  = ();
+    my @submodule_history_list = ();
+    my $submodule_latest_file  = "$win_script_home\\submodule_latest_file.txt";
+    my $submodule_history_file = "$win_script_home\\submodule_history_file.txt";
+    my $submodule_check_rs     = "";
+    
+    chdir("$repo_home");
+    $cmd = "git submodule";
+    ( $rs, @output_array ) = Utilities::my_system($cmd);
+    if ( $rs != 0 )
+    {
+        Utilities::log_error("Meet error when $cmd");
+        exit 1;
+    }
+
+    # Get current submodule information
+    foreach (@output_array)
+    {
+        if ( $_ =~ /(.*) (.*) (.*)/ )
+        {
+            push( @submodule_current_list, "$1 $2" );
+        }
+    }
+
+    if ( !-f "$submodule_latest_file" )
+    {
+        open( OUTFILE, " > $submodule_latest_file" );
+        foreach (@submodule_current_list)
+        {
+            chomp;
+            print OUTFILE "$_\n";
+        }
+
+        close(OUTFILE);
+    }
+
+    if ( !-f "$submodule_history_file" )
+    {
+        open( OUTFILE, " > $submodule_history_file" );
+        foreach (@submodule_current_list)
+        {
+            chomp;
+            print OUTFILE "$_\n";
+        }
+
+        close(OUTFILE);
+    }
+
+    open( LINE, "$submodule_latest_file" ) or die $!;
+    @submodule_latest_list = <LINE>;
+    s/[\r\n]$// foreach @submodule_latest_list;
+    close(LINE);
+
+    open( LINE, "$submodule_history_file" ) or die $!;
+    @submodule_history_list = <LINE>;
+    s/[\r\n]$// foreach @submodule_history_list;
+    close(LINE);
+
+    foreach my $submodule (@submodule_current_list)
+    {
+        chomp($submodule);
+        # submodule will failed if link information exist in history but not found in latest.
+        if ( ( grep { $_ eq $submodule } @submodule_history_list ) && ( !grep { $_ eq $submodule } @submodule_latest_list ) )
+        {
+            $submodule_check_rs = "false";
+            Utilities::log_error("Submodule check failed, looks like the submodule use the old link information, please double check it and then contact with SCM");
+            Utilities::record_log( "$log_dir\\$ENV{BUILD_TAG}.failed", "Submodule check failed: $ENV{BUILD_URL}console" );
+            exit 1;
+        }
+        else
+        {
+            $submodule_check_rs = "true";
+        }
+    }
+
+    print "[INFO] $submodule_check_rs\n";
+
+    open( OUTFILE, " > $submodule_latest_file" );
+    foreach (@submodule_current_list)
+    {
+        chomp;
+        print OUTFILE "$_\n";
+    }
+    close(OUTFILE);
+
+    my @tmp_array = ( @submodule_current_list, @submodule_history_list );
+    my @submodule_new_list = keys %{ { map { $_ => 1 } @tmp_array } };
+    open( OUTFILE, " > $submodule_history_file" );
+    foreach (@submodule_new_list)
+    {
+        chomp;
+        print OUTFILE "$_\n";
+    }
+    close(OUTFILE);
 }
 
 print "#############################\n";
