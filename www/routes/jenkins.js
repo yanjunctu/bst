@@ -20,6 +20,10 @@ var CISTATUS = {
   "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na"}
 };  
 
+var UNLOCK_CI_JOB = "PCR-REPT-Remove_Lock_File";
+var WIN_SCRIPT_HOME = "D:\\Git_CI";
+var LOCK_FILE = "\\\\zch49view02\\SCM\\cgi-bin\\int\\amb4116\\CG566\\Git_CI\\REPT2.7.pid";
+
 // Variables for CI history info
 const CI_TRIGGER_JOB= "PCR-REPT-0-MultiJob";
 const CI_ON_TARGET_JOB= "PCR-REPT-On_Target_MultiJob";
@@ -86,8 +90,6 @@ var getJobLastSuccessBuild = function(job,callback)
   });
 
 };
-
-
 function getParameterValue(data,parameter){
   var actions = data.actions;
   var found;
@@ -424,6 +426,7 @@ function getJobFailureInfo(job,days,callback){
 }
 var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     
+    preResult = ciBlockInfo.result;
     ciBlockInfo.result = data.result;
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
     ciBlockInfo.submitter="";
@@ -479,6 +482,24 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                 });
             });
         });
+    }
+    else if(ciBlockInfo.result == "SUCCESS"){
+        //let CI unblocked
+        if (preResult == "FAILURE"){
+	
+            var paras = new Object(); 
+            paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
+            paras.LOCK_FILE = LOCK_FILE 
+	     
+            jenkins.build(UNLOCK_CI_JOB,paras,function(err) {
+                if (err) {
+                    console.log("failed to build "+UNLOCK_CI_JOB+err);
+                }
+                else {
+                    console.log("succeeded to build "+UNLOCK_CI_JOB);
+                }
+            });
+        }
     }
 }
 
