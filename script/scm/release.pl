@@ -49,10 +49,11 @@ my @attachment = ();
 
 Utilities::get_parameter();
 
+my $core_id = "";
 if ( $author =~ /^(.*)-(.*)/ )
 {   
     # get the coreid
-    $author = $2;
+    $core_id = $2;
 }
 
 print "#############################\n";
@@ -631,14 +632,14 @@ sub checkWarning
     $ENV{LOGONSERVER} = "\\\\ZCH49DSDC801";
 
     chdir("$repo_root\\pcr_srp\\code");
-    my $cmd = "path.bat && JenkinsCheckWarning.bat $author $author\@motorolasolutions.com $last_baseline $new_baseline";
+    my $cmd = "path.bat && JenkinsCheckWarning.bat $core_id $core_id\@motorolasolutions.com $last_baseline $new_baseline";
     print "[INFO] $cmd\n";
     if ( system($cmd) != 0 )
     {
         print "[ERROR] meet error when run s$cmd\n$cmd\n::$!\n";
     }
     
-    $cmd = "path.bat && JenkinsCheckKlocwork.bat $author $author\@motorolasolutions.com $last_baseline $new_baseline";
+    $cmd = "path.bat && JenkinsCheckKlocwork.bat $core_id $core_id\@motorolasolutions.com $last_baseline $new_baseline";
     print "[INFO] $cmd\n";
     if ( system($cmd) != 0 )
     {

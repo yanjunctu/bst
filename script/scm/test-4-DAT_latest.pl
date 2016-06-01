@@ -159,30 +159,23 @@ else
         exit 0;
     }
 
-    chdir("$dat_test_home");
-    my $dat_cmd_1 = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"IDATSys4\"  \/cs LegacySanityTest           \/f $dat_test_home\\$new_baseline \/fv $new_baseline \/r \"CI Trigger the legacy sanity test for Emerald\" \/e \"$author;SCOUT\" \/wait";
-    my $dat_cmd_2 = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"IDATSys5\"  \/cs System5\\EmeraldSanityTest \/f $dat_test_home\\$new_baseline \/fv $new_baseline \/r \"CI Trigger the EmeraldSanity test for Emerald\" \/e \"$author;SCOUT\" \/wait";
-
-    my @result_1 = readpipe("$dat_cmd_1");
-    my @result_2 = readpipe("$dat_cmd_2");
-
-    print "============\n";
-    foreach (@result_1)
-    {
-        print "$_\n";
-    }
-
-    print "============\n";
-
-    foreach (@result_2)
-    {
-        print "$_\n";
-    }
-    print "============\n";
-
     my $t1_res = "";
     my $t2_res = "";
 
+    chdir("$dat_test_home");
+    my $dat_cmd_1 = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"Sys4_Sanity_Legacy\"  \/cs LegacySanityTest           \/f $dat_test_home\\$new_baseline \/fv $new_baseline \/r \"CI Trigger the legacy sanity test for Emerald\" \/e \"$author;SCOUT\" \/wait";
+    my $dat_cmd_2 = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"Sys5_Sanity_Emerald\"  \/cs System5\\EmeraldSanityTest \/f $dat_test_home\\$new_baseline \/fv $new_baseline \/r \"CI Trigger the EmeraldSanity test for Emerald\" \/e \"$author;SCOUT\" \/wait";
+
+    print "$dat_cmd_1\n";
+    my $exit_code = system("$dat_cmd_1");
+    print "[INFO] Command failed with an exit code of $exit_code.\n";
+    $t1_res = ( $exit_code >> 8 );
+
+    print "$dat_cmd_2\n";
+    $exit_code = system("$dat_cmd_2");
+    print "[INFO] Command failed with an exit code of $exit_code.\n";
+    $t2_res = ( $exit_code >> 8 );
+    
     #    sub func
     #    {
     #        my ($cmd) = @_;

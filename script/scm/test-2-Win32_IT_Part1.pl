@@ -83,7 +83,10 @@ if ( $status == 0 )
     {
         $status = 1;
         print "[ERROR] Meet error when $cmd.\n";
-        Utilities::record_log("$remote_log_dir\\$ENV{BUILD_TAG}.failed", "Win32 Test FAILED: $ENV{BUILD_URL}console");
+        if ( $release_type ne "DAILY" )
+        {
+            Utilities::record_log("$remote_log_dir\\$ENV{BUILD_TAG}.failed", "Win32 Test FAILED: $ENV{BUILD_URL}console");
+        }
         exit 1;
     }
 #   else
@@ -114,7 +117,10 @@ if ( $status == 0 )
     {
         $status = 1;
         print "[ERROR] Meet error when $cmd.\n";
-        Utilities::record_log("$remote_log_dir\\$ENV{BUILD_TAG}.failed", "Win32 Test FAILED: $ENV{BUILD_URL}console");
+        if ( $release_type ne "DAILY" )
+        {
+            Utilities::record_log("$remote_log_dir\\$ENV{BUILD_TAG}.failed", "Win32 Test FAILED: $ENV{BUILD_URL}console");
+        }
         exit 1;
     }
 }
