@@ -6,6 +6,7 @@ var configuration = {
 
 var hostname = configuration.testhostname;
 
+var pseudo_pgress = 0;
 
 
 function ciStatus()
@@ -25,17 +26,19 @@ function ciStatus()
 }
 
 //http://booster/jenkins/getCIStatus
-var CIStatus = eval({
+var CIStatus = eval(
+
+{
 	"idleState": {
-		"status": "running",
+		"status": "done",
 		"duration": 0
 	},
 	"preCheckState": {
-		"status": "not start",
+		"status": "done",
 		"duration": 2
 	},
 	"buildFwState": {
-		"status": "not start",
+		"status": "running",
 		"duration": 3
 	},
 	"testFwState": {
@@ -43,7 +46,7 @@ var CIStatus = eval({
 		"duration": 4
 	},
 	"buildWin32State": {
-		"status": "not start",
+		"status": "running",
 		"duration": 5
 	},
 	"testWin32State": {
@@ -57,18 +60,20 @@ var CIStatus = eval({
 	"overall": {
 		"current": {
 			"branch": "na",
-			"subTime": "na",
-			"submitter": "na",
-			"subBranch": "na"
+			"subTime": 1464682276491,
+			"submitter": "xiaofang xie - vnm687",
+			"subBranch": "IR_2.7_vnm687_singlcFix_sfr"
 		}
 	},
 	"ciBlockInfo": {
 		"result": "SUCCESS",
 		"submitter": "",
-		"releaseTag": "REPT_I02.07.01.37",
+		"releaseTag": "REPT_I02.07.01.41",
 		"lastSuccessTag": ""
 	}
-});
+}
+
+);
 
 function ciPending()
 {
@@ -1138,7 +1143,7 @@ var CIHistory = eval(
 	"onTargetSanity": "SUCCESS"
 }, {
 	"buildID": 107,
-	"buildResult": "SUCCESS",
+	"buildResult": "ABORTED",
 	"submitter": "rurong.huang-qpcb36",
 	"precheck": "SUCCESS",
 	"rlsTime": "5/26/2016 10:55:37 AM",
@@ -1242,7 +1247,7 @@ var CIHistory = eval(
 	"extRegression": "ABORTED"
 }, {
 	"buildID": 113,
-	"buildResult": "FAILURE",
+	"buildResult": "QUEUING",
 	"submitter": "Ye Blake-A5421C",
 	"precheck": "SUCCESS",
 	"onTargetBuild": "ABORTED",

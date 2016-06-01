@@ -1,6 +1,17 @@
 'use strict';
-
-
+var resultIconStyles = {
+	"QUEUING": "fa fa-cog fa-spin fa-1x fa-fw",
+	"ABORTED": "fa fa-exclamation fa-1x fa-fw",
+	"SUCCESS": "fa fa-check fa-1x fa-fw",
+	"FAILURE": "fa fa-close fa-1x fa-fw",
+}
+var ciProgresses = {
+	"preCheckState": 0,
+	"buildWin32State": 0,
+	"testWin32State": 0,
+	"buildFwState": 0,	
+	"preReleaseState": 0,
+}
 
 var SubmitList = React.createClass ({
     getInitialState: function(){
@@ -45,8 +56,7 @@ var SubmitList = React.createClass ({
         }); 
     },
     componentDidMount: function(){
-    	console.log("request: " + this.props.url); 
-        if(this.props.url != "")
+        if(this.props.url)
         {
 	        this.loadServer();
 	        setInterval(this.loadServer,this.props.pollInterval);        	
@@ -54,7 +64,9 @@ var SubmitList = React.createClass ({
         else
         {
         	CIHistory.reverse();
-        	this.setState({data: CIHistory.slice(0, 15)});        	
+        	this.setState({data: CIHistory.slice(0, 15)});
+
+        	setInterval(this.render,this.props.pollInterval);
         }
         
     },
@@ -63,41 +75,46 @@ var SubmitList = React.createClass ({
          
         
         var history_data = this.state.data.map((item, i)=>{
-            var statusStyle = {backgroundColor: "lightskyblue", fontSize: "27px", color: "black"};
-            if (item.buildResult == "QUEUING") {
-                statusStyle = {backgroundColor: "sandybrown", fontSize: "27px", color: "black"};
-            }
-
-            if (item.buildResult == "ABORTED") {
-                statusStyle = {backgroundColor: "lightgrey", fontSize: "27px", color: "black"};
-            }
-
-            if (item.buildResult == "SUCCESS") {
-                statusStyle = {backgroundColor: "#8bbc21", fontSize: "27px", color: "black"};
-            }
-
-            if (item.buildResult == "FAILURE") {
-                statusStyle = {backgroundColor: "#A42823", fontSize: "27px", color: "black"};
-            }
-            
+			
+			//just remove core id
             var name = item.submitter.split("-");
+            
+            //format date time
             var time = "";
             if(item.rlsTime)
     	    {
 	            var t = item.rlsTime.split(" ");
-	            time = t[1];
-	            //console.log(item.rlsTime);
+	            var d = t[0].split("/");
+	            var h = t[1].split(":");	            
+	            time = d[0]+"/"+d[1]+" "+h[0]+":"+h[1];
+	            console.log(time);
             }
+/*
+<td>
+	<div className="progress progress-striped active">
+		<div id="preReleaseState" className="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">
+			<div className="progress_text otto2">Release</div>			
+		</div>
+	</div>
+</td>
 
-            
-            return (
-                <tr style={statusStyle} key={i}>
-                    <td><strong>{item.buildID}</strong></td>
-                    <td><strong>{item.buildResult}</strong></td>
-                    <td><strong>{name[0]}</strong></td>
-                    <td><strong>{time}</strong></td>
-                    <td><strong>{item.coverage}</strong></td>
-                    <td><strong>{item.rlsTag}</strong></td>
+
+             <tr className={item.buildResult} key={i}>
+                    <td>{item.buildID}</td>
+                    <td><i className={resultIconStyles[item.buildResult]}></i></td>
+                    <td>{name[0]}</td>
+                    <td>{time}</td>
+                    <td>{item.coverage}</td>
+                    <td>{item.rlsTag}</td>
+                </tr>*/
+		return (
+                <tr className={item.buildResult} key={i}>
+                    <td>{item.buildID}</td>
+                    <td><i className={resultIconStyles[item.buildResult]}></i></td>
+                    <td>{name[0]}</td>
+                    <td>{time}</td>
+                    <td>{item.coverage}</td>
+                    <td>{item.rlsTag}</td>
                 </tr>
             );
         })
@@ -109,6 +126,8 @@ var SubmitList = React.createClass ({
     render() {
     	
     	//put here at initial release, better optimized;
+    	console.log("render...");
+    	
     	var completed = 0;
     	var failed = 0;
     	var aborted = 0;
@@ -136,27 +155,45 @@ var SubmitList = React.createClass ({
 		document.getElementById('submit_completed').textContent = completed;
 		document.getElementById('submit_failed').textContent = failed;
 
-		document.getElementById('overall_failure_rate').textContent = parseInt(failed/(failed + completed) * 100);
-		document.getElementById('last30_failure_rate').textContent = parseInt(failed_last30/(failed_last30 + completed_last30) * 100);
+		document.getElementById('overall_failure_rate').textContent = parseInt(failed/(failed + completed) * 100) + "%";
+		document.getElementById('last30_failure_rate').textContent = parseInt(failed_last30/(failed_last30 + completed_last30) * 100) + "%";
 
-		var a = $('rel');//.innerText = "abc";
-		a.text("aa");
-		console.log(JSON.stringify(a));
-
-
+		//
+		var mtag;
+		for(var m in CIStatus)
+		{
+			mtag = '#' + m; 
+			if(CIStatus[m].status == "done")
+			{
+				ciProgresses[m] = 100;
+			}
+			else if(CIStatus[m].status == "running")
+			{
+				//simulate progress update before get real progress from server
+				ciProgresses[m] += ciProgresses[m] < 95? 1 : 0;
+			}
+			else if(CIStatus[m].status == "not start")
+			{
+				ciProgresses[m] = 0;
+			}
+			
+			$(mtag).css("width", ciProgresses[m] + "%");
+		}
+		
+				
 		//temp code finished
 		
         return (
             <div className="table-responsive">
                 <table className="table">
                     <tbody>
-                    <tr style={{fontSize: "27px"}}>
-                        <th width="5%">Build</th>
-                        <th width="15%">Status</th>
-                        <th width="20%">Submitter</th>
-                        <th width="10%">Finish</th>
-                        <th width="10%">Coverage</th>
-                        <th width="40%">Tag</th>
+                    <tr className="TITILE">
+                        <th>Build</th>
+                        <th>Result</th>
+                        <th>Submitter</th>
+                        <th>Finish</th>
+                        <th>Coverage</th>
+                        <th>Tag</th>
                     </tr>
                     {this.renderTbody()}
                     </tbody>
@@ -169,10 +206,29 @@ var SubmitList = React.createClass ({
 
 
 
-//var SubmitListApi = hostname + "/api/metrics/gated_test/submit_list_tile";
-var SubmitListApi = hostname + "/jenkins/getCIHistory";
+var SubmitListApi;
+//SubmitListApi = hostname + "/jenkins/getCIHistory";
 ReactDOM.render(
     <SubmitList url={SubmitListApi} pollInterval={5000}/>,
     document.getElementById('submit_list_tile')
 );
+
+
+
+
+function set_toggle(){
+	var toggle = false;
+	$(document).on('keyup', function(evt) {
+		if (evt.keyCode == 122) {
+			if (toggle == true) {
+				$('html, body').css('overflow-y', 'auto');
+			} else {
+				$('html, body').css('overflow-y', 'hidden');
+			}
+			toggle = !toggle;					
+		}
+	});
+}
+
+set_toggle();
 
