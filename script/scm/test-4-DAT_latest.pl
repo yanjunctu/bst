@@ -163,8 +163,8 @@ else
     my $t2_res = "";
 
     chdir("$dat_test_home");
-    my $dat_cmd_1 = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"Sys4_Sanity_Legacy\"  \/cs LegacySanityTest           \/f $dat_test_home\\$new_baseline \/fv $new_baseline \/r \"CI Trigger the legacy sanity test for Emerald\" \/e \"$author;SCOUT\" \/wait";
-    my $dat_cmd_2 = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"Sys5_Sanity_Emerald\"  \/cs System5\\EmeraldSanityTest \/f $dat_test_home\\$new_baseline \/fv $new_baseline \/r \"CI Trigger the EmeraldSanity test for Emerald\" \/e \"$author;SCOUT\" \/wait";
+    my $dat_cmd_1 = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"Sys4_Sanity_Legacy\"  \/cs LegacySanityTest           \/f $dat_test_home\\$new_baseline \/fv $new_baseline \/r \"CI Trigger the legacy sanity test for Emerald\" \/e \"cg567a;cg569a;lg549a\" \/wait";
+    my $dat_cmd_2 = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"Sys5_Sanity_Emerald\"  \/cs System5\\EmeraldSanityTest \/f $dat_test_home\\$new_baseline \/fv $new_baseline \/r \"CI Trigger the EmeraldSanity test for Emerald\" \/e \"cg567a;cg569a;lg549a\" \/wait";
 
     print "$dat_cmd_1\n";
     my $exit_code = system("$dat_cmd_1");

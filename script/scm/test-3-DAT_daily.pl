@@ -101,7 +101,7 @@ if ( $release_type eq "DAILY" )
     #}
     #$new_baseline = $last_baseline;
 
-    my $dat_cmd = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"Sys4_Sanity_Legacy\"  \/cs LegacySanityTestEx  \/f $dat_test_home\\$new_baseline  \/fv $new_baseline  \/r \"Daily DAT\"  \/e  rqt768;SCOUT \/wait";
+    my $dat_cmd = "IDATAutoTestTrigger.exe \/s \"IDAT APP Server 1\" \/c \"Sys4_Sanity_Legacy\"  \/cs LegacySanityTestEx  \/f $dat_test_home\\$new_baseline  \/fv $new_baseline  \/r \"Daily DAT\"  \/e \"cg567a;cg569a;lg549a\" \/wait";
     print "$dat_cmd\n";
     chdir("$dat_test_home");
     my $err = system("$dat_cmd 2>&1");
