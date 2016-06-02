@@ -110,10 +110,7 @@ else
 my $mail_string = "";
 my @attachment  = ();
 $comments =~ s/\n/<br>/g;
-if ( $author =~ /^(.*)-(.*)/ )
-{
-    $author = $2;
-}
+
 $failed_mail_list = "$failed_mail_list" . "\;$ENV{EMAIL}";
 
 #my $total_log_email = Utilities::array_to_string(@total_log);
