@@ -42,7 +42,7 @@ function getCoreID(name_string)
     return name[1].replace(/(^\s*)|(\s*$)/g,'');
 }
 
-function ciStatus()
+function get_ciStatus()
 {
         $.ajax({
             url: hostname + "/jenkins/getCIStatus",
@@ -107,7 +107,7 @@ var CIStatus = eval(
 
 );
 
-function ciPending()
+function get_ciPending()
 {
         $.ajax({
             url: hostname + "/jenkins/getCIPendingReq",
@@ -127,7 +127,7 @@ function ciPending()
 var CIPendingReq = eval(
 {
 	"current": {
-		"submitter": "Essen-A4741C",
+		"submitter": "Sync...",
 		"subBranch": "IR_2.7_a5421c_regInfoBackup_fix",
 		"subTime": 1464666588094
 	},
@@ -1320,7 +1320,6 @@ var theWholeCI = eval(
 
 //console.log(parseInt(theWholeCI.duration[0]));
 var theWholeCIduration = parseInt(theWholeCI.duration[0]);
-
 function get_theWholeCIduration()
 {
     $.ajax({
@@ -1328,7 +1327,8 @@ function get_theWholeCIduration()
         dataType:'json',
         success: function(data){
             if (data != null) {
-                theWholeCIduration = eval(data);
+                theWholeCI = eval(data);
+                theWholeCIduration = parseInt(theWholeCI.duration[0]);
             }
         },
         error: function(xhr,status,err){
@@ -1338,7 +1338,7 @@ function get_theWholeCIduration()
 }
 
 //http://booster/serverInfo/testCaseNum
-var testCaseNum = eval(
+var testCases = eval(
 {
 	"filename": ["REPT_I02.07.01.13", "REPT_I02.07.01.14", "REPT_I02.07.01.15", "REPT_I02.07.01.16", "REPT_I02.07.01.17", "REPT_I02.07.01.18", "REPT_I02.07.01.19", "REPT_I02.07.01.20", "REPT_I02.07.01.21", "REPT_I02.07.01.22", "REPT_I02.07.01.23", "REPT_I02.07.01.24", "REPT_I02.07.01.25", "REPT_I02.07.01.26", "REPT_I02.07.01.27", "REPT_I02.07.01.29", "REPT_I02.07.01.30", "REPT_I02.07.01.31", "REPT_I02.07.01.32", "REPT_I02.07.01.33", "REPT_I02.07.01.34", "REPT_I02.07.01.35", "REPT_I02.07.01.36", "REPT_I02.07.01.37", "REPT_I02.07.01.38", "REPT_I02.07.01.39", "REPT_I02.07.01.40", "REPT_I02.07.01.41", "REPT_I02.07.01.42", "REPT_I02.07.01.43"],
 	"num": [1320, 1320, 1320, 1320, 1320, 1320, 1401, 1401, 1401, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403]
@@ -1346,8 +1346,7 @@ var testCaseNum = eval(
 );
 
 //console.log(testCaseNum.num[testCaseNum.num.length - 1]);
-var testCaseNum = testCaseNum.num[testCaseNum.num.length - 1];
-
+var testCaseNum = testCases.num[testCases.num.length - 1];
 function get_testCaseNum()
 {
     $.ajax({
@@ -1355,7 +1354,9 @@ function get_testCaseNum()
         dataType:'json',
         success: function(data){
             if (data != null) {
-                testCaseNum = eval(data);
+            	console.log(data);
+                testCases = eval(data);
+                testCaseNum = testCases.num[testCases.num.length - 1];
             }
         },
         error: function(xhr,status,err){
@@ -1365,7 +1366,6 @@ function get_testCaseNum()
 }
 
 var testCoverage;
-
 function get_testCoverage()
 {
     for(var i = 0; i < CIHistory.length; i++)
@@ -1416,7 +1416,5 @@ function get_heroes()
 	heroes.sort(function(a, b) {
 		return b.XP - a.XP;
 	});
-
-	//console.log(JSON.stringify(heroes));
 }
 

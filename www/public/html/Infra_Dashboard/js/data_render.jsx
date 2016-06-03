@@ -29,8 +29,8 @@ var SubmitList = React.createClass ({
     },
     loadServer: function(){
     	
-    	ciPending();
-    	ciStatus();
+    	get_ciPending();
+    	get_ciStatus();
     	
 		get_theWholeCIduration();
 		get_testCaseNum();
@@ -52,7 +52,10 @@ var SubmitList = React.createClass ({
 					if(CIPendingReq.current)
 					{
 						CIPendingReq.current.buildResult = "RUNNING";
-						CIHistory.unshift(CIPendingReq.current);					
+						if(CIPendingReq.current.submitter != "na")
+						{
+							CIHistory.unshift(CIPendingReq.current);
+						}
 					}
 
 					for (var i=0;i<CIPendingReq.queue.length;i++)
@@ -62,7 +65,7 @@ var SubmitList = React.createClass ({
 					}
 					//
 										
-					this.setState({data: CIHistory.slice(0,15)});
+					this.setState({data: CIHistory.slice(0, this.props.listCount)});
                 }
             }.bind(this),
             error: function(xhr,status,err){
@@ -79,7 +82,7 @@ var SubmitList = React.createClass ({
         else
         {
         	CIHistory.reverse();
-        	this.setState({data: CIHistory.slice(0, 20)});
+        	this.setState({data: CIHistory.slice(0, this.props.listCount)});
 
 			get_testCoverage();
 			get_heroes();
@@ -230,56 +233,11 @@ var SubmitList = React.createClass ({
     
 });
 
-var HeroList = React.createClass ({
-    getInitialState: function(){
-        return {data:[]};
-    },
-
-    componentDidMount: function(){
-    	setInterval(this.loadData, this.props.pollInterval);	    
-    },
-    
-    
-    loadData() 
-    {
-        if(heroes)
-        {
-        	this.setState({data: heroes.slice(0,3)});
-        }    	
-    },
-    
-    renderTbody() {
-        return this.state.data.map((item, i)=>{
-			return (
-	                <tr key={i}>
-	                    <td className="TITILE">{item.name} {item.XP}</td>
-	                </tr>
-	            );
-        })
-
-    },
-
-    render() {
-        return (
-            <div className="table-responsive">
-                <table className="table">
-                    <tbody>
-                    <tr className="TITILE">
-                        <th>Top Submitters</th>
-                    </tr>
-                    {this.renderTbody()}
-                    </tbody>
-                </table>
-            </div>
-        );
-    }
-    
-});
 
 var SubmitListApi;
 SubmitListApi = hostname + "/jenkins/getCIHistory";
 ReactDOM.render(
-    <SubmitList url={SubmitListApi} pollInterval={5000}/>,
+    <SubmitList url={SubmitListApi} pollInterval={5000} listCount={15}/>,
     document.getElementById('submit_list_tile')
 );
 
