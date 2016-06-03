@@ -431,7 +431,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
     ciBlockInfo.submitter="";
     ciBlockInfo.lastSuccessTag=""
-    console,log("ciBlock result:"+ciBlockInfo.result)
+    console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
     if (ciBlockInfo.result == "FAILURE"){
         console.log("CI is blocked")
