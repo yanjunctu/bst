@@ -4,7 +4,8 @@ var configuration = {
 	testhostname: 'http://localhost:8888'
 };
 
-var hostname = configuration.testhostname;
+var hostname = configuration.apihostname;
+//var hostname = configuration.testhostname;
 
 var pseudo_pgress = 0;
 

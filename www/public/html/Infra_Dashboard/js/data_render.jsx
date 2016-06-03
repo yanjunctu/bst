@@ -106,11 +106,10 @@ var SubmitList = React.createClass ({
 
 		return (
                 <tr className={item.buildResult} key={i}>
-                    <td className={item.buildResult}>{item.buildID}</td>
                     <td><i className={resultIconStyles[item.buildResult]}></i></td>
+                    <td className={item.buildResult}>{item.buildID}</td>
                     <td>{name}</td>
                     <td>{time}</td>
-                    <td>{item.coverage}</td>
                     <td>{item.rlsTag}</td>
                 </tr>
             );
@@ -217,11 +216,10 @@ var SubmitList = React.createClass ({
                 <table className="table">
                     <tbody>
                     <tr className="TITILE">
-                        <th>#</th>
                         <th></th>
+                        <th>#</th>
                         <th>Submitter</th>
                         <th>Finish</th>
-                        <th>Coverage</th>
                         <th>Tag</th>
                     </tr>
                     {this.renderTbody()}

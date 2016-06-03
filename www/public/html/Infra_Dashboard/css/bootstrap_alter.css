@@ -37,7 +37,7 @@ div{
                0 5px 10px rgba(0,0,0,.25),
                0 10px 10px rgba(0,0,0,.2),
                0 20px 20px rgba(0,0,0,.15);
-  --font-size: 45px;
+  font-size: 65px;
 }
 
 .otto2 {
@@ -62,25 +62,16 @@ div{
 .FAILURE
  {
 	font-size: 34px; 
- 	font-weight: bold;
+ 	--font-weight: bold;
 	font-style:italic;
 	text-shadow:  1px 1px 1px rgba(0, 0, 0, 1);	
 }
 
-
-.QUEUING,
-.RUNNING,
-.ABORTED,
-.SUCCESS,
-.FAILURE
-{
-	font-style:italic;
-}
 .QUEUING
 {
 	background-color: lightskyblue;
 }
-tr.RUNNING
+.RUNNING
 {
 	background-color: cornflowerblue;
 }
@@ -106,10 +97,10 @@ tr.RUNNING
 .table>thead>tr>td,
 .table>tbody>tr>td,
 .table>tfoot>tr>td {
+	font-size: 25px;
 	padding: 0px;
-	border-width: 3px;
+	border-width: 2px;
 }
-
 
 .row [class^='col-xs-'],
 .row [class^='col-sm-'],
@@ -129,22 +120,23 @@ tr.RUNNING
 	width: 100px;
 	height: 100px;
 	border-radius: 100px;
-	float:left;
-	margin-left: 10px;
+	--margin-left: 10px;
 }
 
 
 	
 .badge {
 	display: inline-block;
-	min-width: 50px;
+	min-width: 20px;
 	padding: 4px 7px;
-	font-size: 40px;
+	font-size: 20px;
 	font-weight: 700;
 	line-height: 1;
 	text-align: center;
 	white-space: nowrap;
 	vertical-align:top;
-	border-radius: 40px;
-
+	border-radius: 20px;
+	
+	position:relative;
+	margin-left: -30px;
 }
