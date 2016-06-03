@@ -20,6 +20,10 @@ var CISTATUS = {
   "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na"}
 };  
 
+var UNLOCK_CI_JOB = "PCR-REPT-Remove_Lock_File";
+var WIN_SCRIPT_HOME = "D:\\Git_CI";
+var LOCK_FILE = "D:\\Git_Repo\\booster\\script\\scm\\REPT2.7.pid";
+
 // Variables for CI history info
 const CI_TRIGGER_JOB= "PCR-REPT-0-MultiJob";
 const CI_ON_TARGET_JOB= "PCR-REPT-On_Target_MultiJob";
@@ -35,8 +39,9 @@ const CI_RELEASE_JOB = "PCR-REPT-Git-Release";
 const CI_PRECHECK_JOB = "PCR-REPT-Git-Integration";
 const CI_SANITY_TEST_JOB = "PCR-REPT-DAT_LATEST";
 const CI_EXT_REGRESSION_JOB = "PCR-REPT-DAT_DAILY";
+const CI_MEMORY_LEAK_JOB = "PCR-REPT-Memory_Leak_MultiJob-DAILY";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
-var CILastTriggerBuildID = 0, CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0;
+var CILastTriggerBuildID = 0, CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0,CIMemoryLeakBuildID=0;
 var CIHistory = [];
 var CIOnTargetBuildChain = [CI_ON_TARGET_JOB, CI_ON_TAEGET_BUILD_JOB];
 var CIOffTargetBuildChain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_BUILD_JOB];
@@ -85,8 +90,6 @@ var getJobLastSuccessBuild = function(job,callback)
   });
 
 };
-
-
 function getParameterValue(data,parameter){
   var actions = data.actions;
   var found;
@@ -423,12 +426,15 @@ function getJobFailureInfo(job,days,callback){
 }
 var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     
+    preResult = ciBlockInfo.result;
     ciBlockInfo.result = data.result;
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
     ciBlockInfo.submitter="";
     ciBlockInfo.lastSuccessTag=""
+    console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
     if (ciBlockInfo.result == "FAILURE"){
+        console.log("CI is blocked")
         getJobLastSuccessBuild(job,function(err,data){
             if(err) {
                 console.log("err in onTargertTestInfo");
@@ -478,6 +484,25 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                 });
             });
         });
+    }
+    else if(ciBlockInfo.result == "SUCCESS"){
+        //let CI unblocked
+        if (preResult == "FAILURE"){
+	        
+            var paras = new Object(); 
+            paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
+            paras.LOCK_FILE = LOCK_FILE 
+	     
+            jenkins.build(UNLOCK_CI_JOB,paras,function(err) {
+                if (err) {
+                    console.log("failed to build "+UNLOCK_CI_JOB+err);
+                }
+                else {
+                    console.log("succeeded to build "+UNLOCK_CI_JOB);
+                }
+            });
+            console.log ("CI unblocked")
+        }
     }
 }
 
@@ -625,11 +650,12 @@ var updateCIHistoryInfo = function() {
         // sort the results in descending order
         var sanityDocs = db.getCollection(CI_SANITY_TEST_JOB).find({"build id": {$gt: CILastSanityBuildID}}).sort({"build id": -1}).toArray();
         var extRegressionDocs = db.getCollection(CI_EXT_REGRESSION_JOB).find({"build id": {$gt: CILastExtRegressionBuildID}}).sort({"build id": -1}).toArray();
+        var memoryLeakDocs = db.getCollection(CI_MEMORY_LEAK_JOB).find({"build id": {$gt: CIMemoryLeakBuildID}}).sort({"build id": -1}).toArray();
          
         triggerDocs.forEach(function(doc) {
             refreshCIHistory(db, doc);
         });
-        // Update the result of on-target sanity test and extended extRegression test
+        // Update the result of on-target sanity test,extended extRegression test and memory leak test
         sanityDocs.forEach(function(doc) {
             for (var i = CIHistory.length-1; i >= 0; --i) {
                 if (doc["release tag"] && CIHistory[i]["rlsTag"] == doc["release tag"]) {
@@ -650,6 +676,19 @@ var updateCIHistoryInfo = function() {
                         CIHistory[i]["extRegression"] = doc["build result"];
                         if (doc["build id"] > CILastExtRegressionBuildID) {
                             CILastExtRegressionBuildID = doc["build id"];
+                        }
+                    }
+                    break;
+                }
+            }
+        });
+        memoryLeakDocs.forEach(function(doc) {
+            for (var i = CIHistory.length-1; i >= 0; --i) {
+                if (doc["release tag"] && CIHistory[i]["rlsTag"] == doc["release tag"]) {
+                    if (!CIHistory[i]["memoryLeak"]) {
+                        CIHistory[i]["memoryLeak"] = doc["build result"];
+                        if (doc["build id"] > CIMemoryLeakBuildID) {
+                            CIMemoryLeakBuildID = doc["build id"];
                         }
                     }
                     break;

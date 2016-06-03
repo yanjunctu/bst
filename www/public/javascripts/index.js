@@ -133,7 +133,7 @@ var ciTable = $("#ciHistoryTbl").DataTable({
                     if (!data)
                         return "--";
 
-                    var part1 = data["win32ITPart1"], part2 = data["win32ITPart1"];
+                    var part1 = data["win32ITPart1"], part2 = data["win32ITPart2"];
 
                     if ("SUCCESS" == part1 && "SUCCESS" == part2)
                         return "SUCCESS";
@@ -161,7 +161,8 @@ var ciTable = $("#ciHistoryTbl").DataTable({
                 }
             },
             {data: "onTargetSanity", defaultContent: "--"},
-            {data: "extRegression", defaultContent: "--"}
+            {data: "extRegression", defaultContent: "--"},
+            {data: "memoryLeak", defaultContent: "--"}
     ]
 });
 
@@ -296,7 +297,8 @@ var refreshCIHistoryInfo = function(ciHistory) {
     ciHistory.forEach(function(info) {
         if (info["buildResult"] == "SUCCESS") {
             if (info["onTargetSanity"] != "SUCCESS"
-                || (info["extRegression"] && info["extRegression"] != "SUCCESS")) {
+                || (info["extRegression"] && info["extRegression"] != "SUCCESS")
+                || (info["memoryLeak"] && info["memoryLeak"] != "SUCCESS")) {
                 info["buildResult"] = "SUCCESSWITHERRORS";
             }
         }
