@@ -8,6 +8,39 @@ var hostname = configuration.testhostname;
 
 var pseudo_pgress = 0;
 
+function formatTime(time_string)
+{
+	var time;
+    if(time_string)
+    {
+        var t = time_string.split(" ");
+        var d = t[0].split("/");
+        var h = t[1].split(":");	            
+        time = d[0]+"/"+d[1]+" "+h[0]+":"+h[1];
+        //console.log(time);
+    }
+    return time;
+}
+
+function getName(name_string)
+{
+	var name;
+    if(name_string)
+    {
+        name = name_string.split("-");
+    }
+    return name[0];
+}
+
+function getCoreID(name_string)
+{
+	var name;
+    if(name_string)
+    {
+        name = name_string.split("-");
+    }
+    return name[1].replace(/(^\s*)|(\s*$)/g,'');
+}
 
 function ciStatus()
 {
@@ -27,7 +60,6 @@ function ciStatus()
 
 //http://booster/jenkins/getCIStatus
 var CIStatus = eval(
-
 {
 	"idleState": {
 		"status": "done",
@@ -82,7 +114,7 @@ function ciPending()
             dataType:'json',
             success: function(data){
                 if (data != null) {
-                    CIPendingReq = eval(data);
+                    CIPendingReq = eval(data);                    
                 }
             },
             error: function(xhr,status,err){
@@ -1247,6 +1279,19 @@ var CIHistory = eval(
 	"extRegression": "ABORTED"
 }, {
 	"buildID": 113,
+	"buildResult": "RUNNING",
+	"submitter": "Ye Blake-A5421C",
+	"precheck": "SUCCESS",
+	"onTargetBuild": "ABORTED",
+	"offTargetBuild": "SUCCESS",
+	"win32UT": "ABORTED",
+	"win32IT": {
+		"win32ITPart1": "FAILURE",
+		"win32ITPart2": "ABORTED"
+	}
+},
+{
+	"buildID": 114,
 	"buildResult": "QUEUING",
 	"submitter": "Ye Blake-A5421C",
 	"precheck": "SUCCESS",
@@ -1257,5 +1302,121 @@ var CIHistory = eval(
 		"win32ITPart1": "FAILURE",
 		"win32ITPart2": "ABORTED"
 	}
-}]
+}
+]
 );
+
+
+//http://booster/jenkins/getTheWholeCI
+var theWholeCI = eval(
+{
+	"id": ["154", "153", "138", "136", "116", "112", "111", "109", "107", "106", "102", "98", "92", "89", "86", "80", "76", "66", "65", "64", "62", "58", "57", "56", "54", "53", "48", "39", "38", "36", "34", "33"],
+	"duration": [49.07908333333334, 51.461816666666664, 55.51263333333333, 53.323116666666664, 53.98406666666666, 57.37055, 73.5202, 73.51273333333333, 60.45793333333334, 49.94115, 53.20803333333333, 54.40781666666667, 53.23435, 52.47553333333333, 19.02005, 47.427616666666665, 39.72306666666667, 49.00338333333333, 41.15861666666667, 51.0356, 60.73388333333333, 57.9623, 58.768033333333335, 47.59688333333333, 45.85655, 44.6605, 42.03045, 44.05416666666667, 40.36821666666667, 45.0232, 40.27016666666667, 93.7232],
+	"submitter": ["Liu Nick-CRV346", "Ye Blake-A5421C", "BraveLi-MRWQ78", "Ye Blake-A5421C", "Ma Xilai-DGBV47", "rurong.huang-qpcb36", "Ning Liu - TGDM48", "Dai xi-jdf638", "rurong.huang-qpcb36", "rurong.huang-qpcb36", "Ning Liu - TGDM48", "Dai xi-jdf638", "Kang Kevin-JDGV38", "Wu YaMing-CWTK73", "Shanghai Fu-PNW748", "Zhidong Jiang-XVPQ68", "Zhidong Jiang-XVPQ68", "Ning Liu - TGDM48", "Eagle Liaw-RQT768", "Ning Liu - TGDM48", "GongWang-gkph87", "Xue Renjie-JFRC74", "Su Huang-TXJB86", "Kang Kevin-JDGV38", "Sun Xiaocong-WGRQ43", "Ella Liu-wpf643", "Fu Shang-Hai-PNW748", "Ning Liu - TGDM48", "RuRong.huang-qpcb36", "RuRong.huang-qpcb36", "RuRong.huang-qpcb36", "JHG487"],
+	"timestamp": [1464674207259, 1464670728170, 1464587015626, 1464581206043, 1464333457996, 1464246304527, 1464241223957, 1464233227987, 1464227709926, 1464224712993, 1464154076235, 1464143158002, 1464074571811, 1463985978037, 1463975778998, 1463721310166, 1463672560370, 1463652249722, 1463649779746, 1463633200811, 1463623363388, 1463560598834, 1463557072374, 1463550033307, 1463538655484, 1463477857616, 1463390228002, 1462504566185, 1462500445191, 1462439209633, 1462433331612, 1462267416226]
+}
+);
+
+
+//console.log(parseInt(theWholeCI.duration[0]));
+var theWholeCIduration = parseInt(theWholeCI.duration[0]);
+
+function get_theWholeCIduration()
+{
+    $.ajax({
+        url: hostname + "/jenkins/getTheWholeCI",
+        dataType:'json',
+        success: function(data){
+            if (data != null) {
+                theWholeCIduration = eval(data);
+            }
+        },
+        error: function(xhr,status,err){
+            console.log(err.toString());
+        }
+    }); 	
+}
+
+//http://booster/serverInfo/testCaseNum
+var testCaseNum = eval(
+{
+	"filename": ["REPT_I02.07.01.13", "REPT_I02.07.01.14", "REPT_I02.07.01.15", "REPT_I02.07.01.16", "REPT_I02.07.01.17", "REPT_I02.07.01.18", "REPT_I02.07.01.19", "REPT_I02.07.01.20", "REPT_I02.07.01.21", "REPT_I02.07.01.22", "REPT_I02.07.01.23", "REPT_I02.07.01.24", "REPT_I02.07.01.25", "REPT_I02.07.01.26", "REPT_I02.07.01.27", "REPT_I02.07.01.29", "REPT_I02.07.01.30", "REPT_I02.07.01.31", "REPT_I02.07.01.32", "REPT_I02.07.01.33", "REPT_I02.07.01.34", "REPT_I02.07.01.35", "REPT_I02.07.01.36", "REPT_I02.07.01.37", "REPT_I02.07.01.38", "REPT_I02.07.01.39", "REPT_I02.07.01.40", "REPT_I02.07.01.41", "REPT_I02.07.01.42", "REPT_I02.07.01.43"],
+	"num": [1320, 1320, 1320, 1320, 1320, 1320, 1401, 1401, 1401, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403, 1403]
+}
+);
+
+//console.log(testCaseNum.num[testCaseNum.num.length - 1]);
+var testCaseNum = testCaseNum.num[testCaseNum.num.length - 1];
+
+function get_testCaseNum()
+{
+    $.ajax({
+        url: hostname + "/jenkins/getTheWholeCI",
+        dataType:'json',
+        success: function(data){
+            if (data != null) {
+                testCaseNum = eval(data);
+            }
+        },
+        error: function(xhr,status,err){
+            console.log(err.toString());
+        }
+    }); 	
+}
+
+var testCoverage;
+
+function get_testCoverage()
+{
+    for(var i = 0; i < CIHistory.length; i++)
+    {
+   		if(CIHistory[i].coverage)
+   		{
+   			testCoverage = CIHistory[i].coverage;
+   			//console.log("Coverage:" + CIHistory[i].coverage);
+   			break;
+   		}
+    }	
+}
+
+function hero(name, XP)
+{
+    this.name=name;
+    this.XP=XP;
+}
+
+var heroes = new Array();
+function get_heroes()
+{
+  	var submitter = new Object();
+	for(var i = 0; i < CIHistory.length; i++)
+    {	
+		if(CIHistory[i].buildResult == "SUCCESS")
+		{
+			var name = CIHistory[i].submitter.toUpperCase();
+			if(submitter[name])
+			{
+				submitter[name] += 1;	
+			}
+			else
+			{
+				submitter[name] = 1;
+			}
+		}
+    }
+	//console.log(heroes);
+
+	heroes = [];
+	for(var p in submitter)
+    {	
+		heroes.push(new hero(p, submitter[p]));
+    }
+    
+    
+	heroes.sort(function(a, b) {
+		return b.XP - a.XP;
+	});
+
+	//console.log(JSON.stringify(heroes));
+}
+
