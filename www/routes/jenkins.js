@@ -21,8 +21,8 @@ var CISTATUS = {
 };  
 
 var UNLOCK_CI_JOB = "PCR-REPT-Remove_Lock_File";
-var WIN_SCRIPT_HOME = "D:\\Git_CI";
-var LOCK_FILE = "D:\\Git_Repo\\booster\\script\\scm\\REPT2.7.pid";
+var WIN_SCRIPT_HOME = "D:\\Git_Repo\\scm";
+var LOCK_FILE = "D:\\Git_Repo\\scm\\REPT2.7.pid";
 
 // Variables for CI history info
 const CI_TRIGGER_JOB= "PCR-REPT-0-MultiJob";
