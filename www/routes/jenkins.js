@@ -431,8 +431,10 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
     ciBlockInfo.submitter="";
     ciBlockInfo.lastSuccessTag=""
+    console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
     if (ciBlockInfo.result == "FAILURE"){
+        console.log("CI is blocked")
         getJobLastSuccessBuild(job,function(err,data){
             if(err) {
                 console.log("err in onTargertTestInfo");
@@ -486,7 +488,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     else if(ciBlockInfo.result == "SUCCESS"){
         //let CI unblocked
         if (preResult == "FAILURE"){
-	
+	        
             var paras = new Object(); 
             paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
             paras.LOCK_FILE = LOCK_FILE 
@@ -499,6 +501,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                     console.log("succeeded to build "+UNLOCK_CI_JOB);
                 }
             });
+            console.log ("CI unblocked")
         }
     }
 }
