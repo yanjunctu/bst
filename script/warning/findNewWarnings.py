@@ -46,7 +46,6 @@ ANNOFILE_DIR=['\\bahama\\code\\annofile\\','\\pcr_srp\\code\\annofile\\']
 CLEAN_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make clean selfChecking=Y','annofile':''},
 		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_clean_32mb selfChecking=Y','annofile':''},
 			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_clean_32mb selfChecking=Y','annofile':''},
-			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make host_matrix_clean selfChecking=Y','annofile':''},
 		   	{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make bandit_clean selfChecking=Y','annofile':''}]
 
 MATRIX_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make matrix selfChecking=Y','annofile':['matrix.xml']},
@@ -124,26 +123,27 @@ class DiffParser(object):
 
         filename = match.group(1)
         changes = {'newfile':False, 'modifysections':[]}
-        for line in section.split('\n'):
-            match = re.search(r'^@@ -(.*) \+(.*) @@', line)
+        match = re.search(r'''^diff --git a(.*)\nnew file mode 100644\n''', section)
+        if match:
+            changes['newfile'] = True
+        else:
+            for line in section.split('\n'):
+                match = re.search(r'^@@ -(.*) \+(.*) @@', line)
 
-            if not match:
-                continue
+                if not match:
+                    continue
 
-            change_a = match.group(1).split(',')
-            change_b = match.group(2).split(',')
-            # No need to process removed file
-            if change_b[0] == '0' and change_b[1] == '0':
-                return ()
-            start = int(change_b[0])
-            if len(change_b) < 2:
-                last = 1
-            else:
-                last = int(change_b[1])
-            changes['modifysections'].append({'start':start, 'last':last})
-            if change_a[0] == '0' and change_a[1] == '0':
-                changes['newfile'] = True
-                break
+                change_a = match.group(1).split(',')
+                change_b = match.group(2).split(',')
+                # No need to process removed file
+                if change_b[0] == '0' and change_b[1] == '0':
+                    return ()
+                start = int(change_b[0])
+                if len(change_b) < 2:
+                    last = 1
+                else:
+                    last = int(change_b[1])
+                changes['modifysections'].append({'start':start, 'last':last})
 
         return (filename, changes) 
 
@@ -247,18 +247,78 @@ def process_argument():
 
     return args
 
+def parseLatestCITag(mergedTags):
+
+    tagString = 'REPT_I02.07' 
+    storeLagest = 0;
+    storeTag = '';
+    for line in mergedTags.splitlines():
+        line = line.strip()
+        if line.startswith(tagString):
+            # A typical tag name is 'REPT_Emerald_I02.07.01.90'
+            # Below code is go to get the biggest one, it will extract the last two number 01 and 90 to compare
+            splitArr = line.split('.')
+            lastIndex = len(splitArr)-1;
+            lastLastIndex = lastIndex-1;
+            s1 = splitArr[lastLastIndex]+splitArr[lastIndex];
+            n1 = int(s1)
+            if n1>storeLagest:
+                storeLagest = n1;
+                storeTag = line;
+        
+        else:
+            continue;
+        
+    return storeTag;
+
+def git_version_check():
+    #the version should newer than 2.7.0.
+    baseVerNum1=2;
+    baseVerNum2=7;
+    baseVerNum3=0;
+    try:
+        versionInfo = subprocess.check_output('git --version', stderr=subprocess.STDOUT)
+    except WindowsError:
+        print "ERROR:The git path not add to the path of your Environment Variables "
+        sys.exit()
+    #versionInfo is kind like "git version 2.8.3.windows.1"
+    version = re.search(r"(?P<verNum1>\d+)\.(?P<verNum2>\d+)\.(?P<verNum3>\d+)\.",versionInfo)
+    isOldVersion = False
+    if version:
+        if int(version.group(1)) < baseVerNum1:
+            isOldVersion = True
+        elif int(version.group(1)) == baseVerNum1:
+            if int(version.group(2)) < baseVerNum2:
+                isOldVersion = True
+            elif int(version.group(2)) == baseVerNum2:
+                if int(version.group(3)) < baseVerNum3:
+                    isOldVersion = True
+    
+    if isOldVersion:
+        reminderString = 'Your git version is '+ version.group(0) + os.linesep+ \
+        'which is too old, please use a newer one.the download link as below:'+os.linesep+ \
+        'https://drive.google.com/open?id=0B9KowNOuazOdOUEyRGM3dmplYUU';     
+        print reminderString
+        sys.exit()
+                   
 def pre_check(args):
     try:
         os.system('rd /s /q {}\\temp_log'.format(args.drive));
         os.mkdir('{}\\temp_log'.format(args.drive))
     except:
         print 'can not remove temp_log' 
-
-
+        
+    git_version_check()
+    # To get the latest Tag engineer's branch based on
+    mergedTags = subprocess.check_output('git tag --merged', stderr=subprocess.STDOUT)
+    baseOnTag = parseLatestCITag(mergedTags)
+    
     if args.mode == 'preCI':
-    # Make sure Git repo have mount to a drive firstly
-        valid_current_path_pattern = r'^\w:\\$';  # match root driver, like c:\ or d:\
-        current_path_drive = os.getcwd();# as this file is called in root, so os.getcwd directly return is drive
+        # Make sure Git repo have mount to a drive firstly
+        # match root driver, like c:\ or d:\
+        valid_current_path_pattern = r'^\w:\\$'; 
+        # as this file is called in root, so os.getcwd directly return is drive
+        current_path_drive = os.getcwd();
         if re.match(valid_current_path_pattern,current_path_drive) == None:
             print("pls mount git repo to a drive, then get back to run this script")
             sys.exit()
@@ -276,12 +336,27 @@ def pre_check(args):
         if match:
             args.ci_Branch = match.group(0).strip()
         else:
-            print('ERROR!!! plese merge your branch to INT branch')
-            sys.exit()
+            if baseOnTag:
+                reminderString = 'You are based on '+ baseOnTag + os.linesep+ \
+                'which is not latest release tag, recommand you back to catch up.'+os.linesep+ \
+                'Do you want to continue find warning based on '+baseOnTag+'? y/n';
+              
+                print(reminderString);
+                exitOrNot = raw_input();
+                if exitOrNot == 'y' or exitOrNot == 'yes':
+                    args.ci_Branch = baseOnTag;
+                else:
+                    sys.exit()
+            else:
+                sys.exit()
     elif args.mode == 'desktop':
         if not args.ci_Branch:
-            args.ci_Branch = 'HEAD'
-    else: #including  CI mode and default others to compare with last HEAD
+            if baseOnTag:
+                args.ci_Branch = baseOnTag;
+            else:
+                args.ci_Branch = 'HEAD'
+    else: 
+        #including  CI mode and default others to compare with last HEAD
         if not args.ci_Branch:
             sys.exit()          
 
@@ -293,9 +368,6 @@ def run_cmd(drive,cmdQ):
         cmdType='cd '+drive+cmdDic['cmdDir']+' && '+cmdDic['cmdType']
         annofiles = cmdDic['annofile'];
 
-        #annofile = cmdDic['annofile']
-        #logfile=drive+cmdDic['logfile']
-        #ret=subprocess.call(cmdType,shell=True,stdout=open(logfile,'w'),stderr=subprocess.STDOUT) 
         f = open(os.devnull, 'w')
         ret=subprocess.call(cmdType,shell=True,stdout=f,stderr=subprocess.STDOUT) 
         f.close()
@@ -320,7 +392,7 @@ def run_cmd(drive,cmdQ):
                         
             print 'more details pls refer to %s' %summarize_log_file
             fp.close()
-            os._exit(1)
+            sys.exit(1)
         cmdQ.task_done() 
             
 def buildLog_generate(drive):
@@ -344,13 +416,6 @@ def print_log(changes,warnings,new_warnings,logfile,drive):
     warning_files = set([file_name for (file_name, line_num) in warnings])
     summarize_log_file = drive+LOG_DIR+'summarize.log'
     fp=file(summarize_log_file,'a+')
-
-    """
-    print '\nChecked {w_cnt} warning(s), {f_cnt} file(s) ({l_cnt} lines) changed'.format(
-                  w_cnt=len(warnings), f_cnt=len(changed_files), l_cnt=len(changes))
-    print>>fp,'\nChecked {w_cnt} warning(s), {f_cnt} file(s) ({l_cnt} lines) changed'.format(
-                  w_cnt=len(warnings), f_cnt=len(changed_files), l_cnt=len(changes))
-    """
                   
     if (0 == len(new_warnings)):
         print '[PASS] no new warning for {build_log} .'.format(build_log=logfile)
@@ -417,8 +482,6 @@ if __name__ == "__main__":
         logfiles =[]
         for annofileDir in ANNOFILE_DIR:
             logfiles =logfiles + [fn for fn in glob.glob(args.drive+annofileDir+ '*.xml') if 'default.xml' not in fn]
-
-    if args.mode == 'CI':
         stdout = sys.stdout
         sys.stdout = stdOutfile = StringIO.StringIO()
         print CIMailHeader
@@ -430,9 +493,7 @@ if __name__ == "__main__":
         if basename != 'default.xml':
             if basename in BAHAMA_ARM_LOG:
                 isBahamaArm=True
-
             (warnings,new_warnings)=get_new_warnings(logfile,changes,isBahamaArm)
-            
             print_log(changes,warnings,new_warnings,logfile,args.drive)
     
     tEnd = datetime.datetime.now()
