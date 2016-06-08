@@ -1373,11 +1373,11 @@ var testCaseNum = testCases.num[testCases.num.length - 1];
 function get_testCaseNum()
 {
     $.ajax({
-        url: hostname + "/jenkins/getTheWholeCI",
+        url: hostname + "/serverInfo/testCaseNum",
         dataType:'json',
         success: function(data){
             if (data != null) {
-            	//console.log(data);
+            	console.log(data);
                 testCases = eval(data);
                 testCaseNum = testCases.num[testCases.num.length - 1];
             }

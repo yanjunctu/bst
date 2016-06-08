@@ -161,14 +161,6 @@ var SubmitList = React.createClass ({
 		document.getElementById('testCaseNum').textContent = testCaseNum;
 		document.getElementById('theWholeCIduration').textContent = theWholeCIduration;
 
-		for(var j=0; j < heroes.length && j < 3; j++)
-		{
-			document.getElementById('hero'+j).textContent = getName(heroes[j].name);
-			document.getElementById('hero'+j+'.XP').textContent = heroes[j].XP;
-			document.getElementById('hero'+j+'.id').src="avatar/"+getCoreID(heroes[j].name)+".jpg";
-			//$("#hero"+j+".id").attr("src","https://converge.motorolasolutions.com/people/"+getCoreID(heroes[j].name)+"/avatar/?"+Math.random());
-		}
-
 		//
 		var mtag;
 		for(var m in CIStatus)
