@@ -26,22 +26,37 @@ function formatTime(time_string)
 
 function getName(name_string)
 {
-	var name;
+	var name_id;
+	var name = name_string;
     if(name_string)
     {
-        name = name_string.split("-");
+        name_id = name_string.split("-");
+        name = name_id[0];
+
+	    if(3 == name_id.length)
+	    {
+	    	name += name_id[1];
+	    }
     }
-    return name[0];
+
+    return name.replace(/(^\s*)|(\s*$)/g,'');
 }
 
 function getCoreID(name_string)
 {
-	var name;
+	var name_id, name = name_string;
     if(name_string)
     {
-        name = name_string.split("-");
+        name_id = name_string.split("-");
+
+        if(name_id.length > 1)
+	    {
+	    	name = name_id[name_id.length - 1];
+	    }
     }
-    return name[1].replace(/(^\s*)|(\s*$)/g,'');
+    
+    name = name.toUpperCase();
+    return name.replace(/(^\s*)|(\s*$)/g,'');
 }
 
 function get_ciStatus()
@@ -1398,7 +1413,7 @@ function get_heroes()
 {
   	var submitter = new Object();
 	for(var i = 0; i < CIHistory.length; i++)
-    {	
+    {
 		if(CIHistory[i].buildResult == "SUCCESS")
 		{
 			var name = CIHistory[i].submitter.toUpperCase();

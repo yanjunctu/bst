@@ -1,4 +1,6 @@
 'use strict';
+
+//icon style for history data
 var resultIconStyles = {
 	"QUEUING": "fa fa-clock-o fa-1x fa-fw",
 	"RUNNING": "fa fa-refresh fa-spin fa-1x fa-fw",
@@ -6,6 +8,8 @@ var resultIconStyles = {
 	"SUCCESS": "fa fa-check fa-1x fa-fw",
 	"FAILURE": "fa fa-close fa-1x fa-fw",
 }
+
+//progress of each steps, percentage, 0 - 100 
 var ciProgresses = {
 	"preCheckState": 0,
 	"buildWin32State": 0,
@@ -14,7 +18,7 @@ var ciProgresses = {
 	"preReleaseState": 0,
 }
 
-//ticks, 5s per tick
+//estimated duration for each step, ticks by 5 sec interval
 var ciEstimation = {
 	"preCheckState": 60,
 	"buildWin32State": 60,
@@ -27,6 +31,7 @@ var SubmitList = React.createClass ({
     getInitialState: function(){
         return {data:[]};
     },
+    
     loadServer: function(){
     	
     	get_ciPending();
@@ -73,6 +78,7 @@ var SubmitList = React.createClass ({
             }.bind(this)
         }); 
     },
+    
     componentDidMount: function(){
         if(this.props.url)
         {
@@ -85,17 +91,15 @@ var SubmitList = React.createClass ({
         	this.setState({data: CIHistory.slice(0, this.props.listCount)});
 
 			get_testCoverage();
-			get_heroes();
+			//get_heroes();
 			
         	setInterval(this.render,this.props.pollInterval);
         }
         
     },
     
-    renderTbody() {
-         
-        
-        var history_data = this.state.data.map((item, i)=>{
+    renderTbody: function() {
+        return this.state.data.map((item, i)=>{
 			
 		//just remove core id
         var name = getName(item.submitter);
@@ -113,13 +117,11 @@ var SubmitList = React.createClass ({
                     <td>{item.rlsTag}</td>
                 </tr>
             );
-        })
-        
-        
-        return history_data;
+        });
+
     },
 
-    render() {
+    render:function() {
     	
     	//put here at initial release, better optimized;
     	//console.log("render...");
@@ -146,7 +148,8 @@ var SubmitList = React.createClass ({
                		failed_last30 += 1;
                	}                 
             }
-        })
+       });
+       
 		document.getElementById('submit_aborted').textContent = aborted;
 		document.getElementById('submit_completed').textContent = completed;
 		document.getElementById('submit_failed').textContent = failed;
@@ -175,7 +178,7 @@ var SubmitList = React.createClass ({
 			//block info
 			if(m == "ciBlockInfo")
 			{	
-				console.log(JSON.stringify(CIStatus[m]));
+				//console.log(JSON.stringify(CIStatus[m]));
 				if(CIStatus[m]["result"] == "FAILURE")
 				{
 					for(var bi in CIStatus[m] )
@@ -253,17 +256,64 @@ var SubmitList = React.createClass ({
                 </table>
             </div>
         );
-    }
+    },
     
 });
 
 
 var SubmitListApi;
-//SubmitListApi = hostname + "/jenkins/getCIHistory";
+SubmitListApi = hostname + "/jenkins/getCIHistory";
 ReactDOM.render(
     <SubmitList url={SubmitListApi} pollInterval={5000} listCount={15}/>,
     document.getElementById('submit_list_tile')
 );
+
+
+
+
+
+var TopSubmitList = React.createClass ({
+    getInitialState: function(){
+        return {data:heroes};
+    },
+    
+    getHeros: function(){
+		get_heroes();
+		this.setState({data: heroes});
+    },
+    
+    componentDidMount: function(){
+		setInterval(this.getHeros,this.props.pollInterval);
+    },
+    
+    renderList:function() {
+    	
+    	return this.state.data.map((hero, i)=>{
+			return (
+		        <div className="widget-item" key={i}>
+		            <img className="avatar" src={"avatar/" + getCoreID(hero.name) + ".jpg"}  />
+		            <div className="badge badge-danger">{hero.XP}</div>                                        
+		            <div className="widget-subtitle">{getName(hero.name)}</div>
+		        </div>
+	            );
+        });
+    },
+    
+    render:function() {
+		return (
+	        <div>
+	            {this.renderList()}
+	        </div>
+            );
+    },
+});
+
+ReactDOM.render(
+    <TopSubmitList url={SubmitListApi} pollInterval={5000} listCount={15}/>,
+    document.getElementById('top_submiter_list')
+);
+
+
 
 function set_toggle(){
 	var toggle = false;

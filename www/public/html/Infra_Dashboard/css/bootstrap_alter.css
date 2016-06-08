@@ -229,3 +229,39 @@ div{
     100% { opacity: 0;  }
 }
 /* Alert CSS --------------------------------------------------*/
+
+
+
+
+/* Marquee CSS --------------------------------------------------*/
+
+	
+:root {
+  --vh: 120px;
+  --vh1: calc(var(--vh) * -1);
+  --vh2: calc(var(--vh) * -2);
+  --vh3: calc(var(--vh) * -3);
+  --vh4: calc(var(--vh) * -4);
+}
+
+
+@keyframes slide {
+    from, to { top: 0; }
+    12.5% { top: 0; }
+    25% { top:  var(--vh1); }
+    37.5% { top: var(--vh1); }
+    50% { top: var(--vh2); }
+    62.5% { top: var(--vh2); }
+    75% { top: var(--vh3);  }
+    87.5% { top: var(--vh3);  }
+    100% { top: 0;  }   
+}
+
+.box{width:500px; height: var(--vh); margin:1em auto; position:relative; overflow:hidden;}
+.list{margin:0; padding:0; position:absolute;
+    -moz-animation: slide 20s infinite;
+    -webkit-animation: slide 20s infinite;
+}
+
+/* Marquee CSS --------------------------------------------------*/
+
