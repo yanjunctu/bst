@@ -40,18 +40,23 @@ div{
   font-size: 65px;
 }
 
+.otto3,
 .otto2 {
 	font-style:italic;	
-	  color: white;
-	  text-shadow: 0 1px 0 #ccc,
+	color: white;
+	text-shadow: 0 1px 0 #ccc,
 	               0 2px 0 #c9c9c9,
-               0 6px 1px rgba(0,0,0,.1),
-               0 0 5px rgba(0,0,0,.1),
-               0 1px 3px rgba(0,0,0,.3),
-               0 3px 5px rgba(0,0,0,.2),
-               0 5px 10px rgba(0,0,0,.25),
-               0 10px 10px rgba(0,0,0,.2),
-               0 20px 20px rgba(0,0,0,.15);	               
+	               0 6px 1px rgba(0,0,0,.1),
+	               0 0 5px rgba(0,0,0,.1),
+	               0 1px 3px rgba(0,0,0,.3),
+	               0 3px 5px rgba(0,0,0,.2),
+	               0 5px 10px rgba(0,0,0,.25),
+	               0 10px 10px rgba(0,0,0,.2),
+	               0 20px 20px rgba(0,0,0,.15);	               
+}
+
+.otto3 {
+  font-size: 45px;	
 }
 
 .TITILE,
@@ -140,3 +145,87 @@ div{
 	position:relative;
 	margin-left: -30px;
 }
+
+
+
+/* Alert CSS --------------------------------------------------*/
+
+#alert {
+    position: relative;
+}
+
+#alert:target {
+    display: none;
+}
+.alert {
+    background-color: #c4453c;
+    background-image: -webkit-linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.05) 25%,
+                      hsla(0,0%,0%,.05) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.05) 75%,
+                      hsla(0,0%,0%,.05));
+    background-image: -moz-linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.1) 25%,
+                      hsla(0,0%,0%,.1) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.1) 75%,
+                      hsla(0,0%,0%,.1));
+    background-image: -ms-linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.1) 25%,
+                      hsla(0,0%,0%,.1) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.1) 75%,
+                      hsla(0,0%,0%,.1));
+    background-image: -o-linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.1) 25%,
+                      hsla(0,0%,0%,.1) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.1) 75%,
+                      hsla(0,0%,0%,.1));
+    background-image: linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.1) 25%,
+                      hsla(0,0%,0%,.1) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.1) 75%,
+                      hsla(0,0%,0%,.1));
+    background-size: 40px 40px;
+/*    box-shadow: 0 5px 0 hsla(0,0%,0%,.1);*/
+    color: #f6f6f6;
+    display: block;
+    font: bold 96px/90px sans-serif;
+    height: 400px;
+    position: absolute;
+    text-align: center;
+    text-decoration: none;
+    top: -20px;
+    width: 100%;
+    z-index: 1;
+    -webkit-animation: alert 2s normal infinite;
+       -moz-animation: alert 2s normal infinite;
+        -ms-animation: alert 2s normal infinite;
+         -o-animation: alert 2s normal infinite;
+            animation: alert 2s normal infinite;
+}
+
+@-webkit-keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+@-moz-keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+@-ms-keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+@-o-keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+@keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+/* Alert CSS --------------------------------------------------*/

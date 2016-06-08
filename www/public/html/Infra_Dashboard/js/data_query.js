@@ -109,6 +109,12 @@ var CIStatus = eval(
 
 );
 
+	
+var CIStatus_CI_blocked = eval(
+//var CIStatus = eval(
+{"idleState":{"status":"running","duration":0},"preCheckState":{"status":"not start","duration":2},"buildFwState":{"status":"not start","duration":3},"testFwState":{"status":"not start","duration":4},"buildWin32State":{"status":"not start","duration":5},"testWin32State":{"status":"not start","duration":0},"preReleaseState":{"status":"not start","duration":0},"overall":{"current":{"branch":"na","subTime":"na","submitter":"na","subBranch":"na"}},"ciBlockInfo":{"result":"FAILURE","submitter":"BraveLi-MRWQ78;Wu Chongyun-mgvb84;","releaseTag":"REPT_I02.07.01.51","lastSuccessTag":"REPT_I02.07.01.49"}}
+);
+
 function get_ciPending()
 {
         $.ajax({
@@ -1356,7 +1362,7 @@ function get_testCaseNum()
         dataType:'json',
         success: function(data){
             if (data != null) {
-            	console.log(data);
+            	//console.log(data);
                 testCases = eval(data);
                 testCaseNum = testCases.num[testCases.num.length - 1];
             }

@@ -17,12 +17,20 @@
         <!-- EOF CSS INCLUDE -->
     </head>
     <body style="overflow-y: auto;">
-        <!-- START PAGE CONTAINER -->
+	
+		<!-- START PAGE CONTAINER -->
         <div style="display: block;" class="page-container page-navigation-toggled rotating-item page-container-wide">
            
             <!-- PAGE CONTENT -->
             <div class="page-content">
 
+				<div class="alert hidden" id="ciBlockInfo">					
+					<div class="otto2">Oops, Integration blocked!</div>
+					<div class="otto3">by</div>
+					<div class="otto3" id= "ciBlockInfo_submitter">Name</div>
+					<div class="otto3" id= "ciBlockInfo_releaseTag">Release Tag</div>
+				</div>
+	
                 <!-- START X-NAVIGATION VERTICAL -->
                 <ul class="x-navigation x-navigation-horizontal x-navigation-panel">
                     <p class="published-title"><i class="fa fa-cloud fa-1x fa-fw"></i>PCR Infra CI Dashboard - 2.7</p>
@@ -31,6 +39,8 @@
 
                 <!-- PAGE CONTENT WRAPPER -->
                 <div class="page-content-wrap">
+
+                	
                     <div class="row">
                         <div class="col-md-5">
 
