@@ -17,7 +17,7 @@ var CISTATUS = {
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
   "overall":{"current":{"branch":"na","subTime":"na"}},
-  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na"}
+  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na",manualControl:"FALSE"}
 };  
 
 var UNLOCK_CI_JOB = "PCR-REPT-Remove_Lock_File";
@@ -424,16 +424,47 @@ function getJobFailureInfo(job,days,callback){
 	return;
 	})
 }
+var ciUnblock = function(jenkinsUnlock,boosterUnlock){
+    console.log('ciUnblock')
+    status = "SUCCESS";
+    if (jenkinsUnlock == "TRUE"){
+        var paras = new Object(); 
+        paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
+        paras.LOCK_FILE = LOCK_FILE 
+	     
+        jenkins.build(UNLOCK_CI_JOB,paras,function(err) {
+            if (err) {
+                console.log("failed to build "+UNLOCK_CI_JOB+err);
+                status = "FAILURE"
+            }
+            else {
+                console.log("succeeded to build "+UNLOCK_CI_JOB);
+            }
+        });
+    }
+    if(boosterUnlock == "TRUE"){
+        CISTATUS.ciBlockInfo.manualControl = "TRUE"
+        CISTATUS.ciBlockInfo.result = "SUCCESS"
+    }
+    console.log(CISTATUS.ciBlockInfo)
+    return status
+}
 var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     
     preResult = ciBlockInfo.result;
+    preReleaseTag = ciBlockInfo.releaseTag
     ciBlockInfo.result = data.result;
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
     ciBlockInfo.submitter="";
     ciBlockInfo.lastSuccessTag=""
     console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
-    if (ciBlockInfo.result == "FAILURE"){
+    if((ciBlockInfo.manualControl == "TRUE") && (preReleaseTag == ciBlockInfo.releaseTag)){
+        
+        ciBlockInfo.result == "SUCCESS"
+    }
+    else if (ciBlockInfo.result == "FAILURE"){
+        ciBlockInfo.manualControl == "FALSE"
         console.log("CI is blocked")
         getJobLastSuccessBuild(job,function(err,data){
             if(err) {
@@ -487,20 +518,9 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     }
     else if(ciBlockInfo.result == "SUCCESS"){
         //let CI unblocked
+        ciBlockInfo.manualControl == "FALSE"
         if (preResult == "FAILURE"){
-	        
-            var paras = new Object(); 
-            paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
-            paras.LOCK_FILE = LOCK_FILE 
-	     
-            jenkins.build(UNLOCK_CI_JOB,paras,function(err) {
-                if (err) {
-                    console.log("failed to build "+UNLOCK_CI_JOB+err);
-                }
-                else {
-                    console.log("succeeded to build "+UNLOCK_CI_JOB);
-                }
-            });
+            ciUnblock("TRUE","FALSE")
             console.log ("CI unblocked")
         }
     }
@@ -777,6 +797,17 @@ router.get('/getCIHistory', function(req, res, next){
 
     return res.json(CIHistory);
 })
-
+router.get('/unblockci', function(req, res, next){
+    res.render('unBlockCI',{ title: 'unblock CI' });
+})
+router.post('/doUnblockCI', function(req, res, next) {
+    console.log("/doUnblockCI")
+    var jenkinsci = req.body.jenkinsCI;
+    var boosterdisplay = req.body.boosterdisplay;
+    status = ciUnblock(jenkinsci,boosterdisplay)
+    res.send(status)
+    return false;
+})
+  
 
 module.exports = router;
