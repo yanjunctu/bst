@@ -26,22 +26,37 @@ function formatTime(time_string)
 
 function getName(name_string)
 {
-	var name;
+	var name_id;
+	var name = name_string;
     if(name_string)
     {
-        name = name_string.split("-");
+        name_id = name_string.split("-");
+        name = name_id[0];
+
+	    if(3 == name_id.length)
+	    {
+	    	name += name_id[1];
+	    }
     }
-    return name[0];
+
+    return name.replace(/(^\s*)|(\s*$)/g,'');
 }
 
 function getCoreID(name_string)
 {
-	var name;
+	var name_id, name = name_string;
     if(name_string)
     {
-        name = name_string.split("-");
+        name_id = name_string.split("-");
+
+        if(name_id.length > 1)
+	    {
+	    	name = name_id[name_id.length - 1];
+	    }
     }
-    return name[1].replace(/(^\s*)|(\s*$)/g,'');
+    
+    name = name.toUpperCase();
+    return name.replace(/(^\s*)|(\s*$)/g,'');
 }
 
 function get_ciStatus()
@@ -107,6 +122,12 @@ var CIStatus = eval(
 	}
 }
 
+);
+
+	
+var CIStatus_CI_blocked = eval(
+//var CIStatus = eval(
+{"idleState":{"status":"running","duration":0},"preCheckState":{"status":"not start","duration":2},"buildFwState":{"status":"not start","duration":3},"testFwState":{"status":"not start","duration":4},"buildWin32State":{"status":"not start","duration":5},"testWin32State":{"status":"not start","duration":0},"preReleaseState":{"status":"not start","duration":0},"overall":{"current":{"branch":"na","subTime":"na","submitter":"na","subBranch":"na"}},"ciBlockInfo":{"result":"FAILURE","submitter":"BraveLi-MRWQ78;Wu Chongyun-mgvb84;","releaseTag":"REPT_I02.07.01.51","lastSuccessTag":"REPT_I02.07.01.49"}}
 );
 
 function get_ciPending()
@@ -1352,7 +1373,7 @@ var testCaseNum = testCases.num[testCases.num.length - 1];
 function get_testCaseNum()
 {
     $.ajax({
-        url: hostname + "/jenkins/getTheWholeCI",
+        url: hostname + "/serverInfo/testCaseNum",
         dataType:'json',
         success: function(data){
             if (data != null) {
@@ -1392,7 +1413,7 @@ function get_heroes()
 {
   	var submitter = new Object();
 	for(var i = 0; i < CIHistory.length; i++)
-    {	
+    {
 		if(CIHistory[i].buildResult == "SUCCESS")
 		{
 			var name = CIHistory[i].submitter.toUpperCase();

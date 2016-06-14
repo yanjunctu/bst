@@ -17,12 +17,20 @@
         <!-- EOF CSS INCLUDE -->
     </head>
     <body style="overflow-y: auto;">
-        <!-- START PAGE CONTAINER -->
+	
+		<!-- START PAGE CONTAINER -->
         <div style="display: block;" class="page-container page-navigation-toggled rotating-item page-container-wide">
            
             <!-- PAGE CONTENT -->
             <div class="page-content">
 
+				<div class="alert hidden" id="ciBlockInfo">					
+					<div class="otto2">Oops, Integration blocked!</div>
+					<div class="otto3">by</div>
+					<div class="otto3" id="ciBlockInfo_submitter">Name</div>
+					<div class="otto3" id="ciBlockInfo_releaseTag">Release Tag</div>
+				</div>
+	
                 <!-- START X-NAVIGATION VERTICAL -->
                 <ul class="x-navigation x-navigation-horizontal x-navigation-panel">
                     <p class="published-title"><i class="fa fa-cloud fa-1x fa-fw"></i>PCR Infra CI Dashboard - 2.7</p>
@@ -31,6 +39,8 @@
 
                 <!-- PAGE CONTENT WRAPPER -->
                 <div class="page-content-wrap">
+
+                	
                     <div class="row">
                         <div class="col-md-5">
 
@@ -95,24 +105,13 @@
                                 </div>                            	
                                 <!-- START WIDGET SLIDER -->
                                 <div class="widget widget-default">
-                                    <div class="widget-item">
-                                            <img id="hero1.id" class="image avatar" src="https://converge.motorolasolutions.com/people/A4741C/avatar/"/>
-                                            <div class="badge badge-danger" id="hero1.XP">--</div>
-                                            <div class="widget-subtitle" id="hero1">-</div>
-                                    </div>
-                                	
-                                    <div class="widget-item">
-                                        <img id="hero0.id" class="avatar" src="https://converge.motorolasolutions.com/people/A4741C/avatar/"></image>
-                                        <div class="badge badge-danger" id="hero0.XP">--</div>                                        
-                                        <div class="widget-subtitle" id="hero0">-</div>
-                                    </div>
-
-                                    <div class="widget-item">
-                                            <img id="hero2.id" class="image avatar"  src="https://converge.motorolasolutions.com/people/A4741C/avatar/"/>
-                                            <div class="badge badge-danger"  id="hero2.XP">--</div>
-                                            <div class="widget-subtitle" id="hero2">-</div>
-                                    </div>
-                                </div>
+									<div class="box">
+									    <div class="list">
+									    	<div id="top_submiter_list" class="panel-body"></div>
+									    </div>
+									</div>
+                            	</div>
+                                
                                 <!-- END WIDGET SLIDER -->
                             </div>
                             
