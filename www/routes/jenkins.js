@@ -429,7 +429,7 @@ var passwordVerify=function(user,password,callback){
     ret = false
     fiber(function() {
 
-        var db = new server("127.0.0.1").db("booster");
+        var db = server.db("booster");
         var doc = db.getCollection('booster_password').find({"user": {$eq:user}}).toArray();
         var dbPassword = doc[0]["password"]
         if(password ==dbPassword ){
