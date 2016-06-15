@@ -464,7 +464,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
         ciBlockInfo.result == "SUCCESS"
     }
     else if (ciBlockInfo.result == "FAILURE"){
-        ciBlockInfo.manualControl == "FALSE"
+        ciBlockInfo.manualControl = "FALSE"
         console.log("CI is blocked")
         getJobLastSuccessBuild(job,function(err,data){
             if(err) {
@@ -518,7 +518,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     }
     else if(ciBlockInfo.result == "SUCCESS"){
         //let CI unblocked
-        ciBlockInfo.manualControl == "FALSE"
+        ciBlockInfo.manualControl = "FALSE"
         if (preResult == "FAILURE"){
             ciUnblock("TRUE","FALSE")
             console.log ("CI unblocked")
