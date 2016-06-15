@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  div(class="col-sm-12")
+    div(class="panel panel-primary")
+      div(class="panel-heading")
+        h3 <span class="glyphicon glyphicon-alert"></span> unblock
+      div(class="panel-body" style="height:420px")
+        form(id="unblock_form" role="form")
+          div(class="form-group")
+            br
+            h3 <strong>please chose the component you want to unblock :</strong>
+              ul
+                li
+                  h3 Jenkins CI system &nbsp&nbsp&nbsp       
+                    input(type="checkbox" name="jenkinsCI" value = "TRUE")
+                li
+                  h3 booster block display 
+                    input(type="checkbox" name="boosterdisplay" value = "TRUE")
+          div(class="form-group")
+            h3 <strong>password:</strong>
+              input(type="password" id="inputPassword" placeholder="password" maxlength="20")
+          br
+          button(id="submit_btn" type="submit" class="btn btn-primary btn-lg" style="width: 150px") Submit           
+          h3(id="unblock_status",class="text-primary")
+
+block userdefinejs
+  script(src="/javascripts/unBlockCI.js")     
