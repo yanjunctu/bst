@@ -7,7 +7,7 @@ var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
 var days=30;
-
+var PASSWORD = "MotorolaBooster"
 var CISTATUS = {
   "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
@@ -804,7 +804,13 @@ router.post('/doUnblockCI', function(req, res, next) {
     console.log("/doUnblockCI")
     var jenkinsci = req.body.jenkinsCI;
     var boosterdisplay = req.body.boosterdisplay;
-    status = ciUnblock(jenkinsci,boosterdisplay)
+    var password = req.body.password;
+    if (password == PASSWORD){
+        status = ciUnblock(jenkinsci,boosterdisplay)
+    }
+    else{
+        status = "Invalid password"
+    }
     res.send(status)
     return false;
 })

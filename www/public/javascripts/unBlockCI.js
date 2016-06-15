@@ -1,7 +1,4 @@
 
-var PASSWORD = "MotorolaBooster"
-
-
 var main = function()
 {  
     var $subBtn = $("#submit_btn");
@@ -14,15 +11,16 @@ var main = function()
         var password = $("#unblock_form input[id='inputPassword']").val();
         var msg = ''
  
-        console.log(JenkinsCI)
-        console.log(boosterDisplay)
-        console.log(password)
         if(JenkinsCI == undefined && boosterDisplay == undefined){
             msg="Please choose at least one component to unblock"
         }
         else {
-            if (password == PASSWORD){
-                var unblockInfo = {"jenkinsCI":JenkinsCI, "boosterdisplay":boosterDisplay};
+            if (typeof password == "undefined"){
+                
+                msg = "please input password"
+            }
+            else{
+                var unblockInfo = {"jenkinsCI":JenkinsCI, "boosterdisplay":boosterDisplay,"password":password};
                 console.log(unblockInfo)
                 try{
                     $.post("/jenkins/doUnblockCI", unblockInfo, function (result) {
@@ -37,9 +35,6 @@ var main = function()
                 {
                     msg=err.message
                 } 
-            }
-            else{
-                msg = "Invalid password"
             } 
         } 
 
