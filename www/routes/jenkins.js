@@ -475,7 +475,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
     if((ciBlockInfo.manualControl == "TRUE") && (preReleaseTag == ciBlockInfo.releaseTag)){
         
-        ciBlockInfo.result == "SUCCESS"
+        ciBlockInfo.result = "SUCCESS"
     }
     else if (ciBlockInfo.result == "FAILURE"){
         ciBlockInfo.manualControl = "FALSE"
