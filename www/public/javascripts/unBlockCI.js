@@ -15,18 +15,16 @@ var main = function()
             msg="Please choose at least one component to unblock"
         }
         else {
-            if (typeof password == "undefined"){
+            if (!password){
                 
                 msg = "please input password"
             }
             else{
                 var unblockInfo = {"jenkinsCI":JenkinsCI, "boosterdisplay":boosterDisplay,"password":password};
-                console.log(unblockInfo)
+
                 try{
-                    $.post("/jenkins/doUnblockCI", unblockInfo, function (result) {
-                        
+                    $.post("/jenkins/doUnblockCI", unblockInfo, function (result) {    
                         msg = result
-                        console.log("result:"+msg)
                         $("#unblock_status").text(msg)
 
                     })
