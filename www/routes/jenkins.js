@@ -2,7 +2,8 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var fiber = require('fibers');
-var server = require('mongo-sync').Server;
+var Server = require('mongo-sync').Server;
+var server = new Server('127.0.0.1');
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
@@ -488,7 +489,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
 
             fiber(function() {
 
-                var db = new server("127.0.0.1").db("booster");
+                var db = server.db("booster");
                 var docS = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.lastSuccessTag}}).toArray();
                 sucessId = docS[0]["build id"];
                 var docF = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.releaseTag}}).toArray();
@@ -677,7 +678,7 @@ var refreshCIHistory = function(db, doc) {
 var updateCIHistoryInfo = function() {
     // Delta update
     fiber(function() {
-        var db = new server("127.0.0.1").db("booster");
+        var db = server.db("booster");
         var triggerDocs = db.getCollection(CI_TRIGGER_JOB).find({"build id": {$gt: CILastTriggerBuildID}}).sort({"build id": 1}).toArray();
         // Maybe the same release version will be tested many times, we only care the last one, so we
         // sort the results in descending order
