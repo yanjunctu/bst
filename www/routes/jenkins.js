@@ -7,7 +7,6 @@ var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
 var days=30;
-var PASSWORD = "MotorolaBooster"
 var CISTATUS = {
   "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
@@ -424,6 +423,20 @@ function getJobFailureInfo(job,days,callback){
 	return;
 	})
 }
+var passwordVerify=function(user,password,callback){
+
+    ret = false
+    fiber(function() {
+
+        var db = new server("127.0.0.1").db("booster");
+        var doc = db.getCollection('booster_password').find({"user": {$eq:user}}).toArray();
+        var dbPassword = doc[0]["password"]
+        if(password ==dbPassword ){
+            ret = true
+        }
+        callback(ret)
+    }).run();    
+}
 var ciUnblock = function(jenkinsUnlock,boosterUnlock){
     console.log('ciUnblock')
     status = "SUCCESS";
@@ -805,14 +818,17 @@ router.post('/doUnblockCI', function(req, res, next) {
     var jenkinsci = req.body.jenkinsCI;
     var boosterdisplay = req.body.boosterdisplay;
     var password = req.body.password;
-    if (password == PASSWORD){
-        status = ciUnblock(jenkinsci,boosterdisplay)
-    }
-    else{
-        status = "Invalid password"
-    }
-    res.send(status)
-    return false;
+
+    passwordVerify("unblock",password,function(result){
+        if (result){
+            status = ciUnblock(jenkinsci,boosterdisplay)
+        }
+        else{
+            status = "Invalid password"
+        }
+        res.send(status)
+        return false;
+    })
 })
   
 
