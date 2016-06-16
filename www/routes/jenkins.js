@@ -811,8 +811,8 @@ router.get('/getCIHistory', function(req, res, next){
 
     return res.json(CIHistory);
 })
-router.get('/unblockci', function(req, res, next){
-    res.render('unBlockCI',{ title: 'unblock CI' });
+router.get('/ControlPanel', function(req, res, next){
+    res.render('controlPanel',{ title: 'unblock CI' });
 })
 router.post('/doUnblockCI', function(req, res, next) {
     console.log("/doUnblockCI")
