@@ -424,8 +424,8 @@ function getJobFailureInfo(job,days,callback){
 	})
 }
 var passwordVerify=function(user,password,callback){
-
     ret = false
+    var server = new Server('127.0.0.1');
     fiber(function() {
 
         var db = server.db("booster");
@@ -435,7 +435,8 @@ var passwordVerify=function(user,password,callback){
             ret = true
         }
         callback(ret)
-    }).run();    
+    }).run();
+    server.close();
 }
 var ciUnblock = function(jenkinsUnlock,boosterUnlock){
     console.log('ciUnblock')
