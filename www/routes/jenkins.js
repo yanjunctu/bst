@@ -2,7 +2,8 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var fiber = require('fibers');
-var server = require('mongo-sync').Server;
+var Server = require('mongo-sync').Server;
+var server = new Server('127.0.0.1');
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
@@ -21,8 +22,8 @@ var CISTATUS = {
 };  
 
 var UNLOCK_CI_JOB = "PCR-REPT-Remove_Lock_File";
-var WIN_SCRIPT_HOME = "D:\\Git_CI";
-var LOCK_FILE = "\\\\zch49view02\\SCM\\cgi-bin\\int\\amb4116\\CG566\\Git_CI\\REPT2.7.pid";
+var WIN_SCRIPT_HOME = "D:\\Git_Repo\\scm";
+var LOCK_FILE = "D:\\Git_Repo\\scm\\REPT2.7.pid";
 
 // Variables for CI history info
 const CI_TRIGGER_JOB= "PCR-REPT-0-MultiJob";
@@ -431,8 +432,10 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
     ciBlockInfo.submitter="";
     ciBlockInfo.lastSuccessTag=""
+    console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
     if (ciBlockInfo.result == "FAILURE"){
+        console.log("CI is blocked")
         getJobLastSuccessBuild(job,function(err,data){
             if(err) {
                 console.log("err in onTargertTestInfo");
@@ -442,7 +445,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
 
             fiber(function() {
 
-                var db = new server("127.0.0.1").db("booster");
+                var db = server.db("booster");
                 var docS = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.lastSuccessTag}}).toArray();
                 sucessId = docS[0]["build id"];
                 var docF = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.releaseTag}}).toArray();
@@ -486,7 +489,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     else if(ciBlockInfo.result == "SUCCESS"){
         //let CI unblocked
         if (preResult == "FAILURE"){
-	
+	        
             var paras = new Object(); 
             paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
             paras.LOCK_FILE = LOCK_FILE 
@@ -499,6 +502,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                     console.log("succeeded to build "+UNLOCK_CI_JOB);
                 }
             });
+            console.log ("CI unblocked")
         }
     }
 }
@@ -641,7 +645,7 @@ var refreshCIHistory = function(db, doc) {
 var updateCIHistoryInfo = function() {
     // Delta update
     fiber(function() {
-        var db = new server("127.0.0.1").db("booster");
+        var db = server.db("booster");
         var triggerDocs = db.getCollection(CI_TRIGGER_JOB).find({"build id": {$gt: CILastTriggerBuildID}}).sort({"build id": 1}).toArray();
         // Maybe the same release version will be tested many times, we only care the last one, so we
         // sort the results in descending order

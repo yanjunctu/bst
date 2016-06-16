@@ -132,13 +132,12 @@ if __name__ == "__main__":
     fcl_file=args.drive+FCL_FILE
     getFCL(fcl_file,args)
     
-    #if(args.mode == 'preCI'):
-    cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file)
-    #else:
+    if(args.mode == 'CI'):
+        cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file)
+    else:
         #REPT_Emerald_I02.07.01.84 convert to REPT_Emerald_I02_07_01_84
-        #args.ci_Branch = args.ci_Branch.replace('.','_')
-        #args.ci_Branch = 'LATEST'
-        #cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file,args.ci_Branch)
+        args.ci_Branch = args.ci_Branch.replace('.','_')
+        cmd_kw = 'ratlperl {}\\ltd\\tools\\booster\\klocwork\\kw_desktop_check.pl {} {} {} {}'.format(args.drive,args.drive,kw_project,fcl_file,args.ci_Branch)
     print 'start to run klocwork,this will take some time,please wait...'
     
     kw_log =args.drive+KW_LOG

@@ -90,7 +90,13 @@ if(!$baseline)
 my $build_spec = $cfg->val("$kw_project", "build_spec");
 
 my $latest_kw_out = "$kw_out_dir\\$baseline\\$build_spec";
-
+$log->debug("latest_kw_out: $latest_kw_out");
+if( !(-e $latest_kw_out))
+{
+    $baseline = $cfg->val("$kw_project", "baseline");
+    $latest_kw_out = "$kw_out_dir\\$baseline\\$build_spec";
+}
+$log->debug("latest_kw_out: $latest_kw_out");
 my $project_vob = $cfg->val("$kw_project", "project_vob");
 
 #=================================================

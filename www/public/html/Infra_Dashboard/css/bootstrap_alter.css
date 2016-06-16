@@ -1,0 +1,267 @@
+div{
+	-border: solid;
+	
+}
+.progress {
+	background-color: darkslategrey;
+}
+
+.progress_text,
+.progress_percent{
+	float: center;
+	margin-top: 5px;
+	margin-left: 5px;
+	text-shadow:  1px 1px 1px rgba(0, 0, 0, 1);	
+}
+
+.progress_percent{
+	font-size: 20px;
+	line-height: 20px;
+}
+
+.progress_text{
+	font-size: 30px;
+	line-height: 30px;
+}
+
+.otto {
+  text-shadow: 0 1px 0 #ccc,
+               0 2px 0 #c9c9c9,
+               0 3px 0 #bbb,
+               0 4px 0 #b9b9b9,
+               0 5px 0 #aaa,
+               0 6px 1px rgba(0,0,0,.1),
+               0 0 5px rgba(0,0,0,.1),
+               0 1px 3px rgba(0,0,0,.3),
+               0 3px 5px rgba(0,0,0,.2),
+               0 5px 10px rgba(0,0,0,.25),
+               0 10px 10px rgba(0,0,0,.2),
+               0 20px 20px rgba(0,0,0,.15);
+  font-size: 65px;
+}
+
+.otto3,
+.otto2 {
+	font-style:italic;	
+	color: white;
+	text-shadow: 0 1px 0 #ccc,
+	               0 2px 0 #c9c9c9,
+	               0 6px 1px rgba(0,0,0,.1),
+	               0 0 5px rgba(0,0,0,.1),
+	               0 1px 3px rgba(0,0,0,.3),
+	               0 3px 5px rgba(0,0,0,.2),
+	               0 5px 10px rgba(0,0,0,.25),
+	               0 10px 10px rgba(0,0,0,.2),
+	               0 20px 20px rgba(0,0,0,.15);	               
+}
+
+.otto3 {
+  font-size: 45px;	
+}
+
+.TITILE,
+.QUEUING,
+.RUNNING,
+.ABORTED,
+.SUCCESS,
+.FAILURE
+ {
+	font-size: 34px; 
+ 	--font-weight: bold;
+	font-style:italic;
+	text-shadow:  1px 1px 1px rgba(0, 0, 0, 1);	
+}
+
+.QUEUING
+{
+	background-color: lightskyblue;
+}
+.RUNNING
+{
+	background-color: cornflowerblue;
+}
+.ABORTED
+{
+	background-color: darkgray;
+}
+.SUCCESS
+{
+	background-color: limegreen; //#8bbc21;
+}
+.FAILURE
+ {
+	background-color: salmon;
+}
+
+
+.progress-bar-color1 {background: rgba(235, 194, 59, 1);}
+
+.table>thead>tr>th,
+.table>tbody>tr>th,
+.table>tfoot>tr>th,
+.table>thead>tr>td,
+.table>tbody>tr>td,
+.table>tfoot>tr>td {
+	font-size: 25px;
+	padding: 0px;
+	border-width: 2px;
+}
+
+.row [class^='col-xs-'],
+.row [class^='col-sm-'],
+.row [class^='col-md-'],
+.row [class^='col-lg-'] {
+  min-height: 1px;
+  padding-left: 4px;
+  padding-right: 0px;
+}
+
+
+.progress {
+	margin-bottom: 2px;
+}
+
+.avatar{
+	width: 100px;
+	height: 100px;
+	border-radius: 100px;
+	--margin-left: 10px;
+}
+
+
+	
+.badge {
+	display: inline-block;
+	min-width: 20px;
+	padding: 4px 7px;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align:top;
+	border-radius: 20px;
+	
+	position:relative;
+	margin-left: -30px;
+}
+
+
+
+/* Alert CSS --------------------------------------------------*/
+
+#alert {
+    position: relative;
+}
+
+#alert:target {
+    display: none;
+}
+.alert {
+    background-color: #c4453c;
+    background-image: -webkit-linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.05) 25%,
+                      hsla(0,0%,0%,.05) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.05) 75%,
+                      hsla(0,0%,0%,.05));
+    background-image: -moz-linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.1) 25%,
+                      hsla(0,0%,0%,.1) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.1) 75%,
+                      hsla(0,0%,0%,.1));
+    background-image: -ms-linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.1) 25%,
+                      hsla(0,0%,0%,.1) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.1) 75%,
+                      hsla(0,0%,0%,.1));
+    background-image: -o-linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.1) 25%,
+                      hsla(0,0%,0%,.1) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.1) 75%,
+                      hsla(0,0%,0%,.1));
+    background-image: linear-gradient(135deg, transparent,
+                      transparent 25%, hsla(0,0%,0%,.1) 25%,
+                      hsla(0,0%,0%,.1) 50%, transparent 50%,
+                      transparent 75%, hsla(0,0%,0%,.1) 75%,
+                      hsla(0,0%,0%,.1));
+    background-size: 40px 40px;
+/*    box-shadow: 0 5px 0 hsla(0,0%,0%,.1);*/
+    color: #f6f6f6;
+    display: block;
+    font: bold 96px/90px sans-serif;
+    height: 400px;
+    position: absolute;
+    text-align: center;
+    text-decoration: none;
+    top: -20px;
+    width: 100%;
+    z-index: 1;
+    -webkit-animation: alert 2s normal infinite;
+       -moz-animation: alert 2s normal infinite;
+        -ms-animation: alert 2s normal infinite;
+         -o-animation: alert 2s normal infinite;
+            animation: alert 2s normal infinite;
+}
+
+@-webkit-keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+@-moz-keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+@-ms-keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+@-o-keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+@keyframes alert {
+    0% { opacity: 0; }
+    50% { opacity: 1; top: 0;}
+    100% { opacity: 0;  }
+}
+/* Alert CSS --------------------------------------------------*/
+
+
+
+
+/* Marquee CSS --------------------------------------------------*/
+
+	
+:root {
+  --vh: 120px;
+  --vh1: calc(var(--vh) * -1);
+  --vh2: calc(var(--vh) * -2);
+  --vh3: calc(var(--vh) * -3);
+  --vh4: calc(var(--vh) * -4);
+}
+
+
+@keyframes slide {
+    from, to { top: 0; }
+    12.5% { top: 0; }
+    25% { top:  var(--vh1); }
+    37.5% { top: var(--vh1); }
+    50% { top: var(--vh2); }
+    62.5% { top: var(--vh2); }
+    75% { top: var(--vh3);  }
+    87.5% { top: var(--vh3);  }
+    100% { top: 0;  }   
+}
+
+.box{width:500px; height: var(--vh); margin:1em auto; position:relative; overflow:hidden;}
+.list{margin:0; padding:0; position:absolute;
+    -moz-animation: slide 20s infinite;
+    -webkit-animation: slide 20s infinite;
+}
+
+/* Marquee CSS --------------------------------------------------*/
+
