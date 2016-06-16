@@ -2,12 +2,12 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var fiber = require('fibers');
-var server = require('mongo-sync').Server;
+var Server = require('mongo-sync').Server;
+var server = new Server('127.0.0.1');
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
 var days=30;
-
 var CISTATUS = {
   "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
@@ -17,12 +17,12 @@ var CISTATUS = {
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
   "overall":{"current":{"branch":"na","subTime":"na"}},
-  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na"}
+  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na",manualControl:"FALSE"}
 };  
 
 var UNLOCK_CI_JOB = "PCR-REPT-Remove_Lock_File";
-var WIN_SCRIPT_HOME = "D:\\Git_CI";
-var LOCK_FILE = "D:\\Git_Repo\\booster\\script\\scm\\REPT2.7.pid";
+var WIN_SCRIPT_HOME = "D:\\Git_Repo\\scm";
+var LOCK_FILE = "D:\\Git_Repo\\scm\\REPT2.7.pid";
 
 // Variables for CI history info
 const CI_TRIGGER_JOB= "PCR-REPT-0-MultiJob";
@@ -424,16 +424,61 @@ function getJobFailureInfo(job,days,callback){
 	return;
 	})
 }
+var passwordVerify=function(user,password,callback){
+
+    ret = false
+    fiber(function() {
+
+        var db = server.db("booster");
+        var doc = db.getCollection('booster_password').find({"user": {$eq:user}}).toArray();
+        var dbPassword = doc[0]["password"]
+        if(password ==dbPassword ){
+            ret = true
+        }
+        callback(ret)
+    }).run();    
+}
+var ciUnblock = function(jenkinsUnlock,boosterUnlock){
+    console.log('ciUnblock')
+    status = "SUCCESS";
+    if (jenkinsUnlock == "TRUE"){
+        var paras = new Object(); 
+        paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
+        paras.LOCK_FILE = LOCK_FILE 
+	     
+        jenkins.build(UNLOCK_CI_JOB,paras,function(err) {
+            if (err) {
+                console.log("failed to build "+UNLOCK_CI_JOB+err);
+                status = "FAILURE"
+            }
+            else {
+                console.log("succeeded to build "+UNLOCK_CI_JOB);
+            }
+        });
+    }
+    if(boosterUnlock == "TRUE"){
+        CISTATUS.ciBlockInfo.manualControl = "TRUE"
+        CISTATUS.ciBlockInfo.result = "SUCCESS"
+    }
+    console.log(CISTATUS.ciBlockInfo)
+    return status
+}
 var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     
     preResult = ciBlockInfo.result;
+    preReleaseTag = ciBlockInfo.releaseTag
     ciBlockInfo.result = data.result;
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
     ciBlockInfo.submitter="";
     ciBlockInfo.lastSuccessTag=""
     console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
-    if (ciBlockInfo.result == "FAILURE"){
+    if((ciBlockInfo.manualControl == "TRUE") && (preReleaseTag == ciBlockInfo.releaseTag)){
+        
+        ciBlockInfo.result == "SUCCESS"
+    }
+    else if (ciBlockInfo.result == "FAILURE"){
+        ciBlockInfo.manualControl = "FALSE"
         console.log("CI is blocked")
         getJobLastSuccessBuild(job,function(err,data){
             if(err) {
@@ -444,7 +489,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
 
             fiber(function() {
 
-                var db = new server("127.0.0.1").db("booster");
+                var db = server.db("booster");
                 var docS = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.lastSuccessTag}}).toArray();
                 sucessId = docS[0]["build id"];
                 var docF = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.releaseTag}}).toArray();
@@ -487,20 +532,9 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     }
     else if(ciBlockInfo.result == "SUCCESS"){
         //let CI unblocked
+        ciBlockInfo.manualControl = "FALSE"
         if (preResult == "FAILURE"){
-	        
-            var paras = new Object(); 
-            paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
-            paras.LOCK_FILE = LOCK_FILE 
-	     
-            jenkins.build(UNLOCK_CI_JOB,paras,function(err) {
-                if (err) {
-                    console.log("failed to build "+UNLOCK_CI_JOB+err);
-                }
-                else {
-                    console.log("succeeded to build "+UNLOCK_CI_JOB);
-                }
-            });
+            ciUnblock("TRUE","FALSE")
             console.log ("CI unblocked")
         }
     }
@@ -562,7 +596,10 @@ var refreshCIHistory = function(db, doc) {
     var rlsInfo = db.getCollection(CI_RELEASE_JOB).findOne({"build id": doc[CI_RELEASE_JOB]});
     var precheck = db.getCollection(CI_PRECHECK_JOB).findOne({"build id": doc[CI_PRECHECK_JOB]});
     var itValue = {};
-    
+    var queuewt = doc["start time"]-doc["push time"];
+    entry["startTime"] = doc["start time"];
+    entry["pushTime"] = doc["push time"];                          
+    entry["queuewTime"]=queuewt;
     entry["buildID"] = doc["build id"];
     entry["buildResult"] = doc["build result"];
     entry["submitter"] = doc["submitter"];
@@ -644,7 +681,7 @@ var refreshCIHistory = function(db, doc) {
 var updateCIHistoryInfo = function() {
     // Delta update
     fiber(function() {
-        var db = new server("127.0.0.1").db("booster");
+        var db = server.db("booster");
         var triggerDocs = db.getCollection(CI_TRIGGER_JOB).find({"build id": {$gt: CILastTriggerBuildID}}).sort({"build id": 1}).toArray();
         // Maybe the same release version will be tested many times, we only care the last one, so we
         // sort the results in descending order
@@ -777,6 +814,26 @@ router.get('/getCIHistory', function(req, res, next){
 
     return res.json(CIHistory);
 })
+router.get('/unblockci', function(req, res, next){
+    res.render('unBlockCI',{ title: 'unblock CI' });
+})
+router.post('/doUnblockCI', function(req, res, next) {
+    console.log("/doUnblockCI")
+    var jenkinsci = req.body.jenkinsCI;
+    var boosterdisplay = req.body.boosterdisplay;
+    var password = req.body.password;
 
+    passwordVerify("unblock",password,function(result){
+        if (result){
+            status = ciUnblock(jenkinsci,boosterdisplay)
+        }
+        else{
+            status = "Invalid password"
+        }
+        res.send(status)
+        return false;
+    })
+})
+  
 
 module.exports = router;
