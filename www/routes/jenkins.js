@@ -3,7 +3,6 @@ var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var fiber = require('fibers');
 var Server = require('mongo-sync').Server;
-var server = new Server('127.0.0.1');
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
@@ -487,6 +486,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             }
             ciBlockInfo.lastSuccessTag=getParameterValue(data,"NEW_BASELINE");
 
+            var server = new Server('127.0.0.1');
             fiber(function() {
 
                 var db = server.db("booster");
@@ -507,7 +507,8 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                 });
                 ciBlockInfo.submitter=submitter;
             }).run();
-            
+
+            server.close();
         });
         // Cancle all pending CI requests
         getPendingReq("REPT2.7", function(err, data){
@@ -676,6 +677,8 @@ var refreshCIHistory = function(db, doc) {
 }
 
 var updateCIHistoryInfo = function() {
+    var server = new Server('127.0.0.1');
+
     // Delta update
     fiber(function() {
         var db = server.db("booster");
@@ -730,8 +733,11 @@ var updateCIHistoryInfo = function() {
             }
         });
     }).run();
+
+    server.close();
 }
 
+updateCIHistoryInfo();
 setInterval(function(){
     onTargertTestInfo('PCR-REPT-DAT_LATEST');
     updateLatestBuildInfo('PCR-REPT-0-MultiJob');    
@@ -805,10 +811,6 @@ router.get('/getFailInfo', function(req, res, next){
 })
 
 router.get('/getCIHistory', function(req, res, next){
-    if (0 == CIHistory.length) {
-        updateCIHistoryInfo();
-    }
-
     return res.json(CIHistory);
 })
 router.get('/unblockci', function(req, res, next){
