@@ -40,44 +40,12 @@ var SubmitList = React.createClass ({
 		get_theWholeCIduration();
 		get_testCaseNum();
 
-        $.ajax({
-            url: this.props.url,
-            dataType:'json',
-            success: function(data){
-                if (data != null) {
-
-                    CIHistory = eval(data);
-                    CIHistory.reverse();
-
-					//todo: move the code to a better place.
-					get_testCoverage();
-					get_heroes();
-					
-					//add running & queuing task
-					if(CIPendingReq.current)
-					{
-						CIPendingReq.current.buildResult = "RUNNING";
-						if(CIPendingReq.current.submitter != "na")
-						{
-							CIHistory.unshift(CIPendingReq.current);
-						}
-					}
-
-					for (var i=0;i<CIPendingReq.queue.length;i++)
-					{
-						CIPendingReq.queue[i].buildResult = "QUEUING";
-						CIHistory.unshift(CIPendingReq.queue[i]);
-					}
-					//
-										
-					this.setState({data: CIHistory.slice(0, this.props.listCount)});
-                }
-            }.bind(this),
-            error: function(xhr,status,err){
-                console.log(this.props.url,status,err.toString());
-            }.bind(this)
-        }); 
+		get_getCIHistory(this);
     },
+    
+    setData: function(d){
+    	this.setState({data: d});    	
+    },    
     
     componentDidMount: function(){
         if(this.props.url)
@@ -266,13 +234,17 @@ ReactDOM.render(
 
 var TopSubmitList = React.createClass ({
     getInitialState: function(){
-        return {data:heroes};
+        return {data:[]};
     },
     
     getHeros: function(){
-		get_heroes();
-		this.setState({data: heroes});
+		get_heroes(this);		
     },
+    
+    setData: function(d){
+    	this.setState({data: d});    	
+    },    
+        
     
     componentDidMount: function(){
 		setInterval(this.getHeros,this.props.pollInterval);
