@@ -424,7 +424,6 @@ function getJobFailureInfo(job,days,callback){
 	})
 }
 var passwordVerify=function(user,password,callback){
-    console.log('start to verify the password')
     ret = false
     var server = new Server('127.0.0.1');
     fiber(function() {
@@ -435,7 +434,6 @@ var passwordVerify=function(user,password,callback){
         if(password ==dbPassword ){
             ret = true
         }
-        console.log('finished to verify the password')
         callback(ret)
     }).run();
     server.close();
