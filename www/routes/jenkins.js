@@ -597,6 +597,11 @@ var refreshCIHistory = function(db, doc) {
     var precheck = db.getCollection(CI_PRECHECK_JOB).findOne({"build id": doc[CI_PRECHECK_JOB]});
     var itValue = {};
     
+    var queuewt = doc["start time"]-doc["push time"];
+    entry["startTime"] = doc["start time"];
+    entry["pushTime"] = doc["push time"];                          
+    entry["queuewTime"]=queuewt;
+    
     entry["buildID"] = doc["build id"];
     entry["buildResult"] = doc["build result"];
     entry["submitter"] = doc["submitter"];
