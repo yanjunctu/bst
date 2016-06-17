@@ -7,7 +7,6 @@ var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
 var days=30;
-
 var CISTATUS = {
   "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
@@ -17,7 +16,7 @@ var CISTATUS = {
   "testWin32State":{"status":"not start","duration":0},
   "preReleaseState":{"status":"not start","duration":0},
   "overall":{"current":{"branch":"na","subTime":"na"}},
-  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na"}
+  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na",manualControl:"FALSE"}
 };  
 
 var UNLOCK_CI_JOB = "PCR-REPT-Remove_Lock_File";
@@ -422,16 +421,62 @@ function getJobFailureInfo(job,days,callback){
 	return;
 	})
 }
+var passwordVerify=function(user,password,callback){
+    ret = false
+    var server = new Server('127.0.0.1');
+    fiber(function() {
+
+        var db = server.db("booster");
+        var doc = db.getCollection('booster_password').find({"user": {$eq:user}}).toArray();
+        var dbPassword = doc[0]["password"]
+        if(password ==dbPassword ){
+            ret = true
+        }
+        callback(ret)
+    }).run();
+    server.close();
+}
+var ciUnblock = function(jenkinsUnlock,boosterUnlock){
+    console.log('ciUnblock')
+    status = "SUCCESS";
+    if (jenkinsUnlock == "TRUE"){
+        var paras = new Object(); 
+        paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
+        paras.LOCK_FILE = LOCK_FILE 
+	     
+        jenkins.build(UNLOCK_CI_JOB,paras,function(err) {
+            if (err) {
+                console.log("failed to build "+UNLOCK_CI_JOB+err);
+                status = "FAILURE"
+            }
+            else {
+                console.log("succeeded to build "+UNLOCK_CI_JOB);
+            }
+        });
+    }
+    if(boosterUnlock == "TRUE"){
+        CISTATUS.ciBlockInfo.manualControl = "TRUE"
+        CISTATUS.ciBlockInfo.result = "SUCCESS"
+    }
+    console.log(CISTATUS.ciBlockInfo)
+    return status
+}
 var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     
     preResult = ciBlockInfo.result;
+    preReleaseTag = ciBlockInfo.releaseTag
     ciBlockInfo.result = data.result;
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
     ciBlockInfo.submitter="";
     ciBlockInfo.lastSuccessTag=""
     console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
-    if (ciBlockInfo.result == "FAILURE"){
+    if((ciBlockInfo.manualControl == "TRUE") && (preReleaseTag == ciBlockInfo.releaseTag)){
+        
+        ciBlockInfo.result = "SUCCESS"
+    }
+    else if (ciBlockInfo.result == "FAILURE"){
+        ciBlockInfo.manualControl = "FALSE"
         console.log("CI is blocked")
         getJobLastSuccessBuild(job,function(err,data){
             if(err) {
@@ -485,20 +530,9 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     }
     else if(ciBlockInfo.result == "SUCCESS"){
         //let CI unblocked
+        ciBlockInfo.manualControl = "FALSE"
         if (preResult == "FAILURE"){
-	        
-            var paras = new Object(); 
-            paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
-            paras.LOCK_FILE = LOCK_FILE 
-	     
-            jenkins.build(UNLOCK_CI_JOB,paras,function(err) {
-                if (err) {
-                    console.log("failed to build "+UNLOCK_CI_JOB+err);
-                }
-                else {
-                    console.log("succeeded to build "+UNLOCK_CI_JOB);
-                }
-            });
+            ciUnblock("TRUE","FALSE")
             console.log ("CI unblocked")
         }
     }
@@ -584,6 +618,10 @@ var refreshCIHistory = function(db, doc) {
     var entry = {};
     var allSubJobs = [CI_PRECHECK_JOB, CI_ON_TAEGET_BUILD_JOB, CI_OFF_TARGET_BUILD_JOB, CI_OFF_TARGET_UT_JOB, CI_OFF_TARGET_IT_PART1_JOB, CI_OFF_TARGET_IT_PART2_JOB];
     var keyMap = {};
+    var queuewt = doc["start time"]-doc["push time"];
+    entry["startTime"] = doc["start time"];
+    entry["pushTime"] = doc["push time"];                          
+    entry["queuewTime"]=queuewt;
 
     // Associate job names with keys of CI history info
     keyMap[CI_PRECHECK_JOB] = "precheck";
@@ -803,6 +841,26 @@ router.get('/getFailInfo', function(req, res, next){
 router.get('/getCIHistory', function(req, res, next){
     return res.json(CIHistory);
 })
+router.get('/ControlPanel', function(req, res, next){
+    res.render('controlPanel',{ title: 'unblock CI' });
+})
+router.post('/doUnblockCI', function(req, res, next) {
+    console.log("/doUnblockCI")
+    var jenkinsci = req.body.jenkinsCI;
+    var boosterdisplay = req.body.boosterdisplay;
+    var password = req.body.password;
 
+    passwordVerify("unblock",password,function(result){
+        if (result){
+            status = ciUnblock(jenkinsci,boosterdisplay)
+        }
+        else{
+            status = "Invalid password"
+        }
+        res.send(status)
+        return false;
+    })
+})
+  
 
 module.exports = router;
