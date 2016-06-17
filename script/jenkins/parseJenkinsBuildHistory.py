@@ -20,7 +20,9 @@ JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
 # PCR-REPT-0-MultiJob is the trigger job of a CI request, the other two jobs are here for the purpose of compatibility
 JENKINS_PCR_REPT_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald']
 JENKINS_GIT_RELEASE_JOB = 'PCR-REPT-Git-Release'
-BOOSTER_DB_NAME = 'booster'
+# This is a backup db used to save all CI data before we can migrate to db, should change it to booster
+# if we start migrating db
+BOOSTER_DB_NAME = 'boosterBak'
 CI_HISTORY_COLLECTION = 'CIHistoryInfo'
 CI_BUILD_LOG_COLLECTION = 'CIBuildLog'
 
@@ -166,12 +168,4 @@ if __name__ == "__main__":
     db = BoosterDB(dbClient, BOOSTER_DB_NAME)
 
     saveAllCI2DB(server, db)
-
-    # variables with subffix "2" are used to replace their old version, but there is more
-    # other work to do. For example, code for reading db should be modified. Delete them all
-    # when the other work is done.
-    # server2 = BoosterJenkins2(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
-    # db2 = BoosterDB2(BOOSTER_DB_NAME)
-
-    # saveAllCI2DB2(server2, db2)
 
