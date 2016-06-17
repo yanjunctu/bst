@@ -37,10 +37,11 @@ var SubmitList = React.createClass ({
     	get_ciPending();
     	get_ciStatus();
     	
-		get_theWholeCIduration();
+		//get_theWholeCIduration();
 		get_testCaseNum();
 
 		get_getCIHistory(this);
+		get_queueStatistics();
     },
     
     setData: function(d){
@@ -73,16 +74,22 @@ var SubmitList = React.createClass ({
         var name = getName(item.submitter);
         
         //format date time
-        var time = formatTime(item.rlsTime);
-
-
+        var time;		
+		if(item.startTime)
+		{
+			var t = new Date(item.startTime);
+			time = t.toLocaleTimeString("en-US", {month:  "2-digit", day: "2-digit", hour12: false, hour: '2-digit', minute:'2-digit'});
+		}
+		
+		var tag = format_release_tag(item.rlsTag);
+		
 		return (
                 <tr className={item.buildResult} key={i}>
                     <td><i className={resultIconStyles[item.buildResult]}></i></td>
                     <td className={item.buildResult}>{item.buildID}</td>
                     <td>{name}</td>
                     <td>{time}</td>
-                    <td>{item.rlsTag}</td>
+                    <td>{tag}</td>
                 </tr>
             );
         });
@@ -127,8 +134,10 @@ var SubmitList = React.createClass ({
 		
 		document.getElementById('testCoverage').textContent = testCoverage;
 		document.getElementById('testCaseNum').textContent = testCaseNum;
-		document.getElementById('theWholeCIduration').textContent = theWholeCIduration;
-
+		//document.getElementById('theWholeCIduration').textContent = theWholeCIduration;
+		document.getElementById('queueDuration').textContent = queueDuration;
+		document.getElementById('releaseDuration').textContent = releaseDuration;
+		
 		//
 		var mtag;
 		for(var m in CIStatus)
@@ -208,7 +217,7 @@ var SubmitList = React.createClass ({
                         <th></th>
                         <th>#</th>
                         <th>Submitter</th>
-                        <th>Finish</th>
+                        <th>Time</th>
                         <th>Tag</th>
                     </tr>
                     {this.renderTbody()}
@@ -224,7 +233,7 @@ var SubmitList = React.createClass ({
 var SubmitListApi;
 SubmitListApi = hostname + "/jenkins/getCIHistory";
 ReactDOM.render(
-    <SubmitList url={SubmitListApi} pollInterval={5000} listCount={15}/>,
+    <SubmitList url={SubmitListApi} pollInterval={5000} listCount={22}/>,
     document.getElementById('submit_list_tile')
 );
 
@@ -273,7 +282,7 @@ var TopSubmitList = React.createClass ({
 });
 
 ReactDOM.render(
-    <TopSubmitList url={SubmitListApi} pollInterval={5000} listCount={15}/>,
+    <TopSubmitList url={SubmitListApi} pollInterval={5000} listCount={12}/>,
     document.getElementById('top_submiter_list')
 );
 

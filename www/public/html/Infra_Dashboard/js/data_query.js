@@ -6,6 +6,8 @@ var configuration = {
 //var hostname = configuration.apihostname;
 var hostname = "http://" + location.host;
 
+//Summary data in past 7 days
+var days_in_summary = 7; 
 
 function get_getCIHistory(obj)
 {
@@ -28,17 +30,21 @@ function get_getCIHistory(obj)
 					CIPendingReq.current.buildResult = "RUNNING";
 					if(CIPendingReq.current.submitter != "na")
 					{
+						CIPendingReq.current.buildID = "+1"; //just an indicator 
+						CIPendingReq.current.startTime = parseInt(CIPendingReq.current.subTime);
 						CIHistory.unshift(CIPendingReq.current);
 					}
 				}
 
 				for (var i=0;i<CIPendingReq.queue.length;i++)
 				{
+					CIPendingReq.queue[i].buildID = "+" + (i + 2); //just an indicator 
+					CIPendingReq.queue[i].startTime = parseInt(CIPendingReq.queue[i].subTime); 
 					CIPendingReq.queue[i].buildResult = "QUEUING";
 					CIHistory.unshift(CIPendingReq.queue[i]);
 				}
-				
-				obj.setData(CIHistory.slice(0, obj.listCount));
+
+				obj.setData(CIHistory.slice(0, obj.props.listCount));
             }
         },
         error: function(xhr,status,err){
@@ -82,7 +88,7 @@ function get_ciPending()
 }
 
 
-
+/*
 var theWholeCIduration;
 function get_theWholeCIduration()
 {
@@ -100,6 +106,8 @@ function get_theWholeCIduration()
         }
     }); 	
 }
+*/
+
 
 
 var testCaseNum;
@@ -135,6 +143,57 @@ function get_testCoverage()
     }	
 }
 
+var queueDuration = 0;
+var releaseDuration = 0;
+function get_queueStatistics()
+{
+	var date = new Date();
+	date.setDate(date.getDate() - days_in_summary);
+	var miniseconds = date.getTime();
+	
+	var qt = 0;
+	var qcount = 0;
+	var rt = 0;
+	var rcount = 0;	
+	
+	for(var i = 0; i < CIHistory.length; i++)
+    {
+    	// filter IRs in the past x days
+		if(CIHistory[i].startTime > miniseconds)
+		{
+			if(CIHistory[i].queuewTime && CIHistory[i].buildResult == "SUCCESS")
+			{
+				qt += CIHistory[i].queuewTime;
+				qcount += 1;			
+
+/*				a = new Date(CIHistory[i].queuewTime);
+				console.log(CIHistory[i].buildID, 
+					a.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}), 
+					a.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(17, 22),
+					CIHistory[i].queuewTime)
+*/
+			
+			}
+
+			if(CIHistory[i].duaration && CIHistory[i].buildResult == "SUCCESS")
+			{
+				rt += CIHistory[i].duaration;
+				rcount += 1;
+				
+//				a = new Date(CIHistory[i].duaration);
+//				console.log(CIHistory[i].buildID, a.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(17, 22), CIHistory[i].duaration)
+			}
+		}
+    }
+    
+    var qd = new Date(parseInt(qt/qcount));
+    queueDuration = qd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
+
+	var rd = new Date(parseInt(rt/rcount));
+    releaseDuration = rd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
+
+}
+
 function hero(name, XP)
 {
     this.name=name;
@@ -145,9 +204,16 @@ var heroes = new Array();
 function find_heroes()
 {
   	var submitter = new Object();
+
+	var date = new Date();
+	date.setDate(date.getDate() - days_in_summary);
+	var miniseconds = date.getTime();
+
 	for(var i = 0; i < CIHistory.length; i++)
     {
-		if(CIHistory[i].buildResult == "SUCCESS")
+    	// filter the passed IR in the past x days
+		if(CIHistory[i].buildResult == "SUCCESS" &&
+			CIHistory[i].startTime > miniseconds)
 		{
 			var name = CIHistory[i].submitter.toUpperCase();
 			if(submitter[name])

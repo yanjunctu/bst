@@ -46,3 +46,18 @@ function getCoreID(name_string)
     name = name.toUpperCase();
     return name.replace(/(^\s*)|(\s*$)/g,'');
 }
+
+
+function format_release_tag(tag)
+{
+	var r;
+    if(tag)
+    {
+        var t = tag.split("_");
+        if(t.length >1)
+        {
+        	r = t[1];
+        }        
+    }
+    return r;
+}
