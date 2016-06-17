@@ -618,10 +618,6 @@ var refreshCIHistory = function(db, doc) {
     var entry = {};
     var allSubJobs = [CI_PRECHECK_JOB, CI_ON_TAEGET_BUILD_JOB, CI_OFF_TARGET_BUILD_JOB, CI_OFF_TARGET_UT_JOB, CI_OFF_TARGET_IT_PART1_JOB, CI_OFF_TARGET_IT_PART2_JOB];
     var keyMap = {};
-    var queuewt = doc["start time"]-doc["push time"];
-    entry["startTime"] = doc["start time"];
-    entry["pushTime"] = doc["push time"];                          
-    entry["queuewTime"]=queuewt;
 
     // Associate job names with keys of CI history info
     keyMap[CI_PRECHECK_JOB] = "precheck";
@@ -634,7 +630,10 @@ var refreshCIHistory = function(db, doc) {
     
     entry["buildID"] = doc["number"];
     entry["buildResult"] = doc["result"];
+    entry["startTime"] = doc["timestamp"];
     entry["submitter"] = findParamValue(doc, "SUBMITTER");
+    entry["pushTime"] = findParamValue(doc, "PUSH_TIME");
+    entry["queuewTime"] = entry["startTime"] - entry["pushTime"];
 
     // Build results of all sub-builds
     for (var i = 0; i < allSubJobs.length; ++i) {
