@@ -133,8 +133,9 @@ def saveAllCI2DB(server, db):
                         if match:
                             info = match.group(0).split()
                             buildInfo['coverage'] = info[len(info)-1]
-                # Save its log if the build failed by the build itself not its sub-builds
-                if buildInfo['result'] != 'SUCCESS' and 'subBuilds' not in buildInfo:
+                # Save its log if the build failed by itself not its sub-builds
+                if (buildInfo['result'] != 'SUCCESS'
+                    and ('subBuilds' not in buildInfo or not buildInfo['subBuilds'])):
                     buildLog = server.getConsoleOutput(job, buildInfo['number'])
                     if buildLog:
                         buildInfo['buildLogID'] = db.writeBlock(buildLog)
