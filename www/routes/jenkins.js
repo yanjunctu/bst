@@ -3,7 +3,6 @@ var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var fiber = require('fibers');
 var Server = require('mongo-sync').Server;
-var server = new Server('127.0.0.1');
 var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
@@ -425,8 +424,8 @@ function getJobFailureInfo(job,days,callback){
 	})
 }
 var passwordVerify=function(user,password,callback){
-
     ret = false
+    var server = new Server('127.0.0.1');
     fiber(function() {
 
         var db = server.db("booster");
@@ -436,7 +435,8 @@ var passwordVerify=function(user,password,callback){
             ret = true
         }
         callback(ret)
-    }).run();    
+    }).run();
+    server.close();
 }
 var ciUnblock = function(jenkinsUnlock,boosterUnlock){
     console.log('ciUnblock')
@@ -475,7 +475,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
     if((ciBlockInfo.manualControl == "TRUE") && (preReleaseTag == ciBlockInfo.releaseTag)){
         
-        ciBlockInfo.result == "SUCCESS"
+        ciBlockInfo.result = "SUCCESS"
     }
     else if (ciBlockInfo.result == "FAILURE"){
         ciBlockInfo.manualControl = "FALSE"
@@ -487,6 +487,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             }
             ciBlockInfo.lastSuccessTag=getParameterValue(data,"NEW_BASELINE");
 
+            var server = new Server('127.0.0.1');
             fiber(function() {
 
                 var db = server.db("booster");
@@ -507,7 +508,8 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                 });
                 ciBlockInfo.submitter=submitter;
             }).run();
-            
+
+            server.close();
         });
         // Cancle all pending CI requests
         getPendingReq("REPT2.7", function(err, data){
@@ -596,10 +598,13 @@ var refreshCIHistory = function(db, doc) {
     var rlsInfo = db.getCollection(CI_RELEASE_JOB).findOne({"build id": doc[CI_RELEASE_JOB]});
     var precheck = db.getCollection(CI_PRECHECK_JOB).findOne({"build id": doc[CI_PRECHECK_JOB]});
     var itValue = {};
+    
     var queuewt = doc["start time"]-doc["push time"];
     entry["startTime"] = doc["start time"];
     entry["pushTime"] = doc["push time"];                          
     entry["queuewTime"]=queuewt;
+    entry["duaration"] = doc["build duration"];
+    
     entry["buildID"] = doc["build id"];
     entry["buildResult"] = doc["build result"];
     entry["submitter"] = doc["submitter"];
@@ -679,6 +684,8 @@ var refreshCIHistory = function(db, doc) {
 }
 
 var updateCIHistoryInfo = function() {
+    var server = new Server('127.0.0.1');
+
     // Delta update
     fiber(function() {
         var db = server.db("booster");
@@ -733,8 +740,11 @@ var updateCIHistoryInfo = function() {
             }
         });
     }).run();
+
+    server.close();
 }
 
+updateCIHistoryInfo();
 setInterval(function(){
     onTargertTestInfo('PCR-REPT-DAT_LATEST');
     updateLatestBuildInfo('PCR-REPT-0-MultiJob');    
@@ -808,14 +818,10 @@ router.get('/getFailInfo', function(req, res, next){
 })
 
 router.get('/getCIHistory', function(req, res, next){
-    if (0 == CIHistory.length) {
-        updateCIHistoryInfo();
-    }
-
     return res.json(CIHistory);
 })
-router.get('/unblockci', function(req, res, next){
-    res.render('unBlockCI',{ title: 'unblock CI' });
+router.get('/ControlPanel', function(req, res, next){
+    res.render('controlPanel',{ title: 'unblock CI' });
 })
 router.post('/doUnblockCI', function(req, res, next) {
     console.log("/doUnblockCI")
