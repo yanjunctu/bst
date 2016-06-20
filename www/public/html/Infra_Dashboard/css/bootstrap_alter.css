@@ -1,6 +1,5 @@
 div{
 	-border: solid;
-	
 }
 .progress {
 	background-color: darkslategrey;
@@ -58,10 +57,6 @@ div{
 
 .otto3 {
   font-size: 45px;	
-}
-
-.otto4 {
-  font-size: 55px;	
 }
 
 
@@ -126,33 +121,6 @@ div{
 .progress {
 	margin-bottom: 2px;
 }
-
-.avatar{
-	width: 100px;
-	height: 100px;
-	border-radius: 100px;
-	--margin-left: 10px;
-}
-
-
-	
-.badge {
-	display: inline-block;
-	min-width: 20px;
-	padding: 4px 7px;
-	font-size: 20px;
-	font-weight: 700;
-	line-height: 1;
-	text-align: center;
-	white-space: nowrap;
-	vertical-align:top;
-	border-radius: 20px;
-	
-	position:relative;
-	margin-left: -30px;
-}
-
-
 
 /* Alert CSS --------------------------------------------------*/
 
@@ -239,9 +207,32 @@ div{
 
 
 
-/* Marquee CSS --------------------------------------------------*/
+
+.avatar{
+	width: 100px;
+	height: 100px;
+	border-radius: 100px;
+}
+
 
 	
+.badge {
+	display: inline-block;
+	min-width: 20px;
+	padding: 4px 7px;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align:top;
+	border-radius: 20px;
+	
+	position:relative;
+	margin-left: -30px;
+}
+
+/* Marquee CSS --------------------------------------------------*/
 :root {
   --vh: 122px;
   --vh1: calc(var(--vh) * -1);
@@ -263,7 +254,7 @@ div{
     100% { top: 0;  }   
 }
 
-.box{width:500px; height: var(--vh); margin:1em auto; position:relative; overflow:hidden;}
+.box{width:400px; height: var(--vh); margin:1em auto; position:relative; overflow:hidden;}
 .list{margin:0; padding:0; position:absolute;
     -moz-animation: slide 20s infinite;
     -webkit-animation: slide 20s infinite;
