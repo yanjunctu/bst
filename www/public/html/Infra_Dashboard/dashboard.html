@@ -42,9 +42,132 @@
 
                 	
                     <div class="row">
+                    	<div class="col-md-7">
+
+
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <div class="panel-title-box">
+                                        <h3><i class="fa fa-cog fa-spin fa-1x fa-fw"></i>Realtime Status</h3>                                        
+                                    </div>
+                                </div>
+                
+	                            <div class="col-md-2">
+									<div class="progress progress-striped active" style="height: 202px">
+										<div id="preCheckState" class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
+											<div class="progress_text otto2">Verify</div>
+											<div class="progress_percent otto2">0%</div>
+										</div>
+									</div>
+	                            </div>
+	
+	                            <div class="col-md-8">
+		                            <div class="col-md-12">
+										<div class="progress progress-striped active" style="height: 100px">
+											<div id="buildFwState" class="progress-bar progress-bar-color1" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
+												<div class="progress_text otto2">FW Build</div>
+												<div class="progress_percent otto2">0%</div>
+											</div>
+										</div>
+		                            </div>
+		                            <div class="col-md-3">
+										<div class="progress progress-striped active" style="height: 100px">
+											<div id="buildWin32State" class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
+												<div class="progress_text otto2">Win32 Build</div>
+												<div class="progress_percent otto2">0%</div>
+											</div>
+										</div>
+		                            </div>
+									<div class="col-md-9">
+										<div class="progress progress-striped active" style="height: 100px">
+											<div id="testWin32State" class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
+												<div class="progress_text otto2">Win32 Test</div>
+												<div class="progress_percent otto2">0%</div>
+											</div>
+										</div>
+									</div>
+
+	
+	                            </div>
+								<div class="col-md-2">
+									<div class="progress progress-striped active" style="height: 202px">
+										<div id="preReleaseState" class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
+											<div class="progress_text otto2">Release</div>
+											<div class="progress_percent otto2">0%</div>											
+										</div>
+									</div>
+								</div>                       
+	                        </div>
+	                        
+	                        
+							<div class="panel panel-default">
+                                <div id="submit_list_tile" class="panel-body"></div>
+                            </div>
+
+                        </div>
+                        
+                        
                         <div class="col-md-5">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <div class="panel-title-box">
+                                        <h3>Time Consumption</h3>
+                                    </div>
+                                </div>
+								<div class="widget widget-default">
+									<div class="widget-item-left">
+										<div class="widget-super-int otto" id="releaseDuration">--</div>
+                                        <div class="widget-subtitle">Release</div>
+									</div>
+									<div class="widget-item-right">
+										<div class="widget-super-int otto" id="queueDuration">--</div>
+                                        <div class="widget-subtitle">Queue</div>
+									</div>									
+								</div>
+                            </div>
+                            
+                            
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <div class="panel-title-box">
+                                        <h3>Test Cases</h3>
+                                    </div>
+                                </div>
+								<div class="widget widget-default" id="average_failure_rate_tile">
+									<div>
+										<div class="widget-item-left">
+											<div class="widget-defined-int otto4">
+												<span id="testCaseNum">--</span>
+											</div>
+											<div class="widget-subtitle">Cases</div>
+										</div>
+										<div class="widget-item-right">
+											<div class="widget-defined-int otto4">
+												<span id="testCoverage">--</span>
+											</div>
+											<div class="widget-subtitle">Coverage</div>
+										</div>
+									</div>
+								</div>
+                            </div>
+                            
 
-
+                           <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <div class="panel-title-box">
+                                        <h3>Active Submitters</h3>
+                                    </div>
+                                </div>                            	
+                                <div class="widget widget-default">
+									<div class="box">
+									    <div class="list">
+									    	<div id="top_submiter_list" class="panel-body"></div>
+									    </div>
+									</div>
+                            	</div>
+                            </div>
+                            
+                            
                             <div class="panel panel-default">
                                 <div class="panel-heading">
                                     <div class="panel-title-box">
@@ -72,66 +195,24 @@
                             </div>
 
 
-                            
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <div class="panel-title-box">
-                                        <h3>Test Cases</h3>
-                                    </div>
-                                </div>
-								<div class="widget widget-default" id="average_failure_rate_tile">
-									<div>
-										<div class="widget-item-left">
-											<div class="widget-defined-int">
-												<span id="testCaseNum" class="otto">--</span>
-											</div>
-											<div class="widget-subtitle">Cases</div>
-										</div>
-										<div class="widget-item-right">
-											<div class="widget-defined-int">
-												<span id="testCoverage" class="otto">--</span>
-											</div>
-											<div class="widget-subtitle">Coverage</div>
-										</div>
-									</div>
-								</div>
-                            </div>
-                            
-                           <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <div class="panel-title-box">
-                                        <h3>Top Submitters</h3>
-                                    </div>
-                                </div>                            	
-                                <!-- START WIDGET SLIDER -->
-                                <div class="widget widget-default">
-									<div class="box">
-									    <div class="list">
-									    	<div id="top_submiter_list" class="panel-body"></div>
-									    </div>
-									</div>
-                            	</div>
-                                
-                                <!-- END WIDGET SLIDER -->
-                            </div>
-                            
+
                             <div class="panel panel-default">
                                 <div class="panel-heading">
                                     <div class="panel-title-box">
                                         <h3>Failure Rate</h3>
                                     </div>
                                 </div>
-								<div class="widget widget-default" id="average_failure_rate_tile">
+								<div class="widget widget-default">
 									<div>
 										<div class="widget-item-left">
-											<div class="widget-defined-int">
-												<span id="overall_failure_rate" class="otto">--</span>
+											<div class="widget-defined-int otto">
+												<span id="overall_failure_rate">--</span>
 											</div>
 											<div class="widget-subtitle">Overall</div>
 										</div>
 										<div class="widget-item-right">
-											<div class="widget-defined-int">
-												<span id="last30_failure_rate" class="otto">--</span>
+											<div class="widget-defined-int otto">
+												<span id="last30_failure_rate">--</span>
 											</div>
 											<div class="widget-subtitle">Latest 30</div>
 										</div>
@@ -139,85 +220,10 @@
 								</div>
                             </div>
                             
-
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <div class="panel-title-box">
-                                        <h3>Time Consumption</h3>
-                                    </div>
-                                </div>
-								<div class="widget widget-default" id="average_failure_rate_tile">
-                                    <div class="widget-item">
-                                        <div class="widget-super-int otto" id="theWholeCIduration">--</div>
-                                        <div class="widget-subtitle">mins</div>
-                                    </div>
-								</div>
-                            </div>                            
+                            
                         </div>
 
-                        <div class="col-md-7">
-
-
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <div class="panel-title-box">
-                                        <h3><i class="fa fa-cog fa-spin fa-1x fa-fw"></i>Realtime Status</h3>                                        
-                                    </div>
-                                </div>
-                
-	                            <div class="col-md-3">
-									<div class="progress progress-striped active" style="height: 202px">
-										<div id="preCheckState" class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
-											<div class="progress_text otto2">Verify</div>
-											<div class="progress_percent otto2">0%</div>
-										</div>
-									</div>
-	                            </div>
-	
-	                            <div class="col-md-6">
-		                            <div class="col-md-12">
-										<div class="progress progress-striped active" style="height: 100px">
-											<div id="buildFwState" class="progress-bar progress-bar-color1" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
-												<div class="progress_text otto2">FW Build</div>
-												<div class="progress_percent otto2">0%</div>
-											</div>
-										</div>
-		                            </div>
-		                            <div class="col-md-6">
-										<div class="progress progress-striped active" style="height: 100px">
-											<div id="buildWin32State" class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
-												<div class="progress_text otto2">Win32 Build</div>
-												<div class="progress_percent otto2">0%</div>
-											</div>
-										</div>
-		                            </div>
-									<div class="col-md-6">
-										<div class="progress progress-striped active" style="height: 100px">
-											<div id="testWin32State" class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
-												<div class="progress_text otto2">Win32 Test</div>
-												<div class="progress_percent otto2">0%</div>
-											</div>
-										</div>
-									</div>
-
-	
-	                            </div>
-								<div class="col-md-3">
-									<div class="progress progress-striped active" style="height: 202px">
-										<div id="preReleaseState" class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
-											<div class="progress_text otto2">Release</div>
-											<div class="progress_percent otto2">0%</div>											
-										</div>
-									</div>
-								</div>                       
-	                        </div>
-	                        
-	                        
-							<div class="panel panel-default">
-                                <div id="submit_list_tile" class="panel-body"></div>
-                            </div>
-
-                        </div>
+                        
                     </div>
                     <div class="block-full-width">
                     </div>
@@ -236,6 +242,8 @@
         <script type="text/javascript" src="js/react.js"></script>
         <script type="text/javascript" src="js/react-dom.js"></script>
         <script type="text/javascript" src="js/browser.js"></script>
+        <script type="text/javascript" src="js/data_function.js"></script>
+        <script type="text/javascript" src="js/data_sample.js"></script>
         <script type="text/javascript" src="js/data_query.js"></script>
         <script type="text/babel" src="js/data_render.jsx"></script>
         <!-- END PLUGINS -->
