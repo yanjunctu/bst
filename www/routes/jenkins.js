@@ -488,11 +488,12 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             var server = new Server('127.0.0.1');
             fiber(function() {
                 var db = server.db("booster");
+                var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
                 var objS = {"name": "NEW_BASELINE", "value": ciBlockInfo.lastSuccessTag};
                 var objF = {"name": "NEW_BASELINE", "value": ciBlockInfo.releaseTag};
-                var docS = db.getCollection('PCR-REPT-Git-Release').findOne({"actions.parameters": {$in: [objS]}});
-                var docF = db.getCollection('PCR-REPT-Git-Release').findOne({"actions.parameters": {$in: [objF]}});
-                var docs = db.getCollection('PCR-REPT-Git-Release').find({"number": {$gt: docS["number"],$lte: docF["number"]}}).toArray();
+                var docS = rlsColl.findOne({"actions.parameters": {$in: [objS]}});
+                var docF = rlsColl.findOne({"actions.parameters": {$in: [objF]}});
+                var docs = rlsColl.find({"number": {$gt: docS["number"],$lte: docF["number"]}}).toArray();
 
                 var submitter = ""
                 docs.forEach(function(doc) {
@@ -614,6 +615,10 @@ var findSubBuildInfo = function(parentBuild, subBuildName) {
     return;
 }
 
+var getJobCollName = function(jobName) {
+    return 'CI-' + jobName;
+}
+
 var refreshCIHistory = function(db, doc) {
     var entry = {};
     var allSubJobs = [CI_PRECHECK_JOB, CI_ON_TAEGET_BUILD_JOB, CI_OFF_TARGET_BUILD_JOB, CI_OFF_TARGET_UT_JOB, CI_OFF_TARGET_IT_PART1_JOB, CI_OFF_TARGET_IT_PART2_JOB];
@@ -659,7 +664,7 @@ var refreshCIHistory = function(db, doc) {
     var subBuildCov = findSubBuildInfo(doc, CI_COVERAGE_CHECK_JOB);
     if (subBuildCov) {
         var number = subBuildCov["buildNumber"];
-        var covInfo = db.getCollection(CI_COVERAGE_CHECK_JOB).findOne({"number": number});
+        var covInfo = db.getCollection(getJobCollName(CI_COVERAGE_CHECK_JOB)).findOne({"number": number});
 
         if (covInfo) {
             entry["coverage"] = covInfo["coverage"];
@@ -672,12 +677,12 @@ var refreshCIHistory = function(db, doc) {
 
         if (subBuildRls) {
             var number = subBuildRls["buildNumber"];
-            var rlsInfo = db.getCollection(CI_RELEASE_JOB).findOne({"number": number});
+            var rlsInfo = db.getCollection(getJobCollName(CI_RELEASE_JOB)).findOne({"number": number});
     
             if (rlsInfo) {
                 var buildWarnings = 0, klocworkWarnings = 0;
                 var rlsTag = findParamValue(rlsInfo, "NEW_BASELINE");
-                var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
+                var warnings = db.getCollection(getJobCollName(CI_WARNING_COLL_NAME)).find({"releaseTag": rlsTag}).toArray();
                 var rlsDate = new Date(doc["timestamp"] + doc["duration"]);
     
                 entry["rlsTag"] = rlsTag;
@@ -703,12 +708,12 @@ var updateCIHistoryInfo = function() {
     // Delta update
     fiber(function() {
         var db = server.db("booster");
-        var triggerDocs = db.getCollection(CI_TRIGGER_JOB).find({"number": {$gt: CILastTriggerBuildID}}).sort({"number": 1}).toArray();
+        var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB)).find({"number": {$gt: CILastTriggerBuildID}}).sort({"number": 1}).toArray();
         // Maybe the same release version will be tested many times, we only care the last one, so we
         // sort the results in descending order
-        var sanityDocs = db.getCollection(CI_SANITY_TEST_JOB).find({"number": {$gt: CILastSanityBuildID}}).sort({"number": -1}).toArray();
-        var extRegressionDocs = db.getCollection(CI_EXT_REGRESSION_JOB).find({"number": {$gt: CILastExtRegressionBuildID}}).sort({"number": -1}).toArray();
-        var memoryLeakDocs = db.getCollection(CI_MEMORY_LEAK_JOB).find({"number": {$gt: CIMemoryLeakBuildID}}).sort({"number": -1}).toArray();
+        var sanityDocs = db.getCollection(getJobCollName(CI_SANITY_TEST_JOB)).find({"number": {$gt: CILastSanityBuildID}}).sort({"number": -1}).toArray();
+        var extRegressionDocs = db.getCollection(getJobCollName(CI_EXT_REGRESSION_JOB)).find({"number": {$gt: CILastExtRegressionBuildID}}).sort({"number": -1}).toArray();
+        var memoryLeakDocs = db.getCollection(getJobCollName(CI_MEMORY_LEAK_JOB)).find({"number": {$gt: CIMemoryLeakBuildID}}).sort({"number": -1}).toArray();
          
         triggerDocs.forEach(function(doc) {
             refreshCIHistory(db, doc);

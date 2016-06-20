@@ -19,10 +19,7 @@ JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'P
 JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
 # PCR-REPT-0-MultiJob is the trigger job of a CI request, the other two jobs are here for the purpose of compatibility
 JENKINS_PCR_REPT_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald']
-JENKINS_GIT_RELEASE_JOB = 'PCR-REPT-Git-Release'
-# This is a backup db used to save all CI data before we can migrate to db, should change it to booster
-# if we start migrating db
-BOOSTER_DB_NAME = 'boosterBak'
+BOOSTER_DB_NAME = 'booster'
 CI_HISTORY_COLLECTION = 'CIHistoryInfo'
 CI_BUILD_LOG_COLLECTION = 'CIBuildLog'
 
@@ -83,16 +80,16 @@ class BoosterDB():
         self.db = dbClient[dbName]
         self.fs = gridfs.GridFS(self.db)
 
-    def insertOne(self, jobName, data):
-        (self.db)[jobName].insert_one(data)
+    def insertOne(self, collName, data):
+        (self.db)[collName].insert_one(data)
 
         return True
 
-    def getLastBuildInfo(self, jobName):
-        if jobName not in self.db.collection_names() or 0 == (self.db)[jobName].count:
+    def getLastBuildInfo(self, collName):
+        if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
             return None
 
-        return (self.db)[jobName].find_one(sort=[('number', -1)])
+        return (self.db)[collName].find_one(sort=[('number', -1)])
 
     def writeBlock(self, blockData, collection=None): 
         fs = gridfs.GridFS(self.db, collection) if collection else self.fs
@@ -109,6 +106,7 @@ def saveAllCI2DB(server, db):
     while i < len(allJobs):
         cnt = 0
         job = allJobs[i]
+        jobColl = 'CI-' + job
         jobInfo = server.getJobInfo(job)
        
         print 'Process job {}'.format(job)
@@ -117,7 +115,7 @@ def saveAllCI2DB(server, db):
             print '\tDone, 0 new records are inserted into DB.'
             continue
         # Find the new builds of the job and save them to DB
-        lastBuildSaved = db.getLastBuildInfo(job)
+        lastBuildSaved = db.getLastBuildInfo(jobColl)
         firstBuildNum = jobInfo['firstBuild']['number'] if 'firstBuild' in jobInfo else 0
         lastBuildNum = jobInfo['lastCompletedBuild']['number'] if 'lastCompletedBuild' in jobInfo else 0
         start = (lastBuildSaved['number']+1) if lastBuildSaved else firstBuildNum
@@ -142,7 +140,7 @@ def saveAllCI2DB(server, db):
                     if buildLog:
                         buildInfo['buildLogID'] = db.writeBlock(buildLog)
 
-                db.insertOne(job, buildInfo)
+                db.insertOne(jobColl, buildInfo)
                 cnt += 1
 
             start += 1
