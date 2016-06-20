@@ -161,27 +161,18 @@ function get_queueStatistics()
     	// filter IRs in the past x days
 		if(CIHistory[i].startTime > miniseconds)
 		{
-			if(CIHistory[i].queuewTime && CIHistory[i].buildResult == "SUCCESS")
+			if(CIHistory[i].queuewTime && CIHistory[i].buildResult == "SUCCESS"
+			&& CIHistory[i].queuewTime < 3600000 * 8) //filter out queue time > 8 hours as outlier
 			{
 				qt += CIHistory[i].queuewTime;
-				qcount += 1;			
-
-/*				a = new Date(CIHistory[i].queuewTime);
-				console.log(CIHistory[i].buildID, 
-					a.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}), 
-					a.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(17, 22),
-					CIHistory[i].queuewTime)
-*/
-			
+				qcount += 1;
+				//console.log(i, CIHistory[i].queuewTime,  CIHistory[i].queuewTime/3600000, qt/qcount/3600000);
 			}
 
 			if(CIHistory[i].duaration && CIHistory[i].buildResult == "SUCCESS")
 			{
 				rt += CIHistory[i].duaration;
 				rcount += 1;
-				
-//				a = new Date(CIHistory[i].duaration);
-//				console.log(CIHistory[i].buildID, a.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(17, 22), CIHistory[i].duaration)
 			}
 		}
     }
@@ -215,7 +206,7 @@ function find_heroes()
 		if(CIHistory[i].buildResult == "SUCCESS" &&
 			CIHistory[i].startTime > miniseconds)
 		{
-			var name = CIHistory[i].submitter.toUpperCase();
+			var name = CIHistory[i].submitter;//.toUpperCase();
 			if(submitter[name])
 			{
 				submitter[name] += 1;	

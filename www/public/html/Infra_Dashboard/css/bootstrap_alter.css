@@ -243,7 +243,7 @@ div{
 
 	
 :root {
-  --vh: 120px;
+  --vh: 122px;
   --vh1: calc(var(--vh) * -1);
   --vh2: calc(var(--vh) * -2);
   --vh3: calc(var(--vh) * -3);

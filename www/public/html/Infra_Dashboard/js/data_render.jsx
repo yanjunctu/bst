@@ -137,7 +137,7 @@ var SubmitList = React.createClass ({
 		//document.getElementById('theWholeCIduration').textContent = theWholeCIduration;
 		document.getElementById('queueDuration').textContent = queueDuration;
 		document.getElementById('releaseDuration').textContent = releaseDuration;
-		
+		//$("#releaseDuration").html(releaseDuration);
 		//
 		var mtag;
 		for(var m in CIStatus)
