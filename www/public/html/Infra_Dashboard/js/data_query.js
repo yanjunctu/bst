@@ -177,12 +177,20 @@ function get_queueStatistics()
 		}
     }
     
-    var qd = new Date(parseInt(qt/qcount));
-    queueDuration = qd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
+    releaseDuration = 0;
+    queueDuration = 0;
+    if(0 != rcount)
+    {
+		var rd = new Date(parseInt(rt/rcount));
+	    releaseDuration = rd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
+    }
 
-	var rd = new Date(parseInt(rt/rcount));
-    releaseDuration = rd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
-
+    if(0 != qcount)
+    {
+	    var qd = new Date(parseInt(qt/qcount));
+	    queueDuration = qd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
+	}
+	//console.log(rt, rcount, releaseDuration, qt, qcount, queueDuration);
 }
 
 function hero(name, XP)

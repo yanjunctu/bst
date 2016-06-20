@@ -19,8 +19,8 @@ div{
 }
 
 .progress_text{
-	font-size: 30px;
-	line-height: 30px;
+	font-size: 25px;
+	line-height: 25px;
 }
 
 .otto4,
@@ -54,6 +54,7 @@ div{
 	               0 10px 10px rgba(0,0,0,.2),
 	               0 20px 20px rgba(0,0,0,.15);	               
 }
+
 
 .otto3 {
   font-size: 45px;	
@@ -204,7 +205,9 @@ div{
 }
 /* Alert CSS --------------------------------------------------*/
 
-
+.hero_box{
+	margin-bottom: 10px;	
+}
 
 
 
@@ -234,7 +237,7 @@ div{
 
 /* Marquee CSS --------------------------------------------------*/
 :root {
-  --vh: 122px;
+  --vh: 130px;
   --vh1: calc(var(--vh) * -1);
   --vh2: calc(var(--vh) * -2);
   --vh3: calc(var(--vh) * -3);
