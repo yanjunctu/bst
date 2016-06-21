@@ -37,47 +37,16 @@ var SubmitList = React.createClass ({
     	get_ciPending();
     	get_ciStatus();
     	
-		get_theWholeCIduration();
+		//get_theWholeCIduration();
 		get_testCaseNum();
 
-        $.ajax({
-            url: this.props.url,
-            dataType:'json',
-            success: function(data){
-                if (data != null) {
-
-                    CIHistory = eval(data);
-                    CIHistory.reverse();
-
-					//todo: move the code to a better place.
-					get_testCoverage();
-					get_heroes();
-					
-					//add running & queuing task
-					if(CIPendingReq.current)
-					{
-						CIPendingReq.current.buildResult = "RUNNING";
-						if(CIPendingReq.current.submitter != "na")
-						{
-							CIHistory.unshift(CIPendingReq.current);
-						}
-					}
-
-					for (var i=0;i<CIPendingReq.queue.length;i++)
-					{
-						CIPendingReq.queue[i].buildResult = "QUEUING";
-						CIHistory.unshift(CIPendingReq.queue[i]);
-					}
-					//
-										
-					this.setState({data: CIHistory.slice(0, this.props.listCount)});
-                }
-            }.bind(this),
-            error: function(xhr,status,err){
-                console.log(this.props.url,status,err.toString());
-            }.bind(this)
-        }); 
+		get_getCIHistory(this);
+		get_queueStatistics();
     },
+    
+    setData: function(d){
+    	this.setState({data: d});    	
+    },    
     
     componentDidMount: function(){
         if(this.props.url)
@@ -105,16 +74,22 @@ var SubmitList = React.createClass ({
         var name = getName(item.submitter);
         
         //format date time
-        var time = formatTime(item.rlsTime);
-
-
+        var time;		
+		if(item.startTime)
+		{
+			var t = new Date(item.startTime);
+			time = t.toLocaleTimeString("en-US", {month:  "2-digit", day: "2-digit", hour12: false, hour: '2-digit', minute:'2-digit'});
+		}
+		
+		var tag = format_release_tag(item.rlsTag);
+		
 		return (
                 <tr className={item.buildResult} key={i}>
                     <td><i className={resultIconStyles[item.buildResult]}></i></td>
                     <td className={item.buildResult}>{item.buildID}</td>
                     <td>{name}</td>
                     <td>{time}</td>
-                    <td>{item.rlsTag}</td>
+                    <td>{tag}</td>
                 </tr>
             );
         });
@@ -150,17 +125,21 @@ var SubmitList = React.createClass ({
             }
        });
        
-		document.getElementById('submit_aborted').textContent = aborted;
-		document.getElementById('submit_completed').textContent = completed;
-		document.getElementById('submit_failed').textContent = failed;
-
-		document.getElementById('overall_failure_rate').textContent = parseInt(failed/(failed + completed) * 100) + "%";
-		document.getElementById('last30_failure_rate').textContent = parseInt(failed_last30/(failed_last30 + completed_last30) * 100) + "%";
+		change_content('#submit_aborted', aborted);
+		change_content('#submit_completed', completed);
+		change_content('#submit_failed', failed);
 		
-		document.getElementById('testCoverage').textContent = testCoverage;
-		document.getElementById('testCaseNum').textContent = testCaseNum;
-		document.getElementById('theWholeCIduration').textContent = theWholeCIduration;
+		change_content('#overall_failure_rate', parseInt(failed/(failed + completed) * 100) + "%");
+		change_content('#last30_failure_rate', parseInt(failed_last30/(failed_last30 + completed_last30) * 100) + "%");
 
+		change_content("#testCoverage", testCoverage);
+		change_content("#testCaseNum", testCaseNum);
+
+		//document.getElementById('theWholeCIduration').textContent = theWholeCIduration;
+
+		change_content("#queueDuration", queueDuration);
+		change_content("#releaseDuration", releaseDuration);
+		
 		//
 		var mtag;
 		for(var m in CIStatus)
@@ -201,7 +180,8 @@ var SubmitList = React.createClass ({
 			{
 				//simulate progress update before get real progress from server
 				ciProgresses[m] += ciProgresses[m] < ciEstimation[m] * 0.95 ? 1 : 0;
-				p = parseInt(ciProgresses[m]/ciEstimation[m] * 100);
+				p = (ciProgresses[m]/ciEstimation[m] * 100).toFixed(1);
+				
 			}
 			else if(CIStatus[m].status == "not start")
 			{
@@ -240,7 +220,7 @@ var SubmitList = React.createClass ({
                         <th></th>
                         <th>#</th>
                         <th>Submitter</th>
-                        <th>Finish</th>
+                        <th>Time</th>
                         <th>Tag</th>
                     </tr>
                     {this.renderTbody()}
@@ -256,7 +236,7 @@ var SubmitList = React.createClass ({
 var SubmitListApi;
 SubmitListApi = hostname + "/jenkins/getCIHistory";
 ReactDOM.render(
-    <SubmitList url={SubmitListApi} pollInterval={5000} listCount={15}/>,
+    <SubmitList url={SubmitListApi} pollInterval={5000} listCount={22}/>,
     document.getElementById('submit_list_tile')
 );
 
@@ -266,13 +246,17 @@ ReactDOM.render(
 
 var TopSubmitList = React.createClass ({
     getInitialState: function(){
-        return {data:heroes};
+        return {data:[]};
     },
     
     getHeros: function(){
-		get_heroes();
-		this.setState({data: heroes});
+		get_heroes(this);		
     },
+    
+    setData: function(d){
+    	this.setState({data: d});    	
+    },    
+        
     
     componentDidMount: function(){
 		setInterval(this.getHeros,this.props.pollInterval);
@@ -282,7 +266,7 @@ var TopSubmitList = React.createClass ({
     	
     	return this.state.data.map((hero, i)=>{
 			return (
-		        <div className="widget-item" key={i}>
+		        <div className="widget-item hero_box" key={i}>
 		            <img className="avatar" src={"avatar/" + getCoreID(hero.name) + ".jpg"}  />
 		            <div className="badge badge-danger">{hero.XP}</div>                                        
 		            <div className="widget-subtitle">{getName(hero.name)}</div>
@@ -301,7 +285,7 @@ var TopSubmitList = React.createClass ({
 });
 
 ReactDOM.render(
-    <TopSubmitList url={SubmitListApi} pollInterval={5000} listCount={15}/>,
+    <TopSubmitList url={SubmitListApi} pollInterval={5000} listCount={12}/>,
     document.getElementById('top_submiter_list')
 );
 

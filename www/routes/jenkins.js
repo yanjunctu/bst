@@ -615,6 +615,7 @@ var refreshCIHistory = function(db, doc) {
     entry["startTime"] = doc["start time"];
     entry["pushTime"] = doc["push time"];                          
     entry["queuewTime"]=queuewt;
+    entry["duaration"] = doc["build duration"];
     
     entry["buildID"] = doc["build id"];
     entry["buildResult"] = doc["build result"];

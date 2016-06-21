@@ -28,7 +28,7 @@ body {
   min-height: 100%;
   padding: 0px;
   margin: 0px;
-  background: #f5f5f5 url('assets/bg.png') left top repeat;
+/*  background: #f5f5f5 url('assets/bg.png') left top repeat;*/
   position: relative;
   font-family: 'Open Sans', sans-serif;
   font-size: 12px;
@@ -218,7 +218,7 @@ span.flare-red {
 .page-container .page-content {
   min-height: 100%;
   margin-left: 220px;
-  background: #1b1c1f url('assets/bg.png') left top repeat;
+/*  background: #1b1c1f url('assets/bg.png') left top repeat;*/
   position: relative;
   zoom: 1;
 }
@@ -234,7 +234,7 @@ span.flare-red {
   float: left;
   width: 100%;
   position: relative;
-  background: #f5f5f5 url('assets/bg.png') left top repeat;
+/*  background: #f5f5f5 url('assets/bg.png') left top repeat;*/
 }
 .page-container .page-content .content-frame .content-frame-top {
   float: left;
@@ -3567,7 +3567,7 @@ background: #1caf9a !important;
 }
 
 .widget .widget-super-int {
-  font-size: 108px;
+  font-size: 83px;
   line-height: 110px;
   font-weight: 300;
 }
@@ -4015,7 +4015,7 @@ background: #1caf9a !important;
   float: left;
   width: 100%;
   min-height: 100%;
-  background: url("assets/bg.png") left top repeat #565249;
+/*  background: url("assets/bg.png") left top repeat #565249;*/
 }
 .login-container .login-box {
   width: 400px;
