@@ -25,13 +25,14 @@ var WIN_SCRIPT_HOME = "D:\\Git_Repo\\scm";
 var LOCK_FILE = "D:\\Git_Repo\\scm\\REPT2.7.pid";
 
 // Variables for CI history info
-const CI_TRIGGER_JOB= "PCR-REPT-0-MultiJob";
-const CI_ON_TARGET_JOB= "PCR-REPT-On_Target_MultiJob";
-const CI_ON_TAEGET_BUILD_JOB= "PCR-REPT-On_Target_Build_MultiJob";
-const CI_OFF_TARGET_JOB= "PCR-REPT-Off_Target_MultiJob";
-const CI_OFF_TARGET_BUILD_JOB= "PCR-REPT-Off_Target_Build_MultiJob";
-const CI_OFF_TARGET_TEST_JOB= "PCR-REPT-Off_Target_Test_MultiJob";
-const CI_OFF_TARGET_UT_JOB= "PCR-REPT-Win32_UT";
+const CI_TRIGGER_JOB = "PCR-REPT-0-MultiJob";
+const CI_ON_TARGET_JOB = "PCR-REPT-On_Target_MultiJob";
+const CI_ON_TAEGET_BUILD_JOB = "PCR-REPT-On_Target_Build_MultiJob";
+const CI_OFF_TARGET_JOB = "PCR-REPT-Off_Target_MultiJob";
+const CI_OFF_TARGET_BUILD_JOB = "PCR-REPT-Off_Target_Build_MultiJob";
+const CI_OFF_TARGET_TEST_JOB = "PCR-REPT-Off_Target_Test_MultiJob";
+const CI_OFF_TARGET_UT_JOB = "PCR-REPT-Win32_UT";
+const CI_OFF_TARGET_IT_JOB = "PCR-REPT-Win32_IT"; // This is not a real jenkins job, it is defined as a key 
 const CI_OFF_TARGET_IT_PART1_JOB = "PCR-REPT-Win32_IT-TEST-Part1";
 const CI_OFF_TARGET_IT_PART2_JOB = "PCR-REPT-Win32_IT-TEST-Part2";
 const CI_COVERAGE_CHECK_JOB = "PCR-REPT-Win32_COV_CHECK";
@@ -43,9 +44,16 @@ const CI_MEMORY_LEAK_JOB = "PCR-REPT-Memory_Leak_MultiJob-DAILY";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
 var CILastTriggerBuildID = 0, CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0,CIMemoryLeakBuildID=0;
 var CIHistory = [];
-var CIOnTargetBuildChain = [CI_ON_TARGET_JOB, CI_ON_TAEGET_BUILD_JOB];
-var CIOffTargetBuildChain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_BUILD_JOB];
-var CIOffTargetTestChain = [CI_OFF_TARGET_JOB, CI_OFF_TARGET_TEST_JOB];
+var keyMap = {};
+
+// Associate job names with keys of CI history info
+keyMap[CI_PRECHECK_JOB] = "precheck";
+keyMap[CI_ON_TAEGET_BUILD_JOB] = "onTargetBuild";
+keyMap[CI_OFF_TARGET_BUILD_JOB] = "offTargetBuild";
+keyMap[CI_OFF_TARGET_UT_JOB] = "win32UT";
+keyMap[CI_OFF_TARGET_IT_JOB] = "win32IT";
+keyMap[CI_OFF_TARGET_IT_PART1_JOB] = "win32ITPart1";
+keyMap[CI_OFF_TARGET_IT_PART2_JOB] = "win32ITPart2";
 
 var getJobLastBuild = function(job,callback)
 {
@@ -102,7 +110,7 @@ function getParameterValue(data,parameter){
         if(para.name==parameter){
           //console.log("found",para.value)
           found = para.value;
-          return;
+          return found;
         }
         {
           //console.log()
@@ -469,17 +477,17 @@ var ciUnblock = function(jenkinsUnlock,boosterUnlock){
     return status
 }
 var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
-    
     var preResult = ciBlockInfo.result;
-    var preReleaseTag = ciBlockInfo.releaseTag
+    var preReleaseTag = ciBlockInfo.releaseTag;
+
     ciBlockInfo.result = data.result;
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
-    ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");;
-    ciBlockInfo.lastSuccessTag=""
+    ciBlockInfo.submitter="";
+    ciBlockInfo.lastSuccessTag="";
+    
     console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
     if((ciBlockInfo.manualControl == "TRUE") && (preReleaseTag == ciBlockInfo.releaseTag)){
-        
         ciBlockInfo.result = "SUCCESS"
     }
     else if (ciBlockInfo.result == "FAILURE"){
@@ -494,24 +502,22 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
 
             var server = new Server('127.0.0.1');
             fiber(function() {
-
                 var db = server.db("booster");
-                var docS = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.lastSuccessTag}}).toArray();
-                sucessId = docS[0]["build id"];
-                var docF = db.getCollection('PCR-REPT-Git-Release').find({"release tag": {$eq:ciBlockInfo.releaseTag}}).toArray();
-                failId = docF[0]["build id"];
+                var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
+                var objS = {"name": "NEW_BASELINE", "value": ciBlockInfo.lastSuccessTag};
+                var objF = {"name": "NEW_BASELINE", "value": ciBlockInfo.releaseTag};
+                var docS = rlsColl.findOne({"actions.parameters": {$in: [objS]}});
+                var docF = rlsColl.findOne({"actions.parameters": {$in: [objF]}});
+                var docs = rlsColl.find({"number": {$gt: docS["number"],$lte: docF["number"]}}).toArray();
 
-                var docs = db.getCollection('PCR-REPT-Git-Release').find({"build id": {$gt:sucessId,$lt:failId}}).toArray();
-
-                var submitter = ""
+                var submitter = "";
                 docs.forEach(function(doc) {
-
-                   if(doc["project name"] == "REPT2.7"){
-                       submitter = submitter + doc["submitter"]+";";
+                   if(findParamValue(doc, "PROJECT_NAME") == "REPT2.7"){
+                       submitter = submitter + findParamValue(doc, "SUBMITTER")+";";
                    }
                    
                 });
-                ciBlockInfo.submitter=ciBlockInfo.submitter+submitter;
+                ciBlockInfo.submitter = submitter;
                 if (preResult == "SUCCESS"){
                     var msg = "Block Reason:  DAT test failed on tag :" +ciBlockInfo.releaseTag +"\n The Submitter(s):" +ciBlockInfo.submitter+"\n Last Success Tag:"+ciBlockInfo.lastSuccessTag;
                     var args={'msg':msg,'mode':'block'}
@@ -536,7 +542,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                         console.log("failed to cancel item["+id.toString()+"]"+err);
                     }
                     else {
-                        console.log("succeeded to cancel item["+id.toString()+"]"+err);
+                        console.log("succeeded to cancel item["+id.toString()+"]");
                     }
                 });
             });
@@ -581,112 +587,130 @@ var updateLatestBuildInfo = function(job){
     });
 }
 
-var getBuildInfoByBuildChain = function(db, doc, buildChain) {
-    var i = 0;
-    var buildInfo = doc;
-    
-    if (!db || !doc || !buildChain || 0 == buildChain.length) {
+var findParamValue = function(buildInfo, paramName) {
+    if (!buildInfo || !buildInfo["actions"]) {
         return;
     }
-    for (; i < buildChain.length && buildInfo && buildChain[i] in buildInfo; ++i) {
-        var nextBuildColl = db.getCollection(buildChain[i]);
-        var nextBuildID = buildInfo[buildChain[i]];
 
-        if (!nextBuildColl || !nextBuildID) {
-            break;
+    for (var i = 0; i < buildInfo["actions"].length; ++i) {
+        if (!buildInfo["actions"][i]["parameters"])
+            continue;
+
+        var params = buildInfo["actions"][i]["parameters"];
+        for (var j = 0; j < params.length; ++j) {
+            if (params[j]["name"] == paramName) {
+                return params[j]["value"];
+            }
         }
-        buildInfo = nextBuildColl.findOne({"build id": nextBuildID});
     }
-    if (i == buildChain.length) {
-        return buildInfo;
+
+
+    return;
+}
+
+var findSubBuildInfo = function(parentBuild, subBuildName) {
+    var allSubBuilds = [];
+
+    // If the parent build is a multi-job build, info of its sub-builds is saved in the 
+    // field "subBuilds", ortherwise, the info is saved in the field subBuilds of field build
+    if (parentBuild["subBuilds"]) {
+        allSubBuilds.push(parentBuild["subBuilds"]);
+    }
+    else if (parentBuild["build"] && parentBuild["build"]["subBuilds"]) {
+        allSubBuilds.push(parentBuild["build"]["subBuilds"]);
+    }
+
+    // Retrive all sub-builds of parent build and sub-builds of sub-builds of the parent build
+    // if any to get build info of the specified sub-build
+    for (var i = 0; i < allSubBuilds.length; ++i) {
+        var subBuilds = allSubBuilds[i];
+
+        for (var j = 0; j < subBuilds.length; ++j) {
+            var subBuild = subBuilds[j];
+
+            if (subBuild["jobName"] == subBuildName) {
+                return subBuild;
+            }
+            if (subBuild["build"] && subBuild["build"]["subBuilds"]) {
+                allSubBuilds.push(subBuild["build"]["subBuilds"]);
+            }
+        }
     }
 
     return;
 }
 
+var getJobCollName = function(jobName) {
+    return 'CI-' + jobName;
+}
+
 var refreshCIHistory = function(db, doc) {
     var entry = {};
-    var rlsDate = new Date(doc["start time"] + doc["build duration"]);
-    var rlsInfo = db.getCollection(CI_RELEASE_JOB).findOne({"build id": doc[CI_RELEASE_JOB]});
-    var precheck = db.getCollection(CI_PRECHECK_JOB).findOne({"build id": doc[CI_PRECHECK_JOB]});
-    var itValue = {};
+    var allSubJobs = [CI_PRECHECK_JOB, CI_ON_TAEGET_BUILD_JOB, CI_OFF_TARGET_BUILD_JOB, CI_OFF_TARGET_UT_JOB, CI_OFF_TARGET_IT_PART1_JOB, CI_OFF_TARGET_IT_PART2_JOB];
     
-    var queuewt = doc["start time"]-doc["push time"];
-    entry["startTime"] = doc["start time"];
-    entry["pushTime"] = doc["push time"];                          
-    entry["queuewTime"]=queuewt;
-    entry["duaration"] = doc["build duration"];
-    
-    entry["buildID"] = doc["build id"];
-    entry["buildResult"] = doc["build result"];
-    entry["submitter"] = doc["submitter"];
-    if (precheck && precheck["build result"]) {
-        entry["precheck"] = precheck["build result"];
+    entry["buildID"] = doc["number"];
+    entry["buildResult"] = doc["result"];
+    entry["startTime"] = doc["timestamp"];
+    entry["submitter"] = findParamValue(doc, "SUBMITTER");
+    entry["pushTime"] = findParamValue(doc, "PUSH_TIME");
+    entry["queuewTime"] = entry["startTime"] - entry["pushTime"];
+    entry["duration"] = doc["duration"];
+
+    // Build results of all sub-builds
+    for (var i = 0; i < allSubJobs.length; ++i) {
+        var subJobName = allSubJobs[i];
+        var entryKey = keyMap[subJobName];
+        var buildInfo = findSubBuildInfo(doc, subJobName);
+
+        if (buildInfo) {
+            // There are two IT related jobs, we should merge these two jobs into one IT job
+            if ((subJobName == CI_OFF_TARGET_IT_PART1_JOB)
+                || (subJobName == CI_OFF_TARGET_IT_PART2_JOB)) {
+                if (!("win32IT" in entry)) {
+                    entry["win32IT"] = {}
+                }
+                entry["win32IT"][entryKey] = buildInfo["result"];
+            }
+            else {
+                entry[entryKey] = buildInfo["result"];
+            }
+        }
     }
+
+    // Coverage
+    var subBuildCov = findSubBuildInfo(doc, CI_COVERAGE_CHECK_JOB);
+    if (subBuildCov) {
+        var number = subBuildCov["buildNumber"];
+        var covInfo = db.getCollection(getJobCollName(CI_COVERAGE_CHECK_JOB)).findOne({"number": number});
+
+        if (covInfo) {
+            entry["coverage"] = covInfo["coverage"];
+        }
+    }
+
     // Release time/release tag/code static check/sanity test/extended regression test
     if (entry["buildResult"] == "SUCCESS") {
-        entry["rlsTime"] = rlsDate.toLocaleDateString() + " " + rlsDate.toLocaleTimeString();
-        if (rlsInfo && rlsInfo["release tag"]) {
-            var buildWarnings = 0, klocworkWarnings = 0;
-            var rlsTag = rlsInfo["release tag"];
-            // Different key name of the release tag field in different collections
-            var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
+        var subBuildRls = findSubBuildInfo(doc, CI_RELEASE_JOB);
 
-            entry["rlsTag"] = rlsInfo["release tag"];
-            for (var i = 0; i < warnings.length; ++i) {
-                buildWarnings += warnings[i]["buildWarningCnt"];
-                klocworkWarnings += warnings[i]["klocworkCnt"];
-            }
-            entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
-        }
-    }
-    // Get on-target build result 
-    var buildInfo = getBuildInfoByBuildChain(db, doc, CIOnTargetBuildChain);
-    if (buildInfo && "build result" in buildInfo) 
-        entry["onTargetBuild"] = buildInfo["build result"];
-
-    // Get off-target build result
-    buildInfo = getBuildInfoByBuildChain(db, doc, CIOffTargetBuildChain);
-    if (buildInfo && "build result" in buildInfo)
-        entry["offTargetBuild"] = buildInfo["build result"];
-
-    // Get off-target ut, it and coverage result 
-    buildInfo = getBuildInfoByBuildChain(db, doc, CIOffTargetTestChain);
-    if (buildInfo) {
-        var jobsMap = {
-                "win32UT": CI_OFF_TARGET_UT_JOB,
-                "win32ITPart1": CI_OFF_TARGET_IT_PART1_JOB,
-                "win32ITPart2": CI_OFF_TARGET_IT_PART2_JOB,
-                "coverage": CI_COVERAGE_CHECK_JOB
-        };
-        var tmpInfo = {};
-        
-        // Build id of ut, it and coverage can be found in build info of off-target test job if any
-        for (var key in jobsMap) {
-            var jobName = jobsMap[key];
-            
-            if (!(jobName in buildInfo)) {
-                continue;
-            }
-            var id = buildInfo[jobName];
-            var info = db.getCollection(jobName).findOne({"build id": id});
-
-            if (info) {
-                if (key == "coverage")
-                    tmpInfo[key] = info["coverage"];
-                else
-                    tmpInfo[key] = info["build result"];
+        if (subBuildRls) {
+            var number = subBuildRls["buildNumber"];
+            var rlsInfo = db.getCollection(getJobCollName(CI_RELEASE_JOB)).findOne({"number": number});
+    
+            if (rlsInfo) {
+                var buildWarnings = 0, klocworkWarnings = 0;
+                var rlsTag = findParamValue(rlsInfo, "NEW_BASELINE");
+                var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
+                var rlsDate = new Date(doc["timestamp"] + doc["duration"]);
+    
+                entry["rlsTag"] = rlsTag;
+                entry["rlsTime"] = rlsDate.toLocaleDateString() + " " + rlsDate.toLocaleTimeString();
+                for (var i = 0; i < warnings.length; ++i) {
+                    buildWarnings += warnings[i]["buildWarningCnt"];
+                    klocworkWarnings += warnings[i]["klocworkCnt"];
+                }
+                entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
             }
         }
-        entry["win32UT"] = tmpInfo["win32UT"];
-        if (tmpInfo["win32ITPart1"] || tmpInfo["win32ITPart2"]) {
-            entry["win32IT"] = {};
-            if (tmpInfo["win32ITPart1"])
-                entry["win32IT"]["win32ITPart1"] = tmpInfo["win32ITPart1"];
-            if (tmpInfo["win32ITPart2"])
-                entry["win32IT"]["win32ITPart2"] = tmpInfo["win32ITPart2"];
-        }
-        entry["coverage"] = tmpInfo["coverage"];
     }
 
     CIHistory.push(entry);
@@ -701,24 +725,28 @@ var updateCIHistoryInfo = function() {
     // Delta update
     fiber(function() {
         var db = server.db("booster");
-        var triggerDocs = db.getCollection(CI_TRIGGER_JOB).find({"build id": {$gt: CILastTriggerBuildID}}).sort({"build id": 1}).toArray();
+        var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB)).find({"number": {$gt: CILastTriggerBuildID}}).sort({"number": 1}).toArray();
         // Maybe the same release version will be tested many times, we only care the last one, so we
         // sort the results in descending order
-        var sanityDocs = db.getCollection(CI_SANITY_TEST_JOB).find({"build id": {$gt: CILastSanityBuildID}}).sort({"build id": -1}).toArray();
-        var extRegressionDocs = db.getCollection(CI_EXT_REGRESSION_JOB).find({"build id": {$gt: CILastExtRegressionBuildID}}).sort({"build id": -1}).toArray();
-        var memoryLeakDocs = db.getCollection(CI_MEMORY_LEAK_JOB).find({"build id": {$gt: CIMemoryLeakBuildID}}).sort({"build id": -1}).toArray();
+        var sanityDocs = db.getCollection(getJobCollName(CI_SANITY_TEST_JOB)).find({"number": {$gt: CILastSanityBuildID}}).sort({"number": -1}).toArray();
+        var extRegressionDocs = db.getCollection(getJobCollName(CI_EXT_REGRESSION_JOB)).find({"number": {$gt: CILastExtRegressionBuildID}}).sort({"number": -1}).toArray();
+        var memoryLeakDocs = db.getCollection(getJobCollName(CI_MEMORY_LEAK_JOB)).find({"number": {$gt: CIMemoryLeakBuildID}}).sort({"number": -1}).toArray();
          
         triggerDocs.forEach(function(doc) {
             refreshCIHistory(db, doc);
         });
-        // Update the result of on-target sanity test,extended extRegression test and memory leak test
+        // The result of Sanity test, Extended Regression test and Memory Leak test of a new release
+        // version can not be gotten immediately, so we should check the db periodically and update
+        // them if necessary
         sanityDocs.forEach(function(doc) {
+            var rlsTag = findParamValue(doc, "NEW_BASELINE");
+
             for (var i = CIHistory.length-1; i >= 0; --i) {
-                if (doc["release tag"] && CIHistory[i]["rlsTag"] == doc["release tag"]) {
+                if (rlsTag && CIHistory[i]["rlsTag"] == rlsTag) {
                     if (!CIHistory[i]["onTargetSanity"]) {
-                        CIHistory[i]["onTargetSanity"] = doc["build result"];
-                        if (doc["build id"] > CILastSanityBuildID) {
-                            CILastSanityBuildID = doc["build id"];
+                        CIHistory[i]["onTargetSanity"] = doc["result"];
+                        if (doc["number"] > CILastSanityBuildID) {
+                            CILastSanityBuildID = doc["number"];
                         }
                     }
                     break;
@@ -726,12 +754,14 @@ var updateCIHistoryInfo = function() {
             }
         });
         extRegressionDocs.forEach(function(doc) {
+            var rlsTag = findParamValue(doc, "NEW_BASELINE");
+
             for (var i = CIHistory.length-1; i >= 0; --i) {
-                if (doc["release tag"] && CIHistory[i]["rlsTag"] == doc["release tag"]) {
+                if (rlsTag && CIHistory[i]["rlsTag"] == rlsTag) {
                     if (!CIHistory[i]["extRegression"]){
-                        CIHistory[i]["extRegression"] = doc["build result"];
-                        if (doc["build id"] > CILastExtRegressionBuildID) {
-                            CILastExtRegressionBuildID = doc["build id"];
+                        CIHistory[i]["extRegression"] = doc["result"];
+                        if (doc["number"] > CILastExtRegressionBuildID) {
+                            CILastExtRegressionBuildID = doc["number"];
                         }
                     }
                     break;
@@ -739,12 +769,14 @@ var updateCIHistoryInfo = function() {
             }
         });
         memoryLeakDocs.forEach(function(doc) {
+            var rlsTag = findParamValue(doc, "NEW_BASELINE");
+
             for (var i = CIHistory.length-1; i >= 0; --i) {
-                if (doc["release tag"] && CIHistory[i]["rlsTag"] == doc["release tag"]) {
+                if (rlsTag && CIHistory[i]["rlsTag"] == rlsTag) {
                     if (!CIHistory[i]["memoryLeak"]) {
-                        CIHistory[i]["memoryLeak"] = doc["build result"];
-                        if (doc["build id"] > CIMemoryLeakBuildID) {
-                            CIMemoryLeakBuildID = doc["build id"];
+                        CIHistory[i]["memoryLeak"] = doc["result"];
+                        if (doc["number"] > CIMemoryLeakBuildID) {
+                            CIMemoryLeakBuildID = doc["number"];
                         }
                     }
                     break;
