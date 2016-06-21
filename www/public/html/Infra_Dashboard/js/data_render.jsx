@@ -125,19 +125,21 @@ var SubmitList = React.createClass ({
             }
        });
        
-		document.getElementById('submit_aborted').textContent = aborted;
-		document.getElementById('submit_completed').textContent = completed;
-		document.getElementById('submit_failed').textContent = failed;
-
-		document.getElementById('overall_failure_rate').textContent = parseInt(failed/(failed + completed) * 100) + "%";
-		document.getElementById('last30_failure_rate').textContent = parseInt(failed_last30/(failed_last30 + completed_last30) * 100) + "%";
+		change_content('#submit_aborted', aborted);
+		change_content('#submit_completed', completed);
+		change_content('#submit_failed', failed);
 		
-		document.getElementById('testCoverage').textContent = testCoverage;
-		document.getElementById('testCaseNum').textContent = testCaseNum;
+		change_content('#overall_failure_rate', parseInt(failed/(failed + completed) * 100) + "%");
+		change_content('#last30_failure_rate', parseInt(failed_last30/(failed_last30 + completed_last30) * 100) + "%");
+
+		change_content("#testCoverage", testCoverage);
+		change_content("#testCaseNum", testCaseNum);
+
 		//document.getElementById('theWholeCIduration').textContent = theWholeCIduration;
-		document.getElementById('queueDuration').textContent = queueDuration;
-		document.getElementById('releaseDuration').textContent = releaseDuration;
-		//$("#releaseDuration").html(releaseDuration);
+
+		change_content("#queueDuration", queueDuration);
+		change_content("#releaseDuration", releaseDuration);
+		
 		//
 		var mtag;
 		for(var m in CIStatus)
@@ -178,7 +180,8 @@ var SubmitList = React.createClass ({
 			{
 				//simulate progress update before get real progress from server
 				ciProgresses[m] += ciProgresses[m] < ciEstimation[m] * 0.95 ? 1 : 0;
-				p = parseInt(ciProgresses[m]/ciEstimation[m] * 100);
+				p = (ciProgresses[m]/ciEstimation[m] * 100).toFixed(1);
+				
 			}
 			else if(CIStatus[m].status == "not start")
 			{
@@ -263,7 +266,7 @@ var TopSubmitList = React.createClass ({
     	
     	return this.state.data.map((hero, i)=>{
 			return (
-		        <div className="widget-item" key={i}>
+		        <div className="widget-item hero_box" key={i}>
 		            <img className="avatar" src={"avatar/" + getCoreID(hero.name) + ".jpg"}  />
 		            <div className="badge badge-danger">{hero.XP}</div>                                        
 		            <div className="widget-subtitle">{getName(hero.name)}</div>

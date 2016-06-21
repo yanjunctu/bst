@@ -61,3 +61,15 @@ function format_release_tag(tag)
     }
     return r;
 }
+
+
+function change_content(id, val) {                                              
+	var obj = $(id); 
+	
+	if(val != obj.html()){
+		obj.fadeOut("slow", function () {
+		        obj.html(val);
+		    })
+			.fadeIn("slow");
+	}
+}
