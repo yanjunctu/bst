@@ -654,7 +654,7 @@ var refreshCIHistory = function(db, doc) {
     entry["submitter"] = findParamValue(doc, "SUBMITTER");
     entry["pushTime"] = findParamValue(doc, "PUSH_TIME");
     entry["queuewTime"] = entry["startTime"] - entry["pushTime"];
-    entry["duration"] = doc["duration"]
+    entry["duration"] = doc["duration"];
 
     // Build results of all sub-builds
     for (var i = 0; i < allSubJobs.length; ++i) {
