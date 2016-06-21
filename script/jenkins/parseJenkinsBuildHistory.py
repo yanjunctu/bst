@@ -9,7 +9,6 @@ from pymongo import MongoClient
 import ssl
 import subprocess
 import re
-import sys
 import gridfs
 
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
@@ -17,11 +16,7 @@ JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
 JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY','PCR-REPT-Memory_Leak_MultiJob-DAILY']
 JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
-# PCR-REPT-0-MultiJob is the trigger job of a CI request, the other two jobs are here for the purpose of compatibility
-JENKINS_PCR_REPT_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald']
 BOOSTER_DB_NAME = 'booster'
-CI_HISTORY_COLLECTION = 'CIHistoryInfo'
-CI_BUILD_LOG_COLLECTION = 'CIBuildLog'
 
 class BoosterJenkins():
     def __init__(self, url, username=None, password=None):

@@ -43,6 +43,16 @@ const CI_MEMORY_LEAK_JOB = "PCR-REPT-Memory_Leak_MultiJob-DAILY";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
 var CILastTriggerBuildID = 0, CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0,CIMemoryLeakBuildID=0;
 var CIHistory = [];
+var keyMap = {};
+
+// Associate job names with keys of CI history info
+keyMap[CI_PRECHECK_JOB] = "precheck";
+keyMap[CI_ON_TAEGET_BUILD_JOB] = "onTargetBuild";
+keyMap[CI_OFF_TARGET_BUILD_JOB] = "offTargetBuild";
+keyMap[CI_OFF_TARGET_UT_JOB] = "win32UT";
+keyMap[CI_OFF_TARGET_IT_JOB] = "win32IT";
+keyMap[CI_OFF_TARGET_IT_PART1_JOB] = "win32ITPart1";
+keyMap[CI_OFF_TARGET_IT_PART2_JOB] = "win32ITPart2";
 
 var getJobLastBuild = function(job,callback)
 {
@@ -498,7 +508,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                 var submitter = ""
                 docs.forEach(function(doc) {
                    if(findParamValue(doc, "PROJECT_NAME") == "REPT2.7"){
-                       submitter = submitter + doc["submitter"]+";";
+                       submitter = submitter + findParamValue(doc, "SUBMITTER")+";";
                    }
                    
                 });
@@ -590,6 +600,8 @@ var findParamValue = function(buildInfo, paramName) {
 var findSubBuildInfo = function(parentBuild, subBuildName) {
     var allSubBuilds = [];
 
+    // If the parent build is a multi-job build, info of its sub-builds is saved in the 
+    // field "subBuilds", ortherwise, the info is saved in the field subBuilds of field build
     if (parentBuild["subBuilds"]) {
         allSubBuilds.push(parentBuild["subBuilds"]);
     }
@@ -597,6 +609,8 @@ var findSubBuildInfo = function(parentBuild, subBuildName) {
         allSubBuilds.push(parentBuild["build"]["subBuilds"]);
     }
 
+    // Retrive all sub-builds of parent build and sub-builds of sub-builds of the parent build
+    // if any to get build info of the specified sub-build
     for (var i = 0; i < allSubBuilds.length; ++i) {
         var subBuilds = allSubBuilds[i];
 
@@ -622,16 +636,6 @@ var getJobCollName = function(jobName) {
 var refreshCIHistory = function(db, doc) {
     var entry = {};
     var allSubJobs = [CI_PRECHECK_JOB, CI_ON_TAEGET_BUILD_JOB, CI_OFF_TARGET_BUILD_JOB, CI_OFF_TARGET_UT_JOB, CI_OFF_TARGET_IT_PART1_JOB, CI_OFF_TARGET_IT_PART2_JOB];
-    var keyMap = {};
-
-    // Associate job names with keys of CI history info
-    keyMap[CI_PRECHECK_JOB] = "precheck";
-    keyMap[CI_ON_TAEGET_BUILD_JOB] = "onTargetBuild";
-    keyMap[CI_OFF_TARGET_BUILD_JOB] = "offTargetBuild";
-    keyMap[CI_OFF_TARGET_UT_JOB] = "win32UT";
-    keyMap[CI_OFF_TARGET_IT_JOB] = "win32IT";
-    keyMap[CI_OFF_TARGET_IT_PART1_JOB] = "win32ITPart1";
-    keyMap[CI_OFF_TARGET_IT_PART2_JOB] = "win32ITPart2";
     
     entry["buildID"] = doc["number"];
     entry["buildResult"] = doc["result"];
@@ -647,12 +651,13 @@ var refreshCIHistory = function(db, doc) {
         var buildInfo = findSubBuildInfo(doc, subJobName);
 
         if (buildInfo) {
+            // There are two IT related jobs, we should merge these two jobs into one IT job
             if ((subJobName == CI_OFF_TARGET_IT_PART1_JOB)
                 || (subJobName == CI_OFF_TARGET_IT_PART2_JOB)) {
-                if (!(CI_OFF_TARGET_IT_JOB in entry)) {
-                    entry[entryKey] = {}
+                if (!("win32IT" in entry)) {
+                    entry["win32IT"] = {}
                 }
-                entry[entryKey][keyMap[subJobName]] = buildInfo["result"];
+                entry["win32IT"][entryKey] = buildInfo["result"];
             }
             else {
                 entry[entryKey] = buildInfo["result"];
@@ -682,7 +687,7 @@ var refreshCIHistory = function(db, doc) {
             if (rlsInfo) {
                 var buildWarnings = 0, klocworkWarnings = 0;
                 var rlsTag = findParamValue(rlsInfo, "NEW_BASELINE");
-                var warnings = db.getCollection(getJobCollName(CI_WARNING_COLL_NAME)).find({"releaseTag": rlsTag}).toArray();
+                var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
                 var rlsDate = new Date(doc["timestamp"] + doc["duration"]);
     
                 entry["rlsTag"] = rlsTag;
@@ -718,7 +723,9 @@ var updateCIHistoryInfo = function() {
         triggerDocs.forEach(function(doc) {
             refreshCIHistory(db, doc);
         });
-        // Update the result of on-target sanity test,extended extRegression test and memory leak test
+        // The result of Sanity test, Extended Regression test and Memory Leak test of a new release
+        // version can not be gotten immediately, so we should check the db periodically and update
+        // them if necessary
         sanityDocs.forEach(function(doc) {
             var rlsTag = findParamValue(doc, "NEW_BASELINE");
 
