@@ -1,6 +1,5 @@
 div{
 	-border: solid;
-	
 }
 .progress {
 	background-color: darkslategrey;
@@ -10,7 +9,7 @@ div{
 .progress_percent{
 	float: center;
 	margin-top: 5px;
-	margin-left: 5px;
+	margin-left: 0px;
 	text-shadow:  1px 1px 1px rgba(0, 0, 0, 1);	
 }
 
@@ -20,10 +19,11 @@ div{
 }
 
 .progress_text{
-	font-size: 30px;
-	line-height: 30px;
+	font-size: 25px;
+	line-height: 25px;
 }
 
+.otto4,
 .otto {
   text-shadow: 0 1px 0 #ccc,
                0 2px 0 #c9c9c9,
@@ -55,9 +55,11 @@ div{
 	               0 20px 20px rgba(0,0,0,.15);	               
 }
 
+
 .otto3 {
   font-size: 45px;	
 }
+
 
 .TITILE,
 .QUEUING,
@@ -120,33 +122,6 @@ div{
 .progress {
 	margin-bottom: 2px;
 }
-
-.avatar{
-	width: 100px;
-	height: 100px;
-	border-radius: 100px;
-	--margin-left: 10px;
-}
-
-
-	
-.badge {
-	display: inline-block;
-	min-width: 20px;
-	padding: 4px 7px;
-	font-size: 20px;
-	font-weight: 700;
-	line-height: 1;
-	text-align: center;
-	white-space: nowrap;
-	vertical-align:top;
-	border-radius: 20px;
-	
-	position:relative;
-	margin-left: -30px;
-}
-
-
 
 /* Alert CSS --------------------------------------------------*/
 
@@ -230,14 +205,39 @@ div{
 }
 /* Alert CSS --------------------------------------------------*/
 
+.hero_box{
+	margin-bottom: 10px;	
+}
 
 
 
-/* Marquee CSS --------------------------------------------------*/
+.avatar{
+	width: 100px;
+	height: 100px;
+	border-radius: 100px;
+}
+
 
 	
+.badge {
+	display: inline-block;
+	min-width: 20px;
+	padding: 4px 7px;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align:top;
+	border-radius: 20px;
+	
+	position:relative;
+	margin-left: -30px;
+}
+
+/* Marquee CSS --------------------------------------------------*/
 :root {
-  --vh: 120px;
+  --vh: 130px;
   --vh1: calc(var(--vh) * -1);
   --vh2: calc(var(--vh) * -2);
   --vh3: calc(var(--vh) * -3);
@@ -257,7 +257,7 @@ div{
     100% { top: 0;  }   
 }
 
-.box{width:500px; height: var(--vh); margin:1em auto; position:relative; overflow:hidden;}
+.box{width:400px; height: var(--vh); margin:1em auto; position:relative; overflow:hidden;}
 .list{margin:0; padding:0; position:absolute;
     -moz-animation: slide 20s infinite;
     -webkit-animation: slide 20s infinite;

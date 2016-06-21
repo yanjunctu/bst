@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
+var email = require('../models/email.js');
 var fiber = require('fibers');
 var Server = require('mongo-sync').Server;
 var cnt=0;
@@ -465,6 +466,10 @@ var ciUnblock = function(jenkinsUnlock,boosterUnlock){
         });
     }
     if(boosterUnlock == "TRUE"){
+        if(CISTATUS.ciBlockInfo.result == "FAILURE"){
+            var args={'mode':'unblock'}
+            email.send(args)
+        }
         CISTATUS.ciBlockInfo.manualControl = "TRUE"
         CISTATUS.ciBlockInfo.result = "SUCCESS"
     }
@@ -473,11 +478,11 @@ var ciUnblock = function(jenkinsUnlock,boosterUnlock){
 }
 var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     
-    preResult = ciBlockInfo.result;
-    preReleaseTag = ciBlockInfo.releaseTag
+    var preResult = ciBlockInfo.result;
+    var preReleaseTag = ciBlockInfo.releaseTag
     ciBlockInfo.result = data.result;
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
-    ciBlockInfo.submitter="";
+    ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");;
     ciBlockInfo.lastSuccessTag=""
     console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
@@ -503,7 +508,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                 var objF = {"name": "NEW_BASELINE", "value": ciBlockInfo.releaseTag};
                 var docS = rlsColl.findOne({"actions.parameters": {$in: [objS]}});
                 var docF = rlsColl.findOne({"actions.parameters": {$in: [objF]}});
-                var docs = rlsColl.find({"number": {$gt: docS["number"],$lte: docF["number"]}}).toArray();
+                var docs = rlsColl.find({"number": {$gt: docS["number"],$lt: docF["number"]}}).toArray();
 
                 var submitter = ""
                 docs.forEach(function(doc) {
@@ -512,8 +517,12 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                    }
                    
                 });
-                ciBlockInfo.submitter=submitter;
-
+                ciBlockInfo.submitter=ciBlockInfo.submitter+submitter;
+                if (preResult == "SUCCESS"){
+                    var msg = "Block Reason:  DAT test failed on tag :" +ciBlockInfo.releaseTag +"\n The Submitter(s):" +ciBlockInfo.submitter+"\n Last Success Tag:"+ciBlockInfo.lastSuccessTag;
+                    var args={'msg':msg,'mode':'block'}
+                    email.send(args)
+                }
             }).run();
 
             server.close();
@@ -544,6 +553,8 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
         ciBlockInfo.manualControl = "FALSE"
         if (preResult == "FAILURE"){
             ciUnblock("TRUE","FALSE")
+            var args={'mode':'unblock'}
+            email.send(args)
             console.log ("CI unblocked")
         }
     }
@@ -643,6 +654,7 @@ var refreshCIHistory = function(db, doc) {
     entry["submitter"] = findParamValue(doc, "SUBMITTER");
     entry["pushTime"] = findParamValue(doc, "PUSH_TIME");
     entry["queuewTime"] = entry["startTime"] - entry["pushTime"];
+    entry["duration"] = doc["duration"]
 
     // Build results of all sub-builds
     for (var i = 0; i < allSubJobs.length; ++i) {
