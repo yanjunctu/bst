@@ -110,7 +110,7 @@ function getParameterValue(data,parameter){
         if(para.name==parameter){
           //console.log("found",para.value)
           found = para.value;
-          return;
+          return found;
         }
         {
           //console.log()
@@ -477,17 +477,17 @@ var ciUnblock = function(jenkinsUnlock,boosterUnlock){
     return status
 }
 var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
-    
     var preResult = ciBlockInfo.result;
-    var preReleaseTag = ciBlockInfo.releaseTag
+    var preReleaseTag = ciBlockInfo.releaseTag;
+
     ciBlockInfo.result = data.result;
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
-    ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");;
-    ciBlockInfo.lastSuccessTag=""
+    ciBlockInfo.submitter="";
+    ciBlockInfo.lastSuccessTag="";
+    
     console.log("ciBlock result:"+ciBlockInfo.result)
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
     if((ciBlockInfo.manualControl == "TRUE") && (preReleaseTag == ciBlockInfo.releaseTag)){
-        
         ciBlockInfo.result = "SUCCESS"
     }
     else if (ciBlockInfo.result == "FAILURE"){
@@ -508,16 +508,16 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                 var objF = {"name": "NEW_BASELINE", "value": ciBlockInfo.releaseTag};
                 var docS = rlsColl.findOne({"actions.parameters": {$in: [objS]}});
                 var docF = rlsColl.findOne({"actions.parameters": {$in: [objF]}});
-                var docs = rlsColl.find({"number": {$gt: docS["number"],$lt: docF["number"]}}).toArray();
+                var docs = rlsColl.find({"number": {$gt: docS["number"],$lte: docF["number"]}}).toArray();
 
-                var submitter = ""
+                var submitter = "";
                 docs.forEach(function(doc) {
                    if(findParamValue(doc, "PROJECT_NAME") == "REPT2.7"){
                        submitter = submitter + findParamValue(doc, "SUBMITTER")+";";
                    }
                    
                 });
-                ciBlockInfo.submitter=ciBlockInfo.submitter+submitter;
+                ciBlockInfo.submitter = submitter;
                 if (preResult == "SUCCESS"){
                     var msg = "Block Reason:  DAT test failed on tag :" +ciBlockInfo.releaseTag +"\n The Submitter(s):" +ciBlockInfo.submitter+"\n Last Success Tag:"+ciBlockInfo.lastSuccessTag;
                     var args={'msg':msg,'mode':'block'}
@@ -542,7 +542,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                         console.log("failed to cancel item["+id.toString()+"]"+err);
                     }
                     else {
-                        console.log("succeeded to cancel item["+id.toString()+"]"+err);
+                        console.log("succeeded to cancel item["+id.toString()+"]");
                     }
                 });
             });
