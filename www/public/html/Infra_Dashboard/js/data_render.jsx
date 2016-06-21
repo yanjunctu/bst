@@ -180,8 +180,8 @@ var SubmitList = React.createClass ({
 			{
 				//simulate progress update before get real progress from server
 				ciProgresses[m] += ciProgresses[m] < ciEstimation[m] * 0.95 ? 1 : 0;
-				p = (ciProgresses[m]/ciEstimation[m] * 100).toFixed(1);
-				
+				p = (ciProgresses[m]/ciEstimation[m] * 100).toFixed(2);
+				console.log(p);
 			}
 			else if(CIStatus[m].status == "not start")
 			{

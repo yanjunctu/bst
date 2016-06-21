@@ -118,7 +118,7 @@ function get_testCaseNum()
         dataType:'json',
         success: function(data){
             if (data != null) {
-            	console.log(data);
+            	//console.log(data);
                 testCases = eval(data);
                 testCaseNum = testCases.num[testCases.num.length - 1];
             }
