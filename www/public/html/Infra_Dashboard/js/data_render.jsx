@@ -21,9 +21,9 @@ var ciProgresses = {
 //estimated duration for each step, ticks by 5 sec interval
 var ciEstimation = {
 	"preCheckState": 60,
-	"buildWin32State": 60,
+	"buildWin32State": 110,
 	"testWin32State": 456,
-	"buildFwState": 115,	
+	"buildFwState": 144,	
 	"preReleaseState": 20,
 }
 
@@ -181,7 +181,7 @@ var SubmitList = React.createClass ({
 				//simulate progress update before get real progress from server
 				ciProgresses[m] += ciProgresses[m] < ciEstimation[m] * 0.95 ? 1 : 0;
 				p = (ciProgresses[m]/ciEstimation[m] * 100).toFixed(1);
-				
+				//console.log(p);
 			}
 			else if(CIStatus[m].status == "not start")
 			{
@@ -201,7 +201,8 @@ var SubmitList = React.createClass ({
 					}
 					else
 					{
-						child.text(p + "%");
+						//child.text(p + "%");
+						change_obj_content(child, p + "%");					
 					}
 				}
 				
@@ -217,7 +218,7 @@ var SubmitList = React.createClass ({
                 <table className="table">
                     <tbody>
                     <tr className="TITILE">
-                        <th></th>
+                        <th>St</th>
                         <th>#</th>
                         <th>Submitter</th>
                         <th>Time</th>

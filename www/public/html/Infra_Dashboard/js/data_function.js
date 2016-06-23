@@ -73,3 +73,13 @@ function change_content(id, val) {
 			.fadeIn("slow");
 	}
 }
+
+
+function change_obj_content(obj, val) {                                              
+	if(val != obj.html()){
+		obj.fadeOut("slow", function () {
+		        obj.html(val);
+		    })
+			.fadeIn("slow");
+	}
+}
