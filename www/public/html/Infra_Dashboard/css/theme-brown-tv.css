@@ -2518,6 +2518,10 @@ label.valid {
 .badge-danger {
   background-color: #E04B4A;
 }
+
+.badge-green {
+  background-color: yellowgreen;
+}
 /* EOF LABELS AND BADGES */
 /* ALERTS */
 .alert {
