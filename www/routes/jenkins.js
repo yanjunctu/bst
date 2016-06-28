@@ -680,11 +680,17 @@ var refreshCIHistory = function(db, doc) {
     // Coverage
     var subBuildCov = findSubBuildInfo(doc, CI_COVERAGE_CHECK_JOB);
     if (subBuildCov) {
-        var number = subBuildCov["buildNumber"];
-        var covInfo = db.getCollection(getJobCollName(CI_COVERAGE_CHECK_JOB)).findOne({"number": number});
+      
+        if (subBuildCov["result"] == "FAILURE"){
+          entry["coverage"] = "FAILURE";
+        }
+        else{
+          var number = subBuildCov["buildNumber"];
+          var covInfo = db.getCollection(getJobCollName(CI_COVERAGE_CHECK_JOB)).findOne({"number": number});
 
-        if (covInfo) {
-            entry["coverage"] = covInfo["coverage"];
+          if (covInfo) {
+              entry["coverage"] = covInfo["coverage"];
+          }          
         }
     }
 
