@@ -16,6 +16,7 @@ JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
 JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY','PCR-REPT-Memory_Leak_MultiJob-DAILY']
 JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
+JENKINS_DAT_JOBS = ['PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY']
 BOOSTER_DB_NAME = 'booster'
 
 class BoosterJenkins():
@@ -128,6 +129,16 @@ def saveAllCI2DB(server, db):
                         if match:
                             info = match.group(0).split()
                             buildInfo['coverage'] = info[len(info)-1]
+                # We want to get the actual EXIT CODE from IDAT exe and store it in DB
+                if job in JENKINS_DAT_JOBS:
+                    buildInfo['IDAT_EXIT_CODES'] = []
+                    output = server.getConsoleOutput(job, start)
+                    if output:
+                        matches = re.findall(r'IDATAutoTestTrigger Exit: \d+', output)
+                        if matches:
+                            for match in matches:
+                              match = match.split(':')[1].strip()
+                              buildInfo['IDAT_EXIT_CODES'].append(match)
                 # Save its log if the build failed by itself not its sub-builds
                 if (buildInfo['result'] != 'SUCCESS'
                     and ('subBuilds' not in buildInfo or not buildInfo['subBuilds'])):

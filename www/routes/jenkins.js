@@ -750,7 +750,35 @@ var updateCIHistoryInfo = function() {
             for (var i = CIHistory.length-1; i >= 0; --i) {
                 if (rlsTag && CIHistory[i]["rlsTag"] == rlsTag) {
                     if (!CIHistory[i]["onTargetSanity"]) {
+                        //datExitCodes value should like ['0','1','2']
+                        //it contain all the exit codes return from DAT, including succeeded or failed code
+                        datExitCodes = doc['IDAT_EXIT_CODES']
+                        
+                        // assign a default value for on Target result
                         CIHistory[i]["onTargetSanity"] = doc["result"];
+                        
+                        //itr all codes, if have non 0(Success) and non 5(TestCaseFailed) value, means have system err happen, assign 'DAT sys error' string
+                        /*below is enum of exitcode
+                                public enum AutoTestTaskExResultForTrigger
+                                {
+                                    Success,
+                                    ParameterError,
+                                    CreateTaskFailed,
+                                    EnvironmentInitFailed,          // USB Fail, Flash Fw Fail
+                                    TaskAborted,
+                                    TestCaseFailed,
+
+                                    UnknownError = 999
+                                }                        
+                        */
+                        if (datExitCodes){
+                          for (var index=0;index<datExitCodes.length;index++)             
+                            if(datExitCodes[index] != '0' && datExitCodes[index] != '5')
+                              CIHistory[i]["onTargetSanity"] = 'DAT sys error ' + datExitCodes[index]
+                              break                          
+                        }
+    
+                        
                         if (doc["number"] > CILastSanityBuildID) {
                             CILastSanityBuildID = doc["number"];
                         }
