@@ -270,7 +270,7 @@ var TopSubmitList = React.createClass ({
 		        <div className="widget-item hero_box" key={i}>
 		            <img className="avatar" src={"avatar/" + getCoreID(hero.name) + ".jpg"}  />
 		            <div className="badge badge-green">{hero.XP}</div>                                        
-		            <div className="widget-subtitle">{getName(hero.name)}</div>
+		            <div className="hero_name">{getName(hero.name)}</div>
 		        </div>
 	            );
         });

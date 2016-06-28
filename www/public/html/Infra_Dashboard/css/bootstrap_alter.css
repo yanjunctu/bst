@@ -206,10 +206,14 @@ div{
 /* Alert CSS --------------------------------------------------*/
 
 .hero_box{
-	margin-bottom: 10px;	
+	margin-bottom: 30px;	
 }
 
-
+.hero_name{
+	font-size: 15px;
+	line-height: 15px;
+	text-align: center;
+}
 
 .avatar{
 	width: 100px;
@@ -237,7 +241,7 @@ div{
 
 /* Marquee CSS --------------------------------------------------*/
 :root {
-  --vh: 130px;
+  --vh: 140px;
   --vh1: calc(var(--vh) * -1);
   --vh2: calc(var(--vh) * -2);
   --vh3: calc(var(--vh) * -3);
