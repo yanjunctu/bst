@@ -9,6 +9,7 @@ from pymongo import MongoClient
 import ssl
 import subprocess
 import re
+import gridfs
 
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
@@ -25,66 +26,33 @@ class BoosterJenkins():
         self.server = Jenkins(url, username, password)
         
     def getJobInfo(self, name):
-        ret = {}
-
         try:
             jobInfo = self.server.get_job_info(name)
         except JenkinsException, je:
             print 'Failed to get job info for job {}: {}'.format(name, str(je))
             return None 
 
-        ret['name'] = name
-        ret['firstBuild'] = jobInfo['firstBuild']['number'] if 'firstBuild' in jobInfo else 0
-        ret['lastBuild'] = jobInfo['lastCompletedBuild']['number'] if 'lastCompletedBuild' in jobInfo else 0
-        ret['subJobs'] = []
+        jobInfo['subJobs'] = []
         if 'lastSuccessfulBuild' in jobInfo:
             info = jobInfo['lastSuccessfulBuild']
 
             if info and 'subBuilds' in info:
                 for build in info['subBuilds']:
-                    ret['subJobs'].append(build['jobName'])
+                    jobInfo['subJobs'].append(build['jobName'])
         else: 
             for subJob in jobInfo['downstreamProjects']:
-                ret['subJobs'].append(subJob['name'])
+                jobInfo['subJobs'].append(subJob['name'])
                 
-        return ret 
+        return jobInfo
 
     def getBuildInfo(self, job, buildNum):
-        ret = {}
-
         try:
             buildInfo = self.server.get_build_info(job, buildNum)
         except JenkinsException, je:
             print 'Failed to get build info[{}, {}]: {}'.format(job, buildNum, str(je))
             return None
 
-        ret['name'] = job 
-        ret['build id'] = buildNum
-        ret['build result'] = buildInfo['result']
-        ret['start time'] = buildInfo['timestamp']
-        ret['build duration'] = buildInfo['duration']
-        ret['submitter'] = ''
-        ret['push time'] = ''
-        # Some parameters we are interested in
-        for action in buildInfo['actions']:
-            if 'parameters' in action:
-                allParams = action['parameters']
-
-                for obj in allParams:
-                    if obj['name'] == 'SUBMITTER':
-                        ret['submitter'] = obj['value']
-                    elif obj['name'] == 'PUSH_TIME':
-                        ret['push time'] = obj['value']
-                    elif obj['name'] == 'PROJECT_NAME':
-                        ret['project name'] = obj['value']
-                    elif obj['name'] == 'NEW_BASELINE':
-                        ret['release tag'] = obj['value']
-        # Sub-builds info of current build
-        if 'subBuilds' in buildInfo:
-            for build in buildInfo['subBuilds']:
-                ret[build['jobName']] = build['buildNumber']
-
-        return ret
+        return buildInfo 
 
     def getConsoleOutput(self, job, buildNum):
         url = self.url + '/job/' + job + '/' + str(buildNum) + '/consoleText'
@@ -103,18 +71,25 @@ class BoosterJenkins():
 
 class BoosterDB():
     def __init__(self, dbClient, dbName):
+        self.dbClient = dbClient
         self.db = dbClient[dbName]
+        self.fs = gridfs.GridFS(self.db)
 
-    def insertOne(self, collection, data):
-        (self.db)[collection].insert_one(data)
+    def insertOne(self, collName, data):
+        (self.db)[collName].insert_one(data)
 
         return True
 
-    def getLastBuildInfo(self, collection):
-        if collection not in self.db.collection_names() or 0 == (self.db)[collection].count:
+    def getLastBuildInfo(self, collName):
+        if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
             return None
 
-        return (self.db)[collection].find_one(sort=[('build id', -1)])
+        return (self.db)[collName].find_one(sort=[('number', -1)])
+
+    def writeBlock(self, blockData, collection=None): 
+        fs = gridfs.GridFS(self.db, collection) if collection else self.fs
+
+        return fs.put(blockData)
 
 
 def saveAllCI2DB(server, db):
@@ -124,21 +99,26 @@ def saveAllCI2DB(server, db):
    
     # Get all the info of tirgger jobs and their downstream jobs
     while i < len(allJobs):
+        cnt = 0
         job = allJobs[i]
+        jobColl = 'CI-' + job
         jobInfo = server.getJobInfo(job)
        
-        print 'process job {}'.format(job)
+        print 'Process job {}'.format(job)
         if not jobInfo:
             i += 1
+            print '\tDone, 0 new records are inserted into DB.'
             continue
         # Find the new builds of the job and save them to DB
-        lastBuildSaved = db.getLastBuildInfo(job)
-        start = (lastBuildSaved['build id']+1) if lastBuildSaved else jobInfo['firstBuild']
-        end = jobInfo['lastBuild']
+        lastBuildSaved = db.getLastBuildInfo(jobColl)
+        firstBuildNum = jobInfo['firstBuild']['number'] if 'firstBuild' in jobInfo else 0
+        lastBuildNum = jobInfo['lastCompletedBuild']['number'] if 'lastCompletedBuild' in jobInfo else 0
+        start = (lastBuildSaved['number']+1) if lastBuildSaved else firstBuildNum
+        end = lastBuildNum
         while start <= end:
             buildInfo = server.getBuildInfo(job, start)
             
-            print '\tprocess build {}'.format(start)
+            print '\tProcess build [{}, {}]'.format(job, start)
             if buildInfo:
                 # We want to know the coverage value
                 if job == JENKINS_COVERAGE_JOB:
@@ -148,10 +128,19 @@ def saveAllCI2DB(server, db):
                         if match:
                             info = match.group(0).split()
                             buildInfo['coverage'] = info[len(info)-1]
-                db.insertOne(job, buildInfo)
+                # Save its log if the build failed by itself not its sub-builds
+                if (buildInfo['result'] != 'SUCCESS'
+                    and ('subBuilds' not in buildInfo or not buildInfo['subBuilds'])):
+                    buildLog = server.getConsoleOutput(job, buildInfo['number'])
+                    if buildLog:
+                        buildInfo['buildLogID'] = db.writeBlock(buildLog)
+
+                db.insertOne(jobColl, buildInfo)
+                cnt += 1
 
             start += 1
 
+        print '\tDone, {} new records are inserted into DB.'.format(cnt)
         # A CI consists of multiple jobs, so append each related sub-job to job array to get its info
         for subJob in jobInfo['subJobs']:
             if subJob not in jobSet:

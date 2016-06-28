@@ -75,7 +75,7 @@ var main = function(){
         xaxis: {
         title: 'Build Number'},
         yaxis: {
-        title: 'Build Duaration(m)'},
+        title: 'Build Duration(m)'},
         margin: {
         t: 0},
     };

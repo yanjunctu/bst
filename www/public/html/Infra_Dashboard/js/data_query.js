@@ -169,9 +169,9 @@ function get_queueStatistics()
 				//console.log(i, CIHistory[i].queuewTime,  CIHistory[i].queuewTime/3600000, qt/qcount/3600000);
 			}
 
-			if(CIHistory[i].duaration && CIHistory[i].buildResult == "SUCCESS")
+			if(CIHistory[i].duration && CIHistory[i].buildResult == "SUCCESS")
 			{
-				rt += CIHistory[i].duaration;
+				rt += CIHistory[i].duration;
 				rcount += 1;
 			}
 		}
