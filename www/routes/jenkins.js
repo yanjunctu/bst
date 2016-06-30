@@ -681,7 +681,7 @@ var refreshCIHistory = function(db, doc) {
     var subBuildCov = findSubBuildInfo(doc, CI_COVERAGE_CHECK_JOB);
     if (subBuildCov) {
       
-        if (subBuildCov["result"] == "FAILURE"){
+        if (subBuildCov["result"] != "SUCCESS"){
           entry["coverage"] = "FAILURE";
         }
         else{
