@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var email = require('../models/email.js');
+var jenkinsCIJob = require('../models/jenkinsJob.js');
 var fiber = require('fibers');
 var Server = require('mongo-sync').Server;
 var cnt=0;
@@ -164,6 +165,10 @@ function getPendingReq(project, callback){
                         {
                             pushTime = keyValue[1];
                         }
+                        if(keyValue[0] == 'EMAIL')
+                        {
+                            submail = keyValue[1];
+                        }
                    
                     });
                     
@@ -172,8 +177,8 @@ function getPendingReq(project, callback){
                         if (jobName && submitter && branch && pushTime){
                      
                             console.log('jobname:'+item.task.name);
-                                        console.log(submitter,branch,pushTime);
-                            result.queue.push({"id": id,"submitter":submitter,"subBranch":branch,"subTime":pushTime});
+                                        console.log(submitter,branch,pushTime,submail);
+                            result.queue.push({"id": id,"submitter":submitter,"subBranch":branch,"subTime":pushTime,"submail":submail});
                         }     
                     }
                 }
@@ -451,19 +456,7 @@ var ciUnblock = function(jenkinsUnlock,boosterUnlock){
     console.log('ciUnblock')
     status = "SUCCESS";
     if (jenkinsUnlock == "TRUE"){
-        var paras = new Object(); 
-        paras.WIN_SCRIPT_HOME=WIN_SCRIPT_HOME
-        paras.LOCK_FILE = LOCK_FILE 
-	     
-        jenkins.build(UNLOCK_CI_JOB,paras,function(err) {
-            if (err) {
-                console.log("failed to build "+UNLOCK_CI_JOB+err);
-                status = "FAILURE"
-            }
-            else {
-                console.log("succeeded to build "+UNLOCK_CI_JOB);
-            }
-        });
+        jenkinsCIJob("enable")
     }
     if(boosterUnlock == "TRUE"){
         if(CISTATUS.ciBlockInfo.result == "FAILURE"){
@@ -518,35 +511,31 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                    
                 });
                 ciBlockInfo.submitter = submitter;
-                if (preResult == "SUCCESS"){
-                    var msg = "Block Reason:  DAT test failed on tag :" +ciBlockInfo.releaseTag +"\n The Submitter(s):" +ciBlockInfo.submitter+"\n Last Success Tag:"+ciBlockInfo.lastSuccessTag;
-                    var args={'msg':msg,'mode':'block'}
-                    email.send(args)
-                }
             }).run();
 
             server.close();
         });
-        // Cancle all pending CI requests
-        getPendingReq("REPT2.7", function(err, data){
-            if (err) {
-                console.log(err);
-                return;
-            }
-            // Cancle all pending CI reqs
-            data["queue"].forEach(function(pendingCI) {
-                var id = pendingCI["id"];
+        if (preResult == "SUCCESS" ){
+            // send email to the submitters whoes CI is canceled
+            getPendingReq("REPT2.7", function(err, data){
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                var msg = "Cancel Reasion : DAT test failed , CI blocked \n please resubmit your CI after CI unblocked"
 
-                jenkins.cancel_item(id, function(err) {
-                    if (err) {
-                        console.log("failed to cancel item["+id.toString()+"]"+err);
-                    }
-                    else {
-                        console.log("succeeded to cancel item["+id.toString()+"]");
-                    }
+                data["queue"].forEach(function(pendingCI) {
+                    var submail = pendingCI["submail"];
+                    var name = pendingCI["submitter"];
+                    var branch = pendingCI["subBranch"];
+                    var subject = "[Notice!] Your CI : "+branch+" is canceled"
+                    var args={'msg':msg,'subject':subject,"email":submail,"name":name}
+                    email.send(args)
                 });
+                //disable PCR-REPT-0-MultiJob
+                jenkinsCIJob("disable")
             });
-        });
+        }
     }
     else if(ciBlockInfo.result == "SUCCESS"){
         //let CI unblocked

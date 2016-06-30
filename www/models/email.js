@@ -10,20 +10,28 @@ var argsParser=function(args){
     email ="rept-ci@googlegroups.com"
 
     var msg =""
+    if (args.mode == 'block'){
+        subject = '[Notice!] CI is blocked'
+    }
+    else if (args.mode == 'unblock'){
+        subject = '[Notice!] CI is unblocked'
+        msg ="You can submit your CI now"
+    }
     if(args.msg){
         msg = args.msg
     }
-    if (args.mode == 'block'){
-        title = '[Notice!] CI is blocked'
+    if(args.subject){
+        subject = args.subject
     }
-    else if (args.mode == 'unblock'){
-        title = '[Notice!] CI is unblocked'
-        if(!args.msg){
-            msg ="You can submit your CI now"
-        }
-    }    
-   
-    cmd = "python /opt/booster_project/script/boosterSocket/sendEmail.py -n "+name+" -e "+email+" -m \""+msg+"\" -t "+title
+    if(args.email){
+        email = args.email
+        name = email.split("@")[0]
+    }
+    if(args.name){
+        name = args.name
+    }
+    cmd = "python /opt/booster_project/script/boosterSocket/sendEmail.py -n "+name+" -e "+email+" -m \""+msg+"\" -s "+subject
+    
     return cmd
 }
 
