@@ -21,10 +21,6 @@ var CISTATUS = {
   "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na",manualControl:"FALSE"}
 };  
 
-var UNLOCK_CI_JOB = "PCR-REPT-Remove_Lock_File";
-var WIN_SCRIPT_HOME = "D:\\Git_Repo\\scm";
-var LOCK_FILE = "D:\\Git_Repo\\scm\\REPT2.7.pid";
-
 // Variables for CI history info
 const CI_TRIGGER_JOB = "PCR-REPT-0-MultiJob";
 const CI_ON_TARGET_JOB = "PCR-REPT-On_Target_MultiJob";
@@ -56,6 +52,8 @@ keyMap[CI_OFF_TARGET_UT_JOB] = "win32UT";
 keyMap[CI_OFF_TARGET_IT_JOB] = "win32IT";
 keyMap[CI_OFF_TARGET_IT_PART1_JOB] = "win32ITPart1";
 keyMap[CI_OFF_TARGET_IT_PART2_JOB] = "win32ITPart2";
+
+const CI_JOB='PCR-REPT-0-MultiJob';
 
 var getJobLastBuild = function(job,callback)
 {
@@ -457,7 +455,7 @@ var ciUnblock = function(jenkinsUnlock,boosterUnlock){
     console.log('ciUnblock')
     status = "SUCCESS";
     if (jenkinsUnlock == "TRUE"){
-        jenkinsCIJob("enable")
+        jenkinsCIJob(CI_JOB,"enable")
     }
     if(boosterUnlock == "TRUE"){
         if(CISTATUS.ciBlockInfo.result == "FAILURE"){
@@ -540,7 +538,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                     email.send(args)
                 });
                 //disable PCR-REPT-0-MultiJob
-                jenkinsCIJob("disable")
+                jenkinsCIJob(CI_JOB,"disable")
             });
         }
     }
