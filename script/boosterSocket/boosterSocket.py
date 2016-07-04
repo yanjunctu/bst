@@ -64,12 +64,14 @@ SREVER_PORT = 16979
 
 #OPCODE
 KLOCWORK_WARNING_CHECK_OPCODE = "KLOCWORK_WARNING_CHECK"
+KLOCWORK_WARNING_FIND_OPCODE = "KLOCWORK_WARNING_FIND"
 
 #RESULT
 SUCCESS_CODE     = "SUCCESS"
 FAIL_CODE = "FAIL"
 
-
+SOCKET_MAX_LEN = 65500
+MSG_MAX_LEN = SOCKET_MAX_LEN-42
 ##########utility functions###################################
 
 def sendEmail(name,mail,text,title):
@@ -83,7 +85,7 @@ def sendEmail(name,mail,text,title):
   server = smtplib.SMTP('remotesmtp.mot-solutions.com')
   #server.set_debuglevel(True) # show communication with the server
   try:
-      server.sendmail('booster@motorolasolutions.com', [mail,'jhv384@motorolasolutions.com'], msg.as_string())
+      server.sendmail('booster@motorolasolutions.com', [mail,'qpcb36@motorolasolutions.com'], msg.as_string())
   finally:
       server.quit()
         
@@ -110,13 +112,40 @@ def handleWarnKlocCheckResult(data):
 
   return SUCCESS_CODE;
 
+def handleWarnKlocFindResult(data):
+  """
+  This handler will response to write received klock and warning check result into database
+  """
+  
+  print "I am in handleWarnKlocFindResult"
+  
+  
+  #get Mongo DB client Instance, connect to default port
+  client = MongoClient();
 
+  #get db
+  db = client.booster
 
+  #typestr=json.dumps(releaseTag)
 
+  #get collections
+  records = db.warningKlocwork.find(data)
+  #items ={}
+  items=[]
+  # if the return info will be truncated if it too big,so only return some useful msg 
+  for record in records:
+      item ={}
+      item["buildNumber"] = record["buildNumber"]
+      item["engineerName"] = record["engineerName"]
+      item["issueIDs"] = record["issueIDs"]
+      items.append(item)
+  #print items
+  return items;
 
 #### mapping table for opcode and its callback function
 registeredHandlers = {
-  KLOCWORK_WARNING_CHECK_OPCODE:handleWarnKlocCheckResult
+  KLOCWORK_WARNING_CHECK_OPCODE:handleWarnKlocCheckResult,
+  KLOCWORK_WARNING_FIND_OPCODE:handleWarnKlocFindResult
 }
 
 
@@ -131,6 +160,21 @@ class BoosterMsg():
     msg = {"opcode":self.OPCODE}
     return msg;
   
+class WarnKlocFindResult(BoosterMsg):
+  """
+  Like CI will check warning and klocwork, if have unclear items, CI will create one such message
+  to send to server
+  """  
+  OPCODE = KLOCWORK_WARNING_FIND_OPCODE;
+  
+  def __init__(self,qury):
+    self.qury = qury;
+
+  def getSendMsg(self):
+    msg = BoosterMsg.getSendMsg(self);
+    msg["data"]= self.qury;
+    return msg;
+
 class WarnKlocCheckResult(BoosterMsg):
   """
   Like CI will check warning and klocwork, if have unclear items, CI will create one such message
@@ -188,13 +232,16 @@ class BoosterRequestHandler(DatagramRequestHandler):
     dbData = dataObject.copy();#dataObject is a dictionary type, it own a copy() to do deep copy
     
     if opcode in registeredHandlers.keys():
+        
       ret = registeredHandlers[opcode](dbData);
-      recvMsg["result"] = ret;
+      if len(str(ret)) > MSG_MAX_LEN:
+        recvMsg["result"] = FAIL_CODE;
+      else:
+        recvMsg["result"] = ret;
     else:
-      recvMsg["result"] = FAIL_CODE;   
-
+      recvMsg["result"] = FAIL_CODE; 
+    
     resultStr = json.dumps(recvMsg);
-
     #except:
     #  resultStr = json.dumps({"result":FAIL_CODE})
         
@@ -251,11 +298,12 @@ class BoosterClient():
     """
     If you need to wait server's response, call this interface
     """
-    return self.sock.recv(1024);
+    return self.sock.recv(SOCKET_MAX_LEN)
+
         
 if __name__ == "__main__":
   
-  if len(sys.argv)<2 or sys.argv[1] not in ["start","sanitytest"]:
+  if len(sys.argv)<2 or sys.argv[1] not in ["start","sanitytest","sanitytest_get"]:
     print('''
     python boosterSocket.py start:               start server...
     python boosterSocket.py sanitytest:          A basic test
@@ -283,5 +331,30 @@ if __name__ == "__main__":
       
     else:
       print "send failed!"
+
+    
+  #This is just a example for client get msg from server
+  if sys.argv[1] == "sanitytest_get":
+    #simulate client
+    #findresult = WarnKlocFindResult("REPT_I02.07.01.96");
+    #qury = {"buildNumber":{"$gte":219-50,"$lte":219-34}}
+    qury = {"releaseTag":"REPT_I02.07.01.96"}
+    findresult = WarnKlocFindResult(qury)
+    interface = BoosterClient();
+    ret = interface.send(findresult);
+    if ret:
+      print "[send from client]: "+json.dumps(findresult.getSendMsg());
+      #print "[recv from server]: "+interface.recv();
+      receive = interface.recv();
+      receive = json.loads(receive)
+      print receive["result"]
+      print  ret
+      #records = interface.recv()
+      #for record in records:
+          #print record
+      #sendEmail('',"hello! booster","checked new warnings");
+    else:
+      print "send failed!"
+     
   
   
