@@ -246,7 +246,7 @@ def actionOnCIMode(args):
                 result = buildInfo['result']
                 email =getParameterValue(buildInfo,'EMAIL')
                 submitter = getParameterValue(buildInfo,'SUBMITTER')
-                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":buildInfo['timestamp'],"buildWarningCnt":0,"issueIDs":[]};
+                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":buildInfo['timestamp'],"issueIDs":[]};
                 
                 kwbuild=releaseTag.replace(".","_")
                 if (result == 'SUCCESS') and (kwbuild in buildList):
