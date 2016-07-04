@@ -478,6 +478,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     ciBlockInfo.lastSuccessTag="";
     
     console.log("ciBlock result:"+ciBlockInfo.result)
+
     //ciBlockInfo.submitter=getParameterValue(data,"SUBMITTER");
     if((ciBlockInfo.manualControl == "TRUE") && (preReleaseTag == ciBlockInfo.releaseTag)){
         ciBlockInfo.result = "SUCCESS"
@@ -710,7 +711,11 @@ var refreshCIHistory = function(db, doc) {
                 for (var i = 0; i < warnings.length; ++i) {
                     buildWarnings += warnings[i]["buildWarningCnt"];
                 }
-                var klocworkWarnings = klockworkIssue[0]["klocworkCnt"];
+
+                var klocworkWarnings = 0
+                if (klockworkIssue.length >0){
+                    klocworkWarnings = klockworkIssue[0]["klocworkCnt"];
+                }
                 
                 entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
             }
