@@ -6,24 +6,25 @@ var exec = require('child_process').exec;
 
 var argsParser=function(args){
 
-    name = "rept-ci"
-    email ="rept-ci@googlegroups.com"
-
+    var name = ""
+    var email =""
     var msg =""
+    var subject = ""
     if(args.msg){
         msg = args.msg
     }
-    if (args.mode == 'block'){
-        title = '[Notice!] CI is blocked'
+    if(args.subject){
+        subject = args.subject
     }
-    else if (args.mode == 'unblock'){
-        title = '[Notice!] CI is unblocked'
-        if(!args.msg){
-            msg ="You can submit your CI now"
-        }
-    }    
-   
-    cmd = "python /opt/booster_project/script/boosterSocket/sendEmail.py -n "+name+" -e "+email+" -m \""+msg+"\" -t "+title
+    if(args.email){
+        email = args.email
+        name = email.split("@")[0]
+    }
+    if(args.name){
+        name = args.name
+    }
+    cmd = "python /opt/booster_project/script/boosterSocket/sendEmail.py -n "+name+" -e "+email+" -m \""+msg+"\" -s "+subject
+    
     return cmd
 }
 

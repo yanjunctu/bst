@@ -227,6 +227,7 @@ def process_argument():
     parser.add_argument('-n',dest="CIUserName")
     parser.add_argument('-e',dest="CIUserEmail")
     parser.add_argument('-t',dest="releaseTag")
+    parser.add_argument('-a',dest="audit")
     
     args = parser.parse_args()
     try:
@@ -313,7 +314,7 @@ def pre_check(args):
     mergedTags = subprocess.check_output('git tag --merged', stderr=subprocess.STDOUT)
     baseOnTag = parseLatestCITag(mergedTags)
     
-    if args.mode == 'preCI':
+    if args.mode == 'preCI' and not args.ci_Branch:
         # Make sure Git repo have mount to a drive firstly
         # match root driver, like c:\ or d:\
         valid_current_path_pattern = r'^\w:\\$'; 
@@ -396,7 +397,7 @@ def run_cmd(drive,cmdQ):
         cmdQ.task_done() 
             
 def buildLog_generate(drive):
-    print("start to generate the build log,this will take about 10 minutes")
+    print("start to generate the build log,this will take about 5 minutes")
     for cmds in All_CMDS:
         cmdQ = Queue()
         for cmdType in cmds:
@@ -438,7 +439,57 @@ def actionOnNewWarning(tag,name,mail,file):
     if ret:
         #print "[send from client]: "+json.dumps(wkresult.getSendMsg());
         #print "[recv from server]: "+interface.recv();
-        sendEmail(name,mail,file.getvalue(),CIMailSubject);  
+        sendEmail(name,mail,file.getvalue(),CIMailSubject); 
+        
+def blameOnNewWarning(args):
+    cwd = os.getcwd()
+    unResolveList= OrderedDict()
+    for (file_name,line) in ALL_NEW_WARNINGS.keys():
+        blame_cmd ='git blame -e -L {start},{end} {filename} '.format(start=line,end=line,filename=os.path.abspath(file_name))
+        print blame_cmd
+ 
+        try:
+            blame_output = subprocess.check_output(blame_cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as err:
+            print err
+            continue;
+        #get email,blame_output kind like:df584209 (<rurong.huang@motorolasolutions.com> 2016-06-12 15:58:32 +0800 585)
+        match = re.match(r'^\w{8}\s\(<(.+)>\s\d{4}-\d{2}-\d{2}\s.+\)', blame_output)
+        if not match:
+            continue
+        emailAddr = match.group(1)
+        if unResolveList.has_key(emailAddr):
+            unResolveList[emailAddr]['number']=namelist[emailAddr]['number']+1;
+            unResolveList[emailAddr]['warning'][file_name,line]=ALL_NEW_WARNINGS[file_name,line]
+        else :
+            blameInfo = OrderedDict()
+            blameInfo['number']=1
+            warningDict = OrderedDict() 
+            warningDict[file_name,line]=ALL_NEW_WARNINGS[file_name,line]
+            blameInfo['warning']=warningDict
+            unResolveList[emailAddr]=blameInfo
+            
+        if args.CIUserEmail:
+            from boosterSocket import sendEmail
+            stdout = sys.stdout
+            sys.stdout = stdOutfile = StringIO.StringIO()
+            
+        for userEmail in unResolveList.keys():
+            name = userEmail.split('@')[0]
+            warningCnt = unResolveList[userEmail]['number']
+            unResolveWarning = unResolveList[userEmail]['warning']
+            print '{} total {} build warning unresolved :'.format(name,warningCnt)
+            for (file_name,line) in unResolveWarning.keys():
+                 print unResolveWarning[file_name,line]
+                    
+        if args.CIUserEmail:           
+            sys.stdout = stdout
+            mailSubject = '[Notice!] The unresolved build warning on : {}'.format(args.ci_Branch)
+            name = args.CIUserEmail.split('@')[0]
+            sendEmail(name,args.CIUserEmail,stdOutfile.getvalue(),mailSubject);
+        
+    os.chdir(cwd)
+    #return unResolveList
 
       
 if __name__ == "__main__":
@@ -503,7 +554,11 @@ if __name__ == "__main__":
     print '\nMore details please refer to {summarize_log_file}\n'.format(summarize_log_file=args.drive+LOG_DIR+'summarize.log')
     print 'Warning check totally use {minute} minutes {seconds} seconds\n'.format(minute = int((tEnd-tStart).total_seconds() / 60),seconds = int((tEnd-tStart).total_seconds() % 60))
 
-    if args.mode == 'CI' and len(ALL_NEW_WARNINGS)>0:
-        sys.stdout = stdout #recover sys.stdout
+    if (args.audit == 'Y' or args.audit == 'y') and len(ALL_NEW_WARNINGS)>0:
+        if args.mode == 'CI':
+            sys.stdout = stdout #recover sys.stdout
+        blameOnNewWarning(args)
+    elif args.mode == 'CI' and len(ALL_NEW_WARNINGS)>0:
+        sys.stdout = stdout #recover sys.stdout      
         actionOnNewWarning(args.releaseTag,args.CIUserName,args.CIUserEmail,stdOutfile)
         
