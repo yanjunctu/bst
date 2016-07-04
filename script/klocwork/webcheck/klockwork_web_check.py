@@ -282,7 +282,7 @@ def actionOnCIMode(args):
                         sys.stdout = stdout #recover sys.stdout  
                         if len(issueIDNew)!=0 or len(issueIDFix)!=0:
                             #sendEmail(submitter,email,stdOutfile.getvalue(),emailSubject);
-                            sendEmail(submitter,"rurong.huang@motorolasolutions",stdOutfile.getvalue(),emailSubject);
+                            sendEmail(submitter,email,stdOutfile.getvalue(),emailSubject);
                 else :
                 #send email to booster team 
                     record["klocworkCnt"]='jenkinsFail'
@@ -291,7 +291,7 @@ def actionOnCIMode(args):
                     msg = "jenkins klocwork job is "+ result +" on:" + releaseTag;
                     if result == "SUCCESS":
                         msg = "{}\n but there is no build info on klockwork web".format(msg)
-                    sendEmail("booster","rurong.huang@motorolasolutions",msg,emailSubject);
+                    sendEmail("booster","boosterTeam@motorolasolutions.com",msg,emailSubject);
         start += 1
  
             
