@@ -242,7 +242,7 @@ def actionOnCIMode(args):
         if buildInfo:
             releaseTag=getParameterValue(buildInfo,'NEW_BASELINE')
             
-            if re.match(r'REPT_I02.*', releaseTag):
+            if re.match(r'REPT_[DI]02.*', releaseTag):
                 result = buildInfo['result']
                 email =getParameterValue(buildInfo,'EMAIL')
                 submitter = getParameterValue(buildInfo,'SUBMITTER')
