@@ -20,7 +20,7 @@ JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
 KW_JOB = "PCR-REPT-Git-KW"
 #data base
-CI_KW_COLL_NAME = "warningKlocwork";
+CI_KW_COLL_NAME = "klocwork";
 BOOSTER_DB_NAME = 'booster'
 
 class klocworkapi(object):
@@ -215,8 +215,8 @@ def getParameterValue(buildInfo, paramName):
 def actionOnCIMode(args):
     from jenkins import Jenkins
     from jenkins import JenkinsException
-    sys.path.append('/vagrant/booster_project/script/boosterSocket/')
-    sys.path.append('/vagrant/booster_project/script/jenkins/')
+    sys.path.append('/opt/booster_project/script/boosterSocket/')
+    sys.path.append('/opt/booster_project/script/jenkins/')
     from boosterSocket import sendEmail
     from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
     

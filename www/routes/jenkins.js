@@ -43,6 +43,7 @@ const CI_SANITY_TEST_JOB = "PCR-REPT-DAT_LATEST";
 const CI_EXT_REGRESSION_JOB = "PCR-REPT-DAT_DAILY";
 const CI_MEMORY_LEAK_JOB = "PCR-REPT-Memory_Leak_MultiJob-DAILY";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
+const CI_KLOCWORK_COLL_NAME = "klocwork";
 var CILastTriggerBuildID = 0, CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0,CIMemoryLeakBuildID=0;
 var CIHistory = [];
 var keyMap = {};
@@ -511,6 +512,12 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                    
                 });
                 ciBlockInfo.submitter = submitter;
+                if (preResult == "SUCCESS"){
+                    var msg = "Block Reason:  DAT test failed on tag :" +ciBlockInfo.releaseTag +"\n The Submitter(s):" +ciBlockInfo.submitter+"\n Last Success Tag:"+ciBlockInfo.lastSuccessTag;
+                    var subject = '[Notice!] CI is blocked'
+                    var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
+                    email.send(args)
+                }
             }).run();
 
             server.close();
@@ -542,7 +549,9 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
         ciBlockInfo.manualControl = "FALSE"
         if (preResult == "FAILURE"){
             ciUnblock("TRUE","FALSE")
-            var args={'mode':'unblock'}
+            var subject = '[Notice!] CI is unblocked'
+            var msg ="You can submit your CI now"
+            var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
             email.send(args)
             console.log ("CI unblocked")
         }
@@ -692,17 +701,19 @@ var refreshCIHistory = function(db, doc) {
             var rlsInfo = db.getCollection(getJobCollName(CI_RELEASE_JOB)).findOne({"number": number});
     
             if (rlsInfo) {
-                var buildWarnings = 0, klocworkWarnings = 0;
+                var buildWarnings = 0;
                 var rlsTag = findParamValue(rlsInfo, "NEW_BASELINE");
                 var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
+                var klockworkIssue = db.getCollection(CI_KLOCWORK_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
                 var rlsDate = new Date(doc["timestamp"] + doc["duration"]);
     
                 entry["rlsTag"] = rlsTag;
                 entry["rlsTime"] = rlsDate.toLocaleDateString() + " " + rlsDate.toLocaleTimeString();
                 for (var i = 0; i < warnings.length; ++i) {
                     buildWarnings += warnings[i]["buildWarningCnt"];
-                    klocworkWarnings += warnings[i]["klocworkCnt"];
                 }
+                var klocworkWarnings = klockworkIssue["klocworkCnt"];
+                
                 entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
             }
         }

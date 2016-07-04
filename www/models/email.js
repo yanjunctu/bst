@@ -6,17 +6,10 @@ var exec = require('child_process').exec;
 
 var argsParser=function(args){
 
-    name = "rept-ci"
-    email ="rept-ci@googlegroups.com"
-
+    var name = ""
+    var email =""
     var msg =""
-    if (args.mode == 'block'){
-        subject = '[Notice!] CI is blocked'
-    }
-    else if (args.mode == 'unblock'){
-        subject = '[Notice!] CI is unblocked'
-        msg ="You can submit your CI now"
-    }
+    var subject = ""
     if(args.msg){
         msg = args.msg
     }

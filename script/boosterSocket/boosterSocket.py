@@ -85,13 +85,10 @@ def sendEmail(name,mail,text,title):
   server = smtplib.SMTP('remotesmtp.mot-solutions.com')
   #server.set_debuglevel(True) # show communication with the server
   try:
-      server.sendmail('booster@motorolasolutions.com', [mail,'qpcb36@motorolasolutions.com'], msg.as_string())
+      server.sendmail('booster@motorolasolutions.com', [mail,'qpcb36@motorolasolutions.com','jhv384@motorolasolutions.com'], msg.as_string())
   finally:
       server.quit()
-        
-        
-        
-        
+
 #######define all your opcode handlers functions here##########
 def handleWarnKlocCheckResult(data):
   """
