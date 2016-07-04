@@ -315,6 +315,10 @@ if __name__ == "__main__":
         from boosterSocket import BoosterClient,sendEmail,WarnKlocFindResult
         actionOnAuditMode(args)
     elif args.mode == "CI":
+        try:
+            ssl._create_default_https_context = ssl._create_unverified_context
+        except AttributeError:
+            pass
         actionOnCIMode(args)
 
 
