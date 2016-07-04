@@ -136,7 +136,9 @@ def handleWarnKlocFindResult(data):
       item["engineerName"] = record["engineerName"]
       item["issueIDs"] = record["issueIDs"]
       items.append(item)
-  #print items
+  #check items len
+  if len(str(items)) > MSG_MAX_LEN:
+      return FAIL_CODE;
   return items;
 
 #### mapping table for opcode and its callback function
@@ -231,10 +233,7 @@ class BoosterRequestHandler(DatagramRequestHandler):
     if opcode in registeredHandlers.keys():
         
       ret = registeredHandlers[opcode](dbData);
-      if len(str(ret)) > MSG_MAX_LEN:
-        recvMsg["result"] = FAIL_CODE;
-      else:
-        recvMsg["result"] = ret;
+      recvMsg["result"] = ret;
     else:
       recvMsg["result"] = FAIL_CODE; 
     
