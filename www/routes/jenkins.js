@@ -710,7 +710,7 @@ var refreshCIHistory = function(db, doc) {
                 for (var i = 0; i < warnings.length; ++i) {
                     buildWarnings += warnings[i]["buildWarningCnt"];
                 }
-                var klocworkWarnings = klockworkIssue["klocworkCnt"];
+                var klocworkWarnings = klockworkIssue[0]["klocworkCnt"];
                 
                 entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
             }
