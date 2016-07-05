@@ -459,7 +459,9 @@ var ciUnblock = function(jenkinsUnlock,boosterUnlock){
     }
     if(boosterUnlock == "TRUE"){
         if(CISTATUS.ciBlockInfo.result == "FAILURE"){
-            var args={'mode':'unblock'}
+            var subject = '[Notice!] CI is unblocked'
+            var msg ="You can submit your CI now"
+            var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
             email.send(args)
         }
         CISTATUS.ciBlockInfo.manualControl = "TRUE"
