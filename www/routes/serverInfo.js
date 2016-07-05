@@ -1,7 +1,8 @@
 var express = require('express');
 var router = express.Router();
-var fs = require('fs');
 var path = require('path');
+var fiber = require('fibers');
+var Server = require('mongo-sync').Server;
 
 var RepoInfoPath = "/var/opt/booster/boosterServerInfo"
 
@@ -82,68 +83,61 @@ router.get('/repoInfo', function (req, res, next) {
 
 });
 
-function fetchTestCaseNum(project,days,callback){
+function findParamValue(buildInfo, paramName) {
+    if (!buildInfo || !buildInfo["actions"]) {
+        return;
+    }
 
-	var utStr = "/ut_report_";
-	var dirname = "/mnt/REPT_Release/";
-	//var dirname = "/vagrant/REPT_Release/";
-	var reportfilePath;
-	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
-	var creatTime;
-	var caseNum_temp =0;
-    var caseNum ={"filename":[],"num":[]};
+    for (var i = 0; i < buildInfo["actions"].length; ++i) {
+        if (!buildInfo["actions"][i]["parameters"]) {
+            continue;
+        }
 
-	fs.readdir(dirname + project, function (err, files) {
-		if(err){
-			console.log(err);
-			return;
-		} 
-		else {
-			//files.forEach(function (file) 
-			for(var i=0;i<files.length;i++)
-			{
-				var file = files[i];
-				var filePath = path.normalize(dirname+ project+"/"+ file);
+        var params = buildInfo["actions"][i]["parameters"];
+        for (var j = 0; j < params.length; ++j) {
+            if (params[j]["name"] == paramName) {
+                return params[j]["value"];
+            }
+        }
+    }
 
-				var stats= fs.lstatSync(filePath);
-				creatTime = stats.mtime.getTime();
+    return;
+}
 
-				if(stats.isDirectory()&&creatTime>oldestTimeStamp){
+function fetchTestCaseNum(project, days, callback){
+    // Get the sum of the number of UT cases and IT cases from DB
+    var server = new Server('127.0.0.1');
+    var ret = {"filename": [], "num": []};
+    var allTestJobs = ["CI-PCR-REPT-Win32_UT", "CI-PCR-REPT-Win32_IT-TEST-Part1", "CI-PCR-REPT-Win32_IT-TEST-Part2"];
+    var timestamp = (new Date).getTime() - days*24*3600*1000;
 
-					reportfilePath=filePath+utStr+file+".txt";
-					if(fs.existsSync(reportfilePath)){
-						var data=fs.readFileSync(reportfilePath,'utf8');
-						// convert whole text into arrays
-						var lines = data.split('\n')
-						caseNum_temp = 0;
-						for (var index = 0; index < lines.length; index++) {
-							var line = lines[index];
+    fiber(function() {
+        var db = server.db("booster");
+        var rlsColl = db.getCollection("CI-PCR-REPT-Git-Release");
+        var docs = rlsColl.find({"result": "SUCCESS", "timestamp": {$gte: timestamp}}).sort({"number": 1}).toArray();
+        var err = undefined;
 
-							line = line.trim(); // remove space
+        for (var i = 0; i < docs.length; ++i) {
+            var rlsTag = findParamValue(docs[i], "NEW_BASELINE");
+            var pattern = {"result": "SUCCESS", "actions.parameters": {$in: [{"name": "NEW_BASELINE", "value": rlsTag}]}};
+            var num = 0;
 
-							var regex =/Test\w*\s*OK\s\([0-9\s]*tests/;
-							if(regex.test(line))
-							{
-							    //console.log(line);
-								//regex=/[^\d\,]/g;
-								regex=/[\w\s]*OK\s\(/;
-								//regex =/([\w\s]*OK\s\()|(tests[\w\s\,]*\))/;
-								var num = line.replace(regex,"");
+            for (var j = 0; j < allTestJobs.length; ++j) {
+                var testDocs = db.getCollection(allTestJobs[j]).find(pattern).sort({"number": -1}).toArray();
 
-								regex = /tests[\w\s\,]*\)/;
-								var testNum = num.replace(regex,"");
+                // Maybe some consecutive builds have the same release tag, only care the latest one
+                if (testDocs.length && "testcaseNum" in testDocs[0]) {
+                    num += testDocs[0]["testcaseNum"];
+                }
+            }
+            ret["filename"].push(rlsTag);
+            ret["num"].push(num);
+        }
 
-								caseNum_temp = caseNum_temp +parseInt(testNum);
-							}
-						}
-						caseNum.filename.push(file); 
-						caseNum.num.push(caseNum_temp); 
-					}				
-				}
-			}
-		}
-		callback(err,caseNum);
-	});
+        callback(err, ret);
+    }).run();
+
+    server.close();
 }
 
 router.get('/testCaseNum', function (req, res, next) {
