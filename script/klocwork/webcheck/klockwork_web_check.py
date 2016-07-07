@@ -319,9 +319,10 @@ def process_argument():
     parser.add_argument('-l',dest="ci_Branch")
     parser.add_argument('-s',dest="state")
     parser.add_argument('-e',dest="email")
+    parser.add_argument('-p',dest="period")
     #the unit is day
-    parser.add_argument('-D',dest="pdays")
-    parser.add_argument('-m',dest="mode",required = True)
+    parser.add_argument('-D',dest="pdays",default = 7,type=int)
+    parser.add_argument('-m',dest="mode",choices=['audit', 'CI'],required = True)
     
     args = parser.parse_args()
 
@@ -329,7 +330,7 @@ def process_argument():
 if __name__ == "__main__":
     
     args = process_argument()
-    if args.mode == 'period':
+    if args.period:
         sys.path.append('/opt/booster_project/script/boosterSocket/')
         sys.path.append('/opt/booster_project/script/jenkins/')
         from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
@@ -337,7 +338,7 @@ if __name__ == "__main__":
         db = BoosterDB(dbClient, BOOSTER_DB_NAME)
         args=findBoundaryTag(args,db,CI_KW_COLL_NAME)
     
-    if args.mode == "audit" or args.mode == 'period':
+    if args.mode == "audit":
         #sys.path.append('/vagrant/booster_project/script/boosterSocket/')
         from boosterSocket import BoosterClient,sendEmail,WarnKlocFindResult
         actionOnAuditMode(args)

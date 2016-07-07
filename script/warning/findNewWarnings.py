@@ -77,6 +77,7 @@ JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
 JENKINS_TRIGGER_JOBS = 'PCR-REPT-0-MultiJob';
 BOOSTER_DB_NAME = 'booster'
+Release_COLL='CI-PCR-REPT-Git-Release'
 
 #---------------------------------------------------------------------------------------------------------------
 # define class BuildLogReader 
@@ -184,15 +185,11 @@ class DiffParser(object):
         return all_changes
 
 
-    def get_changes(self, *commit):
+    def get_changes(self, commit):
         cwd = os.getcwd()
-        if len(commit) == 1:
-            diff_cmd ='git diff --unified=0 {}'.format(commit[0])
-        elif len(commit) == 2 :
-            diff_cmd ='git diff --unified=0 {} {}'.format(commit[0],commit[1])
-        else:
-            print 'get fcl args not correct'
-            sys.exit(1)
+        
+        diff_cmd ='git diff --unified=0 {} {}'.format(commit[0],commit[1])
+
         os.chdir(self.repo)
         try:
             diff_output = subprocess.check_output(diff_cmd, stderr=subprocess.STDOUT,shell=True)
@@ -258,7 +255,7 @@ def process_argument():
     parser.add_argument('-e',dest="CIUserEmail")
     parser.add_argument('-t',dest="releaseTag")
     #the unit is day
-    parser.add_argument('-D',dest="pdays")
+    parser.add_argument('-D',dest="pdays",default = 7,type=int)
     #whether need git blame
     parser.add_argument('-a',dest="audit")
     
@@ -578,14 +575,14 @@ if __name__ == "__main__":
         from klockwork_web_check import findBoundaryTag,getParameterValue
         dbClient = MongoClient()
         db = BoosterDB(dbClient, BOOSTER_DB_NAME)
-        args = findBoundaryTag(args,db,'CI-PCR-REPT-Git-Release')
+        args = findBoundaryTag(args,db,Release_COLL)
         #checkout to the latest tag,bcz git blame need it
         subprocess.check_output('git checkout {}'.format(args.releaseTag), stderr=subprocess.STDOUT,shell=True)
-        diff_parser = DiffParser(args.drive)
-        status,changes = diff_parser.get_changes(args.ci_Branch,args.releaseTag)
-    else:
-        diff_parser = DiffParser(args.drive)
-        status,changes = diff_parser.get_changes(args.ci_Branch)
+
+
+    diff_parser = DiffParser(args.drive)
+    status,changes = diff_parser.get_changes(args.ci_Branch)
+    
     if not status:
         print 'failed to get new warnings for branch: '+args.ci_Branch
         print changes
