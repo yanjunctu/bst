@@ -89,11 +89,11 @@ class BoosterDB():
 
         return True
 
-    def getLastBuildInfo(self, collName):
+    def getLastBuildInfo(self, collName,key="number"):
         if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
             return None
 
-        return (self.db)[collName].find_one(sort=[('number', -1)])
+        return (self.db)[collName].find_one(sort=[(key, -1)])
 
     def writeBlock(self, blockData, collection=None): 
         fs = gridfs.GridFS(self.db, collection) if collection else self.fs
