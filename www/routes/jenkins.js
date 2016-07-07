@@ -434,18 +434,18 @@ function getJobFailureInfo(job,days,callback){
 }
 var passwordVerify=function(user,password,callback){
     ret = false
-    var server = new Server('127.0.0.1');
     fiber(function() {
-
+        var server = new Server('127.0.0.1');
         var db = server.db("booster");
         var doc = db.getCollection('booster_password').find({"user": {$eq:user}}).toArray();
         var dbPassword = doc[0]["password"]
         if(password ==dbPassword ){
             ret = true
         }
+
         callback(ret)
+        server.close();
     }).run();
-    server.close();
 }
 var ciUnblock = function(jenkinsUnlock,boosterUnlock){
     console.log('ciUnblock')
@@ -500,8 +500,8 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             }
             ciBlockInfo.lastSuccessTag=getParameterValue(data,"NEW_BASELINE");
 
-            var server = new Server('127.0.0.1');
             fiber(function() {
+                var server = new Server('127.0.0.1');
                 var db = server.db("booster");
                 var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
                 var objS = {"name": "NEW_BASELINE", "value": ciBlockInfo.lastSuccessTag};
@@ -523,9 +523,9 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                     var args={'msg':msg,'mode':'block'}
                     email.send(args)
                 }
-            }).run();
 
-            server.close();
+                server.close();
+            }).run();
         });
         // Cancle all pending CI requests
         getPendingReq("REPT2.7", function(err, data){
@@ -725,10 +725,9 @@ var refreshCIHistory = function(db, doc) {
 }
 
 var updateCIHistoryInfo = function() {
-    var server = new Server('127.0.0.1');
-
     // Delta update
     fiber(function() {
+        var server = new Server('127.0.0.1');
         var db = server.db("booster");
         var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB)).find({"number": {$gt: CILastTriggerBuildID}}).sort({"number": 1}).toArray();
         // Maybe the same release version will be tested many times, we only care the last one, so we
@@ -816,9 +815,10 @@ var updateCIHistoryInfo = function() {
                 }
             }
         });
+
+        server.close();
     }).run();
 
-    server.close();
 }
 
 updateCIHistoryInfo();

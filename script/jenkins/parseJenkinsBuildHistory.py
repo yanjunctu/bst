@@ -6,10 +6,12 @@
 from jenkins import Jenkins
 from jenkins import JenkinsException
 from pymongo import MongoClient
+import fcntl
 import ssl
 import subprocess
 import re
 import gridfs
+import sys
 
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
@@ -22,6 +24,8 @@ JENKINS_WIN32_IT_PART1 = 'PCR-REPT-Win32_IT-TEST-Part1'
 JENKINS_WIN32_IT_PART2 = 'PCR-REPT-Win32_IT-TEST-Part2'
 JENKINS_DAT_JOBS = ['PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY']
 BOOSTER_DB_NAME = 'booster'
+LOCK_FILE = '/var/lock/CIHistory.lock'
+LOCK_MODE = 'w'
 
 class BoosterJenkins():
     def __init__(self, url, username=None, password=None):
@@ -184,6 +188,15 @@ def saveAllCI2DB(server, db):
 
 
 if __name__ == "__main__":
+    f = open(LOCK_FILE, LOCK_MODE)
+    if not f:
+        sys.exit(1)
+    try:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
+    except IOError:
+        print 'Another python script is running'
+        sys.exit(1)
+
     try:
         ssl._create_default_https_context = ssl._create_unverified_context
     except AttributeError:
@@ -194,4 +207,7 @@ if __name__ == "__main__":
     db = BoosterDB(dbClient, BOOSTER_DB_NAME)
 
     saveAllCI2DB(server, db)
+
+    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+    f.close()
 
