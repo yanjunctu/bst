@@ -41,6 +41,7 @@ const CI_MEMORY_LEAK_JOB = "PCR-REPT-Memory_Leak_MultiJob-DAILY";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
 const CI_KLOCWORK_COLL_NAME = "klocwork";
 var CILastTriggerBuildID = 0, CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0,CIMemoryLeakBuildID=0;
+var CILastKlocworkBuildID=0;
 var CIHistory = [];
 var keyMap = {};
 
@@ -704,7 +705,6 @@ var refreshCIHistory = function(db, doc) {
                 var buildWarnings = 0;
                 var rlsTag = findParamValue(rlsInfo, "NEW_BASELINE");
                 var warnings = db.getCollection(CI_WARNING_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
-                var klockworkIssue = db.getCollection(CI_KLOCWORK_COLL_NAME).find({"releaseTag": rlsTag}).toArray();
                 var rlsDate = new Date(doc["timestamp"] + doc["duration"]);
     
                 entry["rlsTag"] = rlsTag;
@@ -712,13 +712,8 @@ var refreshCIHistory = function(db, doc) {
                 for (var i = 0; i < warnings.length; ++i) {
                     buildWarnings += warnings[i]["buildWarningCnt"];
                 }
-
-                var klocworkWarnings = 0
-                if (klockworkIssue.length >0){
-                    klocworkWarnings = klockworkIssue[0]["klocworkCnt"];
-                }
                 
-                entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": klocworkWarnings};
+                entry["codeStaticCheck"] = {"build": buildWarnings, "klocwork": '--'};
             }
         }
     }
@@ -741,6 +736,9 @@ var updateCIHistoryInfo = function() {
         var sanityDocs = db.getCollection(getJobCollName(CI_SANITY_TEST_JOB)).find({"number": {$gt: CILastSanityBuildID}}).sort({"number": -1}).toArray();
         var extRegressionDocs = db.getCollection(getJobCollName(CI_EXT_REGRESSION_JOB)).find({"number": {$gt: CILastExtRegressionBuildID}}).sort({"number": -1}).toArray();
         var memoryLeakDocs = db.getCollection(getJobCollName(CI_MEMORY_LEAK_JOB)).find({"number": {$gt: CIMemoryLeakBuildID}}).sort({"number": -1}).toArray();
+        
+        var klocworkDocs = db.getCollection(CI_KLOCWORK_COLL_NAME).find({"buildNumber": {$gt: CILastKlocworkBuildID}}).sort({"number": -1}).toArray();
+        
          
         triggerDocs.forEach(function(doc) {
             refreshCIHistory(db, doc);
@@ -748,6 +746,21 @@ var updateCIHistoryInfo = function() {
         // The result of Sanity test, Extended Regression test and Memory Leak test of a new release
         // version can not be gotten immediately, so we should check the db periodically and update
         // them if necessary
+        klocworkDocs.forEach(function(doc) {
+            var rlsTag =doc['releaseTag'];
+
+            for (var i = CIHistory.length-1; i >= 0; --i) {
+                if (rlsTag && CIHistory[i]["rlsTag"] == rlsTag) {
+                    if (CIHistory[i]["codeStaticCheck"]) {
+                        CIHistory[i]["codeStaticCheck"]["klocwork"] = doc['klocworkCnt'];
+                        if (doc["buildNumber"] > CILastKlocworkBuildID) {
+                            CIMemoryLeakBuildID = doc["buildNumber"];
+                        }
+                    }
+                    break;
+                }
+            }
+        });
         sanityDocs.forEach(function(doc) {
             var rlsTag = findParamValue(doc, "NEW_BASELINE");
 
@@ -820,7 +833,8 @@ var updateCIHistoryInfo = function() {
                     break;
                 }
             }
-        });
+        }); 
+
     }).run();
 
     server.close();
