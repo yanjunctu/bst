@@ -20,7 +20,7 @@ var bahamaUsrSizeStr = "Gitlab_Bahama_UserSize"
 var bahamaBrhCntStr = "Gitlab_Bahama_BranchCnt"
 
 var days=30
-var TESTCASE_NUM_INTERVAL = 60000*20 // 20 minutes
+var TESTCASE_NUM_INTERVAL = 60000*60*12 // 12 hours
 // The testcase info is stored in timestamp ascending order
 var testcaseNum = {"filename": [], "num": [], "timestamp": []}
 
