@@ -342,6 +342,7 @@ def pre_check(args):
         except:
             print 'can not remove temp_log'
         os.system('mkdir 777 {}\\temp_log'.format(args.drive));
+        os.chdir(args.drive)
         subprocess.call('git fetch --all',shell=True)
     else:
         try:
@@ -494,7 +495,6 @@ def blameOnNewWarning(args):
         except subprocess.CalledProcessError as err:
             print err
             continue;
-        print blame_output
         #get email,blame_output kind like:df584209 (<rurong.huang@motorolasolutions.com> 2016-06-12 15:58:32 +0800 585)
         match = re.match(r'^\w{8}\s\(<(.+)>\s\d{4}-\d{2}-\d{2}\s.+\)', blame_output)
         if not match:
@@ -564,9 +564,8 @@ if __name__ == "__main__":
     
     #1.get change file and change line number
     if args.mode == 'period': 
+        os.chdir(args.drive)
         #period mode need get the boundary tag according to pdays
-        if not args.pdays:
-            args.pdays = DEFAULTTIME 
         sys.path.append('/opt/booster_project/script/boosterSocket/')
         sys.path.append('/opt/booster_project/script/jenkins/')
         sys.path.append('/opt/booster_project/script/klocwork/webcheck/')
@@ -577,6 +576,7 @@ if __name__ == "__main__":
         db = BoosterDB(dbClient, BOOSTER_DB_NAME)
         args = findBoundaryTag(args,db,Release_COLL)
         #checkout to the latest tag,bcz git blame need it
+        
         subprocess.check_output('git checkout {}'.format(args.releaseTag), stderr=subprocess.STDOUT,shell=True)
 
 
@@ -585,7 +585,6 @@ if __name__ == "__main__":
     
     if not status:
         print 'failed to get new warnings for branch: '+args.ci_Branch
-        print changes
         sys.exit()
         
     #2.get the build log       
@@ -593,7 +592,6 @@ if __name__ == "__main__":
     #get the build log from jenkins console output if mode is period
         jenkins = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
         logfiles = getBuildLogFromConOut(jenkins,db,args.releaseTag,args.drive)
-        print logfiles
     
     elif (args.mode == 'preCI'):
     #generate the build log if mode is preCI   
