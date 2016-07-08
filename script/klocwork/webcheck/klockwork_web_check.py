@@ -146,7 +146,7 @@ def actionOnNewKWissue(response,args,unFixID):
     for engineerName in unFixIssue.keys():
         issueCnt = unFixIssue[engineerName]['number']
         issueIDs = unFixIssue[engineerName]['unFixID']
-        klocworkMsg='\n{}: total {} klocworkIssue unfixed \n issueID:  {}'.format(engineerName,issueCnt,issueIDs)            
+        klocworkMsg='\n\n\n{}: total {} klocworkIssue unfixed \n issueID:  {}'.format(engineerName,issueCnt,issueIDs)            
         print klocworkMsg
         
     if  args.email :
