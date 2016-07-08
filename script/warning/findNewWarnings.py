@@ -188,7 +188,7 @@ class DiffParser(object):
     def get_changes(self, commit):
         cwd = os.getcwd()
         
-        diff_cmd ='git diff --unified=0 {} {}'.format(commit[0],commit[1])
+        diff_cmd ='git diff --unified=0 '+commit
 
         os.chdir(self.repo)
         try:
