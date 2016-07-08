@@ -501,7 +501,7 @@ def blameOnNewWarning(args):
             continue
         emailAddr = match.group(1)
         if unResolveList.has_key(emailAddr):
-            unResolveList[emailAddr]['number']=namelist[emailAddr]['number']+1;
+            unResolveList[emailAddr]['number']=unResolveList[emailAddr]['number']+1;
             unResolveList[emailAddr]['warning'][file_name,line]=ALL_NEW_WARNINGS[file_name,line]
         else :
             blameInfo = OrderedDict()
@@ -520,18 +520,18 @@ def blameOnNewWarning(args):
             name = userEmail.split('@')[0]
             warningCnt = unResolveList[userEmail]['number']
             unResolveWarning = unResolveList[userEmail]['warning']
-            print '{} total {} build warning unresolved :'.format(name,warningCnt)
+            print '\n\n\n{} total {} build warning unresolved :'.format(name,warningCnt)
             for (file_name,line) in unResolveWarning.keys():
                  print unResolveWarning[file_name,line]
                     
-        if args.CIUserEmail:           
-            sys.stdout = stdout
-            if args.releaseTag:
-                mailSubject = '[Notice!] The unresolved build warning between : {} and {}'.format(args.ci_Branch,args.releaseTag)
-            else:
-                mailSubject = '[Notice!] The unresolved build warning on : {}'.format(args.ci_Branch)
-            name = args.CIUserEmail.split('@')[0]
-            sendEmail(name,args.CIUserEmail,stdOutfile.getvalue(),mailSubject);
+    if args.CIUserEmail:           
+        sys.stdout = stdout
+        if args.releaseTag:
+            mailSubject = '[Notice!] The unresolved build warning between : {} and {}'.format(args.ci_Branch,args.releaseTag)
+        else:
+            mailSubject = '[Notice!] The unresolved build warning on : {}'.format(args.ci_Branch)
+        name = args.CIUserEmail.split('@')[0]
+        sendEmail(name,args.CIUserEmail,stdOutfile.getvalue(),mailSubject);
         
     os.chdir(cwd)
     #return unResolveList
