@@ -10,7 +10,6 @@ import ssl
 import subprocess
 import re
 import gridfs
-import sys
 
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
