@@ -21,6 +21,7 @@ JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
 KW_JOB = "PCR-REPT-Git-KW"
+CI_KW_JOB_COLL = "CI-PCR-REPT-Git-KW"
 #data base
 CI_KW_COLL_NAME = "klocwork";
 BOOSTER_DB_NAME = 'booster'
@@ -207,7 +208,7 @@ def getParameterValue(buildInfo, paramName):
         return;
     
     for action in buildInfo["actions"]:
-        print paramName
+
         if action.get("parameters"):
             for param in action["parameters"]:
                 if param["name"] == paramName:
@@ -336,7 +337,7 @@ if __name__ == "__main__":
         from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
         dbClient = MongoClient()
         db = BoosterDB(dbClient, BOOSTER_DB_NAME)
-        args=findBoundaryTag(args,db,CI_KW_COLL_NAME)
+        args=findBoundaryTag(args,db,CI_KW_JOB_COLL)
     
     if args.mode == "audit":
         #sys.path.append('/vagrant/booster_project/script/boosterSocket/')
