@@ -126,7 +126,7 @@ def handleWarnKlocFindResult(data):
   #typestr=json.dumps(releaseTag)
 
   #get collections
-  records = db.warningKlocwork.find(data)
+  records = db.klocwork.find(data)
   #items ={}
   items=[]
   # if the return info will be truncated if it too big,so only return some useful msg 

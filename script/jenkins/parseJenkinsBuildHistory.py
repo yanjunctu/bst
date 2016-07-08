@@ -16,7 +16,7 @@ JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
 JENKINS_TIMEOUT = 60  # 60s
-JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY','PCR-REPT-Memory_Leak_MultiJob-DAILY']
+JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY','PCR-REPT-Memory_Leak_MultiJob-DAILY',"PCR-REPT-Git-KW"]
 JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
 JENKINS_WIN32_UT = 'PCR-REPT-Win32_UT'
 JENKINS_WIN32_IT_PART1 = 'PCR-REPT-Win32_IT-TEST-Part1'
@@ -73,7 +73,15 @@ class BoosterDB():
         (self.db)[collName].insert_one(data)
 
         return True
-
+    def findInfo(self, collName,*query):
+        if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
+            return None
+        if len(query) == 1:
+            docs=(self.db)[collName].find(query[0])
+        elif len(query) ==2:
+            docs=(self.db)[collName].find(query[0],sort=[query[1]])
+        return [doc for doc in docs]
+    
     def getLastBuildInfo(self, collName,key="number"):
         if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
             return None
