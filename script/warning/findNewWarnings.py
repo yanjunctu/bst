@@ -13,6 +13,11 @@ import subprocess
 from Queue import Queue 
 import glob
 import StringIO
+import ssl
+import time
+import math
+from pymongo import MongoClient
+from xml.dom import minidom
         
 
 WelcomeWords = '''
@@ -58,9 +63,21 @@ BUILD_CMDS=[{'cmdDir':BAHAMADIR,'cmdType':'path.bat && make dsp_all selfChecking
 			{'cmdDir':CYPHERDIR,'cmdType':'path.bat && make dsp_32mb_nomatrix selfChecking=Y','annofile':['dsp_32mb.xml']},
 		    {'cmdDir':CYPHERDIR,'cmdType':'path.bat && make bandit selfChecking=Y','annofile':['matrix_32mb_dsp.xml','dsp_bandit.xml']}]
 
-BAHAMA_ARM_LOG=['arm.xml','srp.xml','arm_link.xml']
+BAHAMA_ARM_LOG=['arm.xml','srp.xml','arm_link.xml','arm.txt']
 
 All_CMDS =[CLEAN_CMDS,MATRIX_CMDS,BUILD_CMDS]
+
+JENKINS_BUILD_JOBS = [{'jobname':'PCR-REPT-Bahama_Matrix_ARM_Build','annofile':'arm.txt'},
+                      {'jobname':'PCR-REPT-Bahama_DSP_Build','annofile':'dsp.txt'},
+                      {'jobname':'PCR-REPT-Cypher_DSP32_Build','annofile':'dsp_32mb.txt'},
+                      {'jobname':'PCR-REPT-Cypher_Matrix32_ARM32_Build','annofile':'arm_32mb.txt'}]
+DEFAULTTIME = 7;
+JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
+JENKINS_USERNAME = 'jhv384'
+JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
+JENKINS_TRIGGER_JOBS = 'PCR-REPT-0-MultiJob';
+BOOSTER_DB_NAME = 'booster'
+Release_COLL='CI-PCR-REPT-Git-Release'
 
 #---------------------------------------------------------------------------------------------------------------
 # define class BuildLogReader 
@@ -170,11 +187,12 @@ class DiffParser(object):
 
     def get_changes(self, commit):
         cwd = os.getcwd()
+        
         diff_cmd ='git diff --unified=0 '+commit
 
         os.chdir(self.repo)
         try:
-            diff_output = subprocess.check_output(diff_cmd, stderr=subprocess.STDOUT)
+            diff_output = subprocess.check_output(diff_cmd, stderr=subprocess.STDOUT,shell=True)
             output = self.parse_diff(diff_output)
             ret = (True, output)
         except subprocess.CalledProcessError as err:
@@ -188,18 +206,26 @@ class DiffParser(object):
 
 def get_new_warnings(buildLog,changes,isBahamaArm):
     
-    try:
-        tree = ET.parse(buildLog) 
-        root = tree.getroot()
-    except Exception, e:
-        print "Error:cannot parse file:{}".format(buildLog)
-        sys.exit(1) 
-        
     build_log_reader = BuildLogReader(isBahamaArm)
-    
     warnings ={}
-    for output_node in root.iter('output'):
-        warning_temp = build_log_reader.get_warnings(output_node.text)
+    filename = os.path.basename(buildLog) 
+    fileType = filename.split('.', 1)[1] 
+    if fileType == 'xml':
+        try:
+            tree = ET.parse(buildLog) 
+            root = tree.getroot()
+        except Exception, e:
+            print "Error:cannot parse file:{}".format(buildLog)
+            sys.exit(1) 
+            
+        for output_node in root.iter('output'):
+            warning_temp = build_log_reader.get_warnings(output_node.text)
+            warnings=dict(warnings, **warning_temp)
+    else:
+        f=open(buildLog)
+        logs=f.read()
+        f.close()
+        warning_temp = build_log_reader.get_warnings(logs)
         warnings=dict(warnings, **warning_temp)
 
     new_warnings = OrderedDict()
@@ -220,20 +246,28 @@ def get_new_warnings(buildLog,changes,isBahamaArm):
 
 def process_argument():
     parser = argparse.ArgumentParser(description="description:gennerate new warnings", epilog=" %(prog)s description end")
-    parser.add_argument('-m',dest="mode",choices=['preCI', 'CI', 'desktop'],required = True)
+    parser.add_argument('-m',dest="mode",choices=['preCI', 'CI', 'desktop','period'],required = True)
     parser.add_argument('-d',dest="drive")
     parser.add_argument('-l',dest="build_logs", nargs='*')
+    #older(base) branch
     parser.add_argument('-b',dest="ci_Branch")
     parser.add_argument('-n',dest="CIUserName")
     parser.add_argument('-e',dest="CIUserEmail")
     parser.add_argument('-t',dest="releaseTag")
+    #the unit is day
+    parser.add_argument('-D',dest="pdays",default = 7,type=int)
+    #whether need git blame
+    parser.add_argument('-a',dest="audit")
     
     args = parser.parse_args()
-    try:
-        args.drive = args.drive.strip().rstrip(':')[0] + ':'
-    except:
-        args.drive = os.getcwd()	
-        args.drive = args.drive.strip().rstrip(':')[0] + ':'
+    #the drive is the dir for period mode
+    if args.mode != 'period':
+       try:
+            args.drive = args.drive.strip().rstrip(':')[0] + ':'
+       except:
+            args.drive = os.getcwd()	
+            args.drive = args.drive.strip().rstrip(':')[0] + ':'
+    
 		
     # Only desktop mode require user pass a log file, CI and preCI mode will parse the log a hardcode path
     if args.mode == 'desktop':
@@ -302,63 +336,73 @@ def git_version_check():
         sys.exit()
                    
 def pre_check(args):
-    try:
-        os.system('rd /s /q {}\\temp_log'.format(args.drive));
-        os.mkdir('{}\\temp_log'.format(args.drive))
-    except:
-        print 'can not remove temp_log' 
-        
-    git_version_check()
-    # To get the latest Tag engineer's branch based on
-    mergedTags = subprocess.check_output('git tag --merged', stderr=subprocess.STDOUT)
-    baseOnTag = parseLatestCITag(mergedTags)
-    
-    if args.mode == 'preCI':
-        # Make sure Git repo have mount to a drive firstly
-        # match root driver, like c:\ or d:\
-        valid_current_path_pattern = r'^\w:\\$'; 
-        # as this file is called in root, so os.getcwd directly return is drive
-        current_path_drive = os.getcwd();
-        if re.match(valid_current_path_pattern,current_path_drive) == None:
-            print("pls mount git repo to a drive, then get back to run this script")
-            sys.exit()
-                
-        f = open(os.devnull, 'w')
-        subprocess.call('git fetch --all', stdout=f, stderr=f)
-        f.close()
+    if args.mode == 'period':
         try:
-            remote_branches = subprocess.check_output('git branch -r --merged', stderr=subprocess.STDOUT)
+            os.system('rm -rf {}\\temp_log'.format(args.drive));
         except:
-            print('failed to get remote branches, make sure you are in the correct repo directory')
-            sys.exit()
-        pattern =  r' *(.*)/(REPT_2\.7_INT)\n';
-        match = re.search(pattern, remote_branches) 
-        if match:
-            args.ci_Branch = match.group(0).strip()
-        else:
-            if baseOnTag:
-                reminderString = 'You are based on '+ baseOnTag + os.linesep+ \
-                'which is not latest release tag, recommand you back to catch up.'+os.linesep+ \
-                'Do you want to continue find warning based on '+baseOnTag+'? y/n';
+            print 'can not remove temp_log'
+        os.system('mkdir 777 {}\\temp_log'.format(args.drive));
+        os.chdir(args.drive)
+        subprocess.call('git fetch --all',shell=True)
+    else:
+        try:
+            os.system('rd /s /q {}\\temp_log'.format(args.drive));
+            os.mkdir('{}\\temp_log'.format(args.drive))
+        except:
+            print 'can not remove temp_log' 
+
+        git_version_check()
+        
+        # To get the latest Tag engineer's branch based on
+        mergedTags = subprocess.check_output('git tag --merged', stderr=subprocess.STDOUT)
+        baseOnTag = parseLatestCITag(mergedTags)
+            
+        if args.mode == 'preCI' and not args.ci_Branch:
+            # Make sure Git repo have mount to a drive firstly
+            # match root driver, like c:\ or d:\
+            valid_current_path_pattern = r'^\w:\\$'; 
+            # as this file is called in root, so os.getcwd directly return is drive
+            current_path_drive = os.getcwd();
+            if re.match(valid_current_path_pattern,current_path_drive) == None:
+               print("pls mount git repo to a drive, then get back to run this script")
+               sys.exit()
+                
+            f = open(os.devnull, 'w')
+            subprocess.call('git fetch --all', stdout=f, stderr=f)
+            f.close()
+            try:
+                remote_branches = subprocess.check_output('git branch -r --merged', stderr=subprocess.STDOUT)
+            except:
+                print('failed to get remote branches, make sure you are in the correct repo directory')
+                sys.exit()
+            pattern =  r' *(.*)/(REPT_2\.7_INT)\n';
+            match = re.search(pattern, remote_branches) 
+            if match:
+                args.ci_Branch = match.group(0).strip()
+            else:
+                if baseOnTag:
+                    reminderString = 'You are based on '+ baseOnTag + os.linesep+ \
+                    'which is not latest release tag, recommand you back to catch up.'+os.linesep+ \
+                    'Do you want to continue find warning based on '+baseOnTag+'? y/n';
               
-                print(reminderString);
-                exitOrNot = raw_input();
-                if exitOrNot == 'y' or exitOrNot == 'yes':
-                    args.ci_Branch = baseOnTag;
+                    print(reminderString);
+                    exitOrNot = raw_input();
+                    if exitOrNot == 'y' or exitOrNot == 'yes':
+                        args.ci_Branch = baseOnTag;
+                    else:
+                        sys.exit()
                 else:
                     sys.exit()
-            else:
-                sys.exit()
-    elif args.mode == 'desktop':
-        if not args.ci_Branch:
-            if baseOnTag:
-                args.ci_Branch = baseOnTag;
-            else:
-                args.ci_Branch = 'HEAD'
-    else: 
-        #including  CI mode and default others to compare with last HEAD
-        if not args.ci_Branch:
-            sys.exit()          
+        elif args.mode == 'desktop':
+            if not args.ci_Branch:
+                if baseOnTag:
+                    args.ci_Branch = baseOnTag;
+                else:
+                    args.ci_Branch = 'HEAD'
+        else: 
+            #including  CI mode and default others to compare with last HEAD
+            if not args.ci_Branch:
+                sys.exit()          
 
     return args
 
@@ -396,7 +440,7 @@ def run_cmd(drive,cmdQ):
         cmdQ.task_done() 
             
 def buildLog_generate(drive):
-    print("start to generate the build log,this will take about 10 minutes")
+    print("start to generate the build log,this will take about 5 minutes")
     for cmds in All_CMDS:
         cmdQ = Queue()
         for cmdType in cmds:
@@ -438,28 +482,119 @@ def actionOnNewWarning(tag,name,mail,file):
     if ret:
         #print "[send from client]: "+json.dumps(wkresult.getSendMsg());
         #print "[recv from server]: "+interface.recv();
-        sendEmail(name,mail,file.getvalue(),CIMailSubject);  
-
+        sendEmail(name,mail,file.getvalue(),CIMailSubject); 
+        
+def blameOnNewWarning(args):
+    cwd = os.getcwd()
+    unResolveList= OrderedDict()
+    for (file_name,line) in ALL_NEW_WARNINGS.keys():
+        blame_cmd ='git blame -e -L {start},{end} {filename} '.format(start=line,end=line,filename=(args.drive+os.path.abspath(file_name)))
+ 
+        try:
+            blame_output = subprocess.check_output(blame_cmd, stderr=subprocess.STDOUT,shell=True)
+        except subprocess.CalledProcessError as err:
+            print err
+            continue;
+        #get email,blame_output kind like:df584209 (<rurong.huang@motorolasolutions.com> 2016-06-12 15:58:32 +0800 585)
+        match = re.match(r'^\w{8}\s\(<(.+)>\s\d{4}-\d{2}-\d{2}\s.+\)', blame_output)
+        if not match:
+            continue
+        emailAddr = match.group(1)
+        if unResolveList.has_key(emailAddr):
+            unResolveList[emailAddr]['number']=namelist[emailAddr]['number']+1;
+            unResolveList[emailAddr]['warning'][file_name,line]=ALL_NEW_WARNINGS[file_name,line]
+        else :
+            blameInfo = OrderedDict()
+            blameInfo['number']=1
+            warningDict = OrderedDict() 
+            warningDict[file_name,line]=ALL_NEW_WARNINGS[file_name,line]
+            blameInfo['warning']=warningDict
+            unResolveList[emailAddr]=blameInfo
+            
+        if args.CIUserEmail:
+            from boosterSocket import sendEmail
+            stdout = sys.stdout
+            sys.stdout = stdOutfile = StringIO.StringIO()
+            
+        for userEmail in unResolveList.keys():
+            name = userEmail.split('@')[0]
+            warningCnt = unResolveList[userEmail]['number']
+            unResolveWarning = unResolveList[userEmail]['warning']
+            print '{} total {} build warning unresolved :'.format(name,warningCnt)
+            for (file_name,line) in unResolveWarning.keys():
+                 print unResolveWarning[file_name,line]
+                    
+        if args.CIUserEmail:           
+            sys.stdout = stdout
+            if args.releaseTag:
+                mailSubject = '[Notice!] The unresolved build warning between : {} and {}'.format(args.ci_Branch,args.releaseTag)
+            else:
+                mailSubject = '[Notice!] The unresolved build warning on : {}'.format(args.ci_Branch)
+            name = args.CIUserEmail.split('@')[0]
+            sendEmail(name,args.CIUserEmail,stdOutfile.getvalue(),mailSubject);
+        
+    os.chdir(cwd)
+    #return unResolveList
+def getBuildLogFromConOut(jenkins,db,tag,fdir):
+    logfiles = []
+    for job in JENKINS_BUILD_JOBS:
+        #get build number from database
+        jobname = job['jobname']
+        coll = 'CI-'+jobname
+        obj = {"name": "NEW_BASELINE", "value": tag};
+        condition ={"actions.parameters": {'$in': [obj]}}
+        sortType=('number',-1)
+        docs = db.findInfo(coll,condition,sortType)
+        #only use the latest one,bcz may build pass but not release
+        buildLog = jenkins.getConsoleOutput(jobname, docs[0]['number'])
+        #save the buildLog to file
+        logfile = str(fdir)+'temp_log/'+job['annofile'];
+        f = open(logfile,'w')
+        f.write(buildLog)
+        f.close()
+        logfiles.append(logfile)
+        
+    return logfiles
       
 if __name__ == "__main__":
 
     tStart = datetime.datetime.now()
-
     args = process_argument()
-
     args = pre_check(args)
     
-    #get change file and change line number
+    #1.get change file and change line number
+    if args.mode == 'period': 
+        os.chdir(args.drive)
+        #period mode need get the boundary tag according to pdays
+        sys.path.append('/opt/booster_project/script/boosterSocket/')
+        sys.path.append('/opt/booster_project/script/jenkins/')
+        sys.path.append('/opt/booster_project/script/klocwork/webcheck/')
+        from boosterSocket import sendEmail
+        from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
+        from klockwork_web_check import findBoundaryTag,getParameterValue
+        dbClient = MongoClient()
+        db = BoosterDB(dbClient, BOOSTER_DB_NAME)
+        args = findBoundaryTag(args,db,Release_COLL)
+        #checkout to the latest tag,bcz git blame need it
+        
+        subprocess.check_output('git checkout {}'.format(args.releaseTag), stderr=subprocess.STDOUT,shell=True)
+
+
     diff_parser = DiffParser(args.drive)
     status,changes = diff_parser.get_changes(args.ci_Branch)
+    
     if not status:
         print 'failed to get new warnings for branch: '+args.ci_Branch
-        print changes
         sys.exit()
-
-    #generate the build log if mode is preCI
-    if (args.mode == 'preCI'):
         
+    #2.get the build log       
+    if args.mode == 'period':
+    #get the build log from jenkins console output if mode is period
+        jenkins = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
+        logfiles = getBuildLogFromConOut(jenkins,db,args.releaseTag,args.drive)
+    
+    elif (args.mode == 'preCI'):
+    #generate the build log if mode is preCI   
         os.system("cls") # clear screen
         print WelcomeWords;
         
@@ -469,8 +604,8 @@ if __name__ == "__main__":
         for annofileDir in ANNOFILE_DIR:
             logfiles =logfiles + glob.glob(args.drive+annofileDir+ '*.xml')
     
-    # buildlog is passed from makefile for desktop mode
     elif args.mode == 'desktop':
+    # buildlog is passed from makefile for desktop mode
         logfiles = args.build_logs
         print os.linesep;
     
@@ -485,7 +620,9 @@ if __name__ == "__main__":
         stdout = sys.stdout
         sys.stdout = stdOutfile = StringIO.StringIO()
         print CIMailHeader
-               
+
+    
+    #3.find out the new warnings          
     for logfile in logfiles:
         
         isBahamaArm =False
@@ -495,15 +632,20 @@ if __name__ == "__main__":
                 isBahamaArm=True
             (warnings,new_warnings)=get_new_warnings(logfile,changes,isBahamaArm)
             print_log(changes,warnings,new_warnings,logfile,args.drive)
-    
+
     tEnd = datetime.datetime.now()
 
     print '\nWarning check is done!'
     print '\nIntroduced {num} warnings in total'.format(num=len(ALL_NEW_WARNINGS))
     print '\nMore details please refer to {summarize_log_file}\n'.format(summarize_log_file=args.drive+LOG_DIR+'summarize.log')
     print 'Warning check totally use {minute} minutes {seconds} seconds\n'.format(minute = int((tEnd-tStart).total_seconds() / 60),seconds = int((tEnd-tStart).total_seconds() % 60))
-
-    if args.mode == 'CI' and len(ALL_NEW_WARNINGS)>0:
-        sys.stdout = stdout #recover sys.stdout
+    
+    #4.other actions on new warnings
+    if (args.audit == 'Y' or args.audit == 'y') and len(ALL_NEW_WARNINGS)>0:
+        if args.mode == 'CI':
+            sys.stdout = stdout #recover sys.stdout
+        blameOnNewWarning(args)
+    elif args.mode == 'CI' and len(ALL_NEW_WARNINGS)>0:
+        sys.stdout = stdout #recover sys.stdout      
         actionOnNewWarning(args.releaseTag,args.CIUserName,args.CIUserEmail,stdOutfile)
         

@@ -14,8 +14,13 @@ import gridfs
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
-JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY','PCR-REPT-Memory_Leak_MultiJob-DAILY']
+JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY','PCR-REPT-Memory_Leak_MultiJob-DAILY',"PCR-REPT-Git-KW"]
 JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
+JENKINS_WIN32_TEST_JOBS = ['PCR-REPT-Win32_UT', 'PCR-REPT-Win32_IT-TEST-Part1', 'PCR-REPT-Win32_IT-TEST-Part2']
+JENKINS_WIN32_UT = 'PCR-REPT-Win32_UT'
+JENKINS_WIN32_IT_PART1 = 'PCR-REPT-Win32_IT-TEST-Part1'
+JENKINS_WIN32_IT_PART2 = 'PCR-REPT-Win32_IT-TEST-Part2'
+JENKINS_DAT_JOBS = ['PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY']
 BOOSTER_DB_NAME = 'booster'
 
 class BoosterJenkins():
@@ -79,12 +84,20 @@ class BoosterDB():
         (self.db)[collName].insert_one(data)
 
         return True
-
-    def getLastBuildInfo(self, collName):
+    def findInfo(self, collName,*query):
+        if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
+            return None
+        if len(query) == 1:
+            docs=(self.db)[collName].find(query[0])
+        elif len(query) ==2:
+            docs=(self.db)[collName].find(query[0],sort=[query[1]])
+        return [doc for doc in docs]
+    
+    def getLastBuildInfo(self, collName,key="number"):
         if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
             return None
 
-        return (self.db)[collName].find_one(sort=[('number', -1)])
+        return (self.db)[collName].find_one(sort=[(key, -1)])
 
     def writeBlock(self, blockData, collection=None): 
         fs = gridfs.GridFS(self.db, collection) if collection else self.fs
@@ -120,14 +133,42 @@ def saveAllCI2DB(server, db):
             
             print '\tProcess build [{}, {}]'.format(job, start)
             if buildInfo:
-                # We want to know the coverage value
+                # Values of some specific fields in the following jobs need to
+                # be extracted from their console outputs
                 if job == JENKINS_COVERAGE_JOB:
+                    # Coverage
                     output = server.getConsoleOutput(job, start)
                     if output:
                         match = re.search(r'AutoMerge(.*)%', output)
                         if match:
                             info = match.group(0).split()
                             buildInfo['coverage'] = info[len(info)-1]
+                elif job in JENKINS_WIN32_TEST_JOBS and buildInfo['result'] == 'SUCCESS': 
+                    # Test case number(UT test cases + IT test cases)
+                    output = server.getConsoleOutput(job, start)
+                    if output:
+                        if job == JENKINS_WIN32_UT:
+                            output = output.split("Unit Test Result:", 1)[1]
+                            pattern = r'\w+\s+OK \((\d+) tests,'
+                        else:
+                            pattern = r'Done!! Totally (\d+) win32 cases run'
+                        matchs = re.findall(pattern, output)
+                        if matchs:
+                            buildInfo['testcaseNum'] = 0
+                            for num in matchs:
+                                buildInfo['testcaseNum'] += int(num)
+                # We want to get the actual EXIT CODE from IDAT exe and store it in DB
+                elif job in JENKINS_DAT_JOBS:
+                    # Exit code of DAT
+                    buildInfo['IDAT_EXIT_CODES'] = []
+                    output = server.getConsoleOutput(job, start)
+                    if output:
+                        matches = re.findall(r'IDATAutoTestTrigger Exit: \d+', output)
+                        if matches:
+                            for match in matches:
+                              match = match.split(':')[1].strip()
+                              buildInfo['IDAT_EXIT_CODES'].append(match)
+
                 # Save its log if the build failed by itself not its sub-builds
                 if (buildInfo['result'] != 'SUCCESS'
                     and ('subBuilds' not in buildInfo or not buildInfo['subBuilds'])):
