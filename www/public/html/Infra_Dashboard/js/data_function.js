@@ -30,9 +30,10 @@ function getName(name_string)
     return name.replace(/(^\s*)|(\s*$)/g,'');
 }
 
+//return NULL if failed
 function getCoreID(name_string)
 {
-	var name_id, name = name_string;
+	var name_id, name = "NULL";
     if(name_string)
     {
         name_id = name_string.split("-");
@@ -43,7 +44,7 @@ function getCoreID(name_string)
 	    }
     }
     
-    name = name.toUpperCase();
+    //name = name.toUpperCase();
     return name.replace(/(^\s*)|(\s*$)/g,'');
 }
 
