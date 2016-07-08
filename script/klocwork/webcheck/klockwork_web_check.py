@@ -7,6 +7,8 @@ from urllib2 import HTTPError
 from collections import OrderedDict
 import StringIO
 from pymongo import MongoClient
+import math
+import ssl
 
 #klocwork
 HOST = '10.193.226.186'
@@ -110,7 +112,7 @@ def actionOnNewKWissue(response,args,unFixID):
         stdout = sys.stdout
         sys.stdout = stdOutfile = StringIO.StringIO()
         
-    mailSubject = '[Notice!] The new klocwork issue betwean: {} and {}'.format(args.lastTag,args.releaseTag)
+    mailSubject = '[Notice!] The new klocwork issue betwean: {} and {}'.format(args.ci_Branch,args.releaseTag)
     unFixIssue= OrderedDict()
     
     #get the releaseTag buildnumber
@@ -119,7 +121,7 @@ def actionOnNewKWissue(response,args,unFixID):
     maxBuildNumber = record[0]['buildNumber']
     
     #get the lastTag buildnumber
-    qury = {"releaseTag":args.lastTag}
+    qury = {"releaseTag":args.ci_Branch}
     record = findInServerDB(qury)
     minBuildNumber = record[0]['buildNumber']
     
@@ -187,7 +189,7 @@ def fetchBuildListFromKlocworkWeb():
 def actionOnAuditMode(args):
     #REPT_I02.07.01.84 convert to REPT_I02_07_01_84
     newbuild = args.releaseTag.replace('.','_')
-    oldbuild = args.lastTag.replace('.','_')
+    oldbuild = args.ci_Branch.replace('.','_')
     query = "state:+'{}' diff:'{}','{}'".format(args.state,oldbuild,newbuild)
     response,issueID = fetchIssueFromKlocworkWeb(query)
 
@@ -195,7 +197,7 @@ def actionOnAuditMode(args):
         actionOnNewKWissue(response,args,issueID)
     else:
         if args.email :
-            mailSubject = '[Notice!] No new klocwork issue betwean: {} and {}'.format(args.lastTag,args.releaseTag)
+            mailSubject = '[Notice!] No new klocwork issue betwean: {} and {}'.format(args.ci_Branch,args.releaseTag)
             name = args.email.split('@')[0]
             sendEmail(name,args.email,"",mailSubject); 
             
@@ -293,15 +295,34 @@ def actionOnCIMode(args):
                         msg = "{}\n but there is no build info on klockwork web".format(msg)
                     sendEmail("booster","boosterTeam@motorolasolutions.com",msg,emailSubject);
         start += 1
- 
+
+    
+def findBoundaryTag(args,db,collname):
+    
+    oldestTimeStamp =math.floor(time.time()*1000-(int(args.pdays) * 24 * 60 * 60*1000));
+    condition ={'timestamp':{"$gte":oldestTimeStamp},'result':'SUCCESS'}
+    sortType=('number',-1)
+    docs = db.findInfo(collname,condition,sortType)
+
+    #newer Tag
+    args.releaseTag = getParameterValue(docs[0],'NEW_BASELINE')
+    print args.releaseTag
+    #older Tag
+    args.ci_Branch = getParameterValue(docs[len(docs)-1],'NEW_BASELINE')
+    print args.ci_Branch
+    
+    return args
             
 def process_argument():
     parser = argparse.ArgumentParser(description="description:get the klocwork issue info", epilog=" %(prog)s description end")
     parser.add_argument('-r',dest="releaseTag")
-    parser.add_argument('-l',dest="lastTag")
+    parser.add_argument('-l',dest="ci_Branch")
     parser.add_argument('-s',dest="state")
     parser.add_argument('-e',dest="email")
-    parser.add_argument('-m',dest="mode",required = True)
+    parser.add_argument('-p',dest="period")
+    #the unit is day
+    parser.add_argument('-D',dest="pdays",default = 7,type=int)
+    parser.add_argument('-m',dest="mode",choices=['audit', 'CI'],required = True)
     
     args = parser.parse_args()
 
@@ -309,6 +330,13 @@ def process_argument():
 if __name__ == "__main__":
     
     args = process_argument()
+    if args.period:
+        sys.path.append('/opt/booster_project/script/boosterSocket/')
+        sys.path.append('/opt/booster_project/script/jenkins/')
+        from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
+        dbClient = MongoClient()
+        db = BoosterDB(dbClient, BOOSTER_DB_NAME)
+        args=findBoundaryTag(args,db,CI_KW_COLL_NAME)
     
     if args.mode == "audit":
         #sys.path.append('/vagrant/booster_project/script/boosterSocket/')

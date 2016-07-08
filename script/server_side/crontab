@@ -15,4 +15,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 0  0    * * *   root    bash /opt/booster_project/script/server_side/updateRepoInfo.sh
 */10 *  * * *   root    python /opt/booster_project/script/jenkins/parseJenkinsBuildHistory.py
 */5 *   * * *   root    python /opt/booster_project/script/sitemonitor/sitemonitor.py -u booster
-
+* */1   * * *   root    python /opt/booster_project/script/klocwork/klockwork_web_check.py -m CI
+0 11    * * 7   root    python /opt/booster_project/script/klocwork/klockwork_web_check.py -m audit -s New -p y -D 7 -e rept-ci@googlegroups.com
+0 11    * * 7   root    python /opt/booster_project/script/warning/findNewWarnings.py -m period -a Y -D 7 -d /opt/bitbucket_repo/comm/ -e rept-ci@googlegroups.com

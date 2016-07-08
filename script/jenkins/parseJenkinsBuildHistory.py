@@ -84,7 +84,15 @@ class BoosterDB():
         (self.db)[collName].insert_one(data)
 
         return True
-
+    def findInfo(self, collName,*query):
+        if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
+            return None
+        if len(query) == 1:
+            docs=(self.db)[collName].find(query[0])
+        elif len(query) ==2:
+            docs=(self.db)[collName].find(query[0],sort=[query[1]])
+        return [doc for doc in docs]
+    
     def getLastBuildInfo(self, collName,key="number"):
         if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
             return None
