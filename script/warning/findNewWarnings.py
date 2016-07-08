@@ -341,8 +341,8 @@ def pre_check(args):
             os.system('rm -rf {}\\temp_log'.format(args.drive));
         except:
             print 'can not remove temp_log'
-        os.system('mkdir 777 {}\\temp_log'.format(args.drive));
         os.chdir(args.drive)
+        os.system('mkdir 777 {}\\temp_log'.format(args.drive));
         subprocess.call('git fetch --all',shell=True)
     else:
         try:
