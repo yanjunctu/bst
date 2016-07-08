@@ -6,7 +6,6 @@
 from jenkins import Jenkins
 from jenkins import JenkinsException
 from pymongo import MongoClient
-import fcntl
 import ssl
 import subprocess
 import re
@@ -16,30 +15,26 @@ import sys
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
+JENKINS_TIMEOUT = 60  # 60s
 JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY','PCR-REPT-Memory_Leak_MultiJob-DAILY']
 JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
-JENKINS_WIN32_TEST_JOBS = ['PCR-REPT-Win32_UT', 'PCR-REPT-Win32_IT-TEST-Part1', 'PCR-REPT-Win32_IT-TEST-Part2']
 JENKINS_WIN32_UT = 'PCR-REPT-Win32_UT'
 JENKINS_WIN32_IT_PART1 = 'PCR-REPT-Win32_IT-TEST-Part1'
 JENKINS_WIN32_IT_PART2 = 'PCR-REPT-Win32_IT-TEST-Part2'
+JENKINS_WIN32_TEST_JOBS = [JENKINS_WIN32_UT, JENKINS_WIN32_IT_PART1, JENKINS_WIN32_IT_PART2]
 JENKINS_DAT_JOBS = ['PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY']
 BOOSTER_DB_NAME = 'booster'
-LOCK_FILE = '/var/lock/CIHistory.lock'
-LOCK_MODE = 'w'
 
 class BoosterJenkins():
-    def __init__(self, url, username=None, password=None):
+    def __init__(self, url, username=None, password=None, timeout=None):
         self.url = url
         self.username = username
         self.password = password
-        self.server = Jenkins(url, username, password)
+        self.timeout = timeout
+        self.server = Jenkins(url, username, password, timeout)
         
     def getJobInfo(self, name):
-        try:
-            jobInfo = self.server.get_job_info(name)
-        except JenkinsException, je:
-            print 'Failed to get job info for job {}: {}'.format(name, str(je))
-            return None 
+        jobInfo = self.server.get_job_info(name)
 
         jobInfo['subJobs'] = []
         if 'lastSuccessfulBuild' in jobInfo:
@@ -55,13 +50,7 @@ class BoosterJenkins():
         return jobInfo
 
     def getBuildInfo(self, job, buildNum):
-        try:
-            buildInfo = self.server.get_build_info(job, buildNum)
-        except JenkinsException, je:
-            print 'Failed to get build info[{}, {}]: {}'.format(job, buildNum, str(je))
-            return None
-
-        return buildInfo 
+        return self.server.get_build_info(job, buildNum)
 
     def getConsoleOutput(self, job, buildNum):
         url = self.url + '/job/' + job + '/' + str(buildNum) + '/consoleText'
@@ -69,13 +58,9 @@ class BoosterJenkins():
         output = ""
         
         try:
-            output = subprocess.check_output(cmd.split(), stderr=subprocess.STDOUT)
+            return subprocess.check_output(cmd.split(), stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError, e:
-            print 'Failed to get console output, url: {}, job: {}, number: {}, err: {}'.format(self.url, job, buildNum, str(e))
-
-            return None
-
-        return output
+            raise JenkinsException('Failed to get console output, url: {}, job: {}, number: {}, err: {}'.format(self.url, job, buildNum, str(e)))
 
 
 class BoosterDB():
@@ -106,18 +91,24 @@ def saveAllCI2DB(server, db):
     allJobs = JENKINS_TRIGGER_JOBS
     jobSet = set(JENKINS_TRIGGER_JOBS)
    
-    # Get all the info of tirgger jobs and their downstream jobs
+    # Get all the info of trigger jobs and their downstream jobs
     while i < len(allJobs):
         cnt = 0
         job = allJobs[i]
         jobColl = 'CI-' + job
-        jobInfo = server.getJobInfo(job)
-       
+
         print 'Process job {}'.format(job)
-        if not jobInfo:
+        try:
+            jobInfo = server.getJobInfo(job)
+        except TimeoutException as e:
+            # If jenkins server hangs, return immediately
+            print '\tGet job info for job {} timeout: {}'.format(job, str(e))
+            return
+        except JenkinsException as e:
+            print '\tFailed to get job info for job {}: {}'.format(job, str(e))
             i += 1
-            print '\tDone, 0 new records are inserted into DB.'
             continue
+       
         # Find the new builds of the job and save them to DB
         lastBuildSaved = db.getLastBuildInfo(jobColl)
         firstBuildNum = jobInfo['firstBuild']['number'] if 'firstBuild' in jobInfo else 0
@@ -125,55 +116,66 @@ def saveAllCI2DB(server, db):
         start = (lastBuildSaved['number']+1) if lastBuildSaved else firstBuildNum
         end = lastBuildNum
         while start <= end:
-            buildInfo = server.getBuildInfo(job, start)
-            
             print '\tProcess build [{}, {}]'.format(job, start)
-            if buildInfo:
-                # Values of some specific fields in the following jobs need to
-                # be extracted from their console outputs
+
+            try:
+                buildInfo = server.getBuildInfo(job, start)
+            except TimeoutException as e:
+                # If jenkins server hangs, return immediately
+                print '\tGet build info for build [{}, {}] timeout: {}'.format(start, job, str(e))
+                return
+            except JenkinsException as e:
+                print '\tFailed to get build info [{}, {}]: {}'.format(start, job, str(e))
+                start += 1
+                continue
+            
+            # Values of some specific fields in the following jobs need to
+            # be extracted from their console outputs if any
+            try:
                 if job == JENKINS_COVERAGE_JOB:
                     # Coverage
                     output = server.getConsoleOutput(job, start)
-                    if output:
-                        match = re.search(r'AutoMerge(.*)%', output)
-                        if match:
-                            info = match.group(0).split()
-                            buildInfo['coverage'] = info[len(info)-1]
+                    match = re.search(r'AutoMerge(.*)%', output)
+                    if match:
+                        info = match.group(0).split()
+                        buildInfo['coverage'] = info[len(info)-1]
                 elif job in JENKINS_WIN32_TEST_JOBS and buildInfo['result'] == 'SUCCESS': 
                     # Test case number(UT test cases + IT test cases)
                     output = server.getConsoleOutput(job, start)
-                    if output:
-                        if job == JENKINS_WIN32_UT:
-                            output = output.split("Unit Test Result:", 1)[1]
-                            pattern = r'\w+\s+OK \((\d+) tests,'
-                        else:
-                            pattern = r'Done!! Totally (\d+) win32 cases run'
-                        matchs = re.findall(pattern, output)
-                        if matchs:
-                            buildInfo['testcaseNum'] = 0
-                            for num in matchs:
-                                buildInfo['testcaseNum'] += int(num)
+                    if job == JENKINS_WIN32_UT:
+                        output = output.split("Unit Test Result:", 1)[1]
+                        pattern = r'\w+\s+OK \((\d+) tests,'
+                    else:
+                        pattern = r'Done!! Totally (\d+) win32 cases run'
+                    matchs = re.findall(pattern, output)
+                    if matchs:
+                        buildInfo['testcaseNum'] = 0
+                        for num in matchs:
+                            buildInfo['testcaseNum'] += int(num)
                 # We want to get the actual EXIT CODE from IDAT exe and store it in DB
                 elif job in JENKINS_DAT_JOBS:
                     # Exit code of DAT
                     buildInfo['IDAT_EXIT_CODES'] = []
                     output = server.getConsoleOutput(job, start)
-                    if output:
-                        matches = re.findall(r'IDATAutoTestTrigger Exit: \d+', output)
-                        if matches:
-                            for match in matches:
-                              match = match.split(':')[1].strip()
-                              buildInfo['IDAT_EXIT_CODES'].append(match)
+                    matches = re.findall(r'IDATAutoTestTrigger Exit: \d+', output)
+                    if matches:
+                        for match in matches:
+                            match = match.split(':')[1].strip()
+                            buildInfo['IDAT_EXIT_CODES'].append(match)
+            except JenkinsException as e:
+                pass
 
-                # Save its log if the build failed by itself not its sub-builds
-                if (buildInfo['result'] != 'SUCCESS'
-                    and ('subBuilds' not in buildInfo or not buildInfo['subBuilds'])):
+            # Save its log if the build failed by itself not its sub-builds
+            if (buildInfo['result'] != 'SUCCESS'
+                and ('subBuilds' not in buildInfo or not buildInfo['subBuilds'])):
+                try:
                     buildLog = server.getConsoleOutput(job, buildInfo['number'])
-                    if buildLog:
-                        buildInfo['buildLogID'] = db.writeBlock(buildLog)
+                    buildInfo['buildLogID'] = db.writeBlock(buildLog)
+                except JenkinsException as e:
+                    pass
 
-                db.insertOne(jobColl, buildInfo)
-                cnt += 1
+            db.insertOne(jobColl, buildInfo)
+            cnt += 1
 
             start += 1
 
@@ -188,26 +190,14 @@ def saveAllCI2DB(server, db):
 
 
 if __name__ == "__main__":
-    f = open(LOCK_FILE, LOCK_MODE)
-    if not f:
-        sys.exit(1)
-    try:
-        fcntl.flock(f.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
-    except IOError:
-        print 'Another python script is running'
-        sys.exit(1)
-
     try:
         ssl._create_default_https_context = ssl._create_unverified_context
     except AttributeError:
         pass
 
-    server = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
+    server = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN, JENKINS_TIMEOUT)
     dbClient = MongoClient()
     db = BoosterDB(dbClient, BOOSTER_DB_NAME)
 
     saveAllCI2DB(server, db)
-
-    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-    f.close()
 
