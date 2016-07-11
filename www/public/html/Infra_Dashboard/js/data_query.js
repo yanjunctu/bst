@@ -30,7 +30,7 @@ function get_getCIHistory(obj)
 					CIPendingReq.current.buildResult = "RUNNING";
 					if(CIPendingReq.current.submitter != "na")
 					{
-						CIPendingReq.current.buildID = "+1"; //just an indicator 
+						CIPendingReq.current.buildID = ""; //just an indicator 
 						CIPendingReq.current.startTime = parseInt(CIPendingReq.current.subTime);
 						CIHistory.unshift(CIPendingReq.current);
 					}
@@ -38,7 +38,7 @@ function get_getCIHistory(obj)
 
 				for (var i=0;i<CIPendingReq.queue.length;i++)
 				{
-					CIPendingReq.queue[i].buildID = "+" + (i + 2); //just an indicator 
+					CIPendingReq.queue[i].buildID = "+" + (i + 1); //just an indicator 
 					CIPendingReq.queue[i].startTime = parseInt(CIPendingReq.queue[i].subTime); 
 					CIPendingReq.queue[i].buildResult = "QUEUING";
 					CIHistory.unshift(CIPendingReq.queue[i]);
