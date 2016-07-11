@@ -44,7 +44,7 @@ function getCoreID(name_string)
 	    }
     }
     
-    //name = name.toUpperCase();
+    name = name.toUpperCase();
     return name.replace(/(^\s*)|(\s*$)/g,'');
 }
 
