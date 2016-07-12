@@ -150,7 +150,7 @@ var main = function(){
     
     
     $.get("/reposizeinfo/getreposize",function (reposize) {
-    
+
     var plotHandlerRepoOriginal = document.getElementById('repoSizeOriginal');
     var plotHandlerRepoCheckout = document.getElementById('repoSizeCheckout');
     var plotHandlerBranch = document.getElementById('branchNumber');
@@ -195,63 +195,63 @@ var main = function(){
     Plotly.plot( plotHandlerRepoOriginal, repoDataOriginal, layoutRepo);
     Plotly.plot( plotHandlerRepoCheckout, repoDataCheckout, layoutRepo);
     Plotly.plot( plotHandlerBranch, branchData, layoutBranch);    
+
+    // draw pie for repos size before checkout
+    var MaxSize = 2048 //2G so far
+    var commSize = (reposize.Gitlab_Comm_OriginSize)[reposize.Gitlab_Comm_OriginSize.length-1]
+    var cypherSize = (reposize.Gitlab_Cypher_OriginSize)[reposize.Gitlab_Cypher_OriginSize.length-1]
+    var bahamaSize = (reposize.Gitlab_Bahama_OriginSize)[reposize.Gitlab_Bahama_OriginSize.length-1]
+    var usedSize = commSize + cypherSize + bahamaSize
+    var unusedSize = MaxSize - usedSize;
+
+    var data = [{
+      values: [usedSize, unusedSize],
+      labels: ['used', 'unused'],
+      type: 'pie'
+      }];
+
+
+    var layout = {
+      height: 400,
+      width: 600
+    };
+
+    Plotly.newPlot('originRepoSizePlot', data, layout);
+
+    // draw pies for repos after checkout
+    MaxSize = 10240 //10G so far
+    commSize = (reposize.Gitlab_Comm_UserSize)[reposize.Gitlab_Comm_UserSize.length-1]
+    cypherSize = (reposize.Gitlab_Cypher_UserSize)[reposize.Gitlab_Cypher_UserSize.length-1]
+    bahamaSize = (reposize.Gitlab_Bahama_UserSize)[reposize.Gitlab_Bahama_UserSize.length-1]
+    usedSize = commSize + cypherSize + bahamaSize
+    unusedSize = MaxSize - usedSize;
+
+    data = [{
+      values: [usedSize, unusedSize],
+      labels: ['used', 'unused'],
+      type: 'pie'
+      }];
+
+    Plotly.newPlot('userRepoSizePlot', data, layout);
+
+    // draw pie for repo branches counter
+    MaxSize = 1000 //1000 branches so far
+    commSize = (reposize.Gitlab_Comm_BranchCnt)[reposize.Gitlab_Comm_BranchCnt.length-1]
+    cypherSize = (reposize.Gitlab_Cypher_BranchCnt)[reposize.Gitlab_Cypher_BranchCnt.length-1]
+    bahamaSize = (reposize.Gitlab_Bahama_BranchCnt)[reposize.Gitlab_Bahama_BranchCnt.length-1]
+    usedSize = commSize + cypherSize + bahamaSize
+    unusedSize = MaxSize - usedSize;
+
+    data = [{
+      values: [usedSize, unusedSize],
+      labels: ['used', 'unused'],
+      type: 'pie'
+      }];
+
+    Plotly.newPlot('repoBrhCntPlot', data, layout);
     })
-    
 
-    $.get("/serverInfo/repoInfo",function (result) {
-      
-
-      // draw pie for repo size before checkout
-      var MaxSize = 2048 //2G so far
-      var usedSize = parseInt(result.Gitlab_Comm_OriginSize) + parseInt(result.Gitlab_Cypher_OriginSize) + parseInt(result.Gitlab_Bahama_OriginSize);
-      var unusedSize = MaxSize - usedSize;
-
-      var data = [{
-        values: [usedSize, unusedSize],
-        labels: ['used', 'unused'],
-        type: 'pie'
-        }];
-
-
-      var layout = {
-        height: 400,
-        width: 600
-      };
-
-      Plotly.newPlot('originRepoSizePlot', data, layout);
-
-      // draw pie for repo size after checkout
-
-      MaxSize = 10240 //10G so far
-      usedSize = parseInt(result.Gitlab_Comm_UserSize) + parseInt(result.Gitlab_Cypher_UserSize) + parseInt(result.Gitlab_Bahama_UserSize);
-      unusedSize = MaxSize - usedSize;
-
-      data = [{
-        values: [usedSize, unusedSize],
-        labels: ['used', 'unused'],
-        type: 'pie'
-        }];
-
-      Plotly.newPlot('userRepoSizePlot', data, layout);
-
-      // draw pie for repo branches counter
-      MaxSize = 1000 //1000 branches so far
-      usedSize = parseInt(result.Gitlab_Comm_BranchCnt) + parseInt(result.Gitlab_Cypher_BranchCnt) + parseInt(result.Gitlab_Bahama_BranchCnt);
-      unusedSize = MaxSize - usedSize;
-
-      data = [{
-        values: [usedSize, unusedSize],
-        labels: ['used', 'unused'],
-        type: 'pie'
-        }];
-
-      Plotly.newPlot('repoBrhCntPlot', data, layout);
-      
-
-  })    
   /* Current Plotly.js version */
-  
-  
   console.log( Plotly.BUILD );
 }
 
