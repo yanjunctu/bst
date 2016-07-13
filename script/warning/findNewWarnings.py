@@ -189,7 +189,7 @@ class DiffParser(object):
         cwd = os.getcwd()
         
         diff_cmd ='git diff --unified=0 '+commit
-
+        
         os.chdir(self.repo)
         try:
             diff_output = subprocess.check_output(diff_cmd, stderr=subprocess.STDOUT,shell=True)
@@ -257,7 +257,7 @@ def process_argument():
     #the unit is day
     parser.add_argument('-D',dest="pdays",default = 7,type=int)
     #whether need git blame
-    parser.add_argument('-a',dest="audit")
+    parser.add_argument('-a',dest="audit",default = "N")
     
     args = parser.parse_args()
     #the drive is the dir for period mode
@@ -487,8 +487,12 @@ def actionOnNewWarning(tag,name,mail,file):
 def blameOnNewWarning(args):
     cwd = os.getcwd()
     unResolveList= OrderedDict()
+    if args.CIUserEmail:
+        from boosterSocket import sendEmail
+        stdout = sys.stdout
+        sys.stdout = stdOutfile = StringIO.StringIO()
     for (file_name,line) in ALL_NEW_WARNINGS.keys():
-        blame_cmd ='git blame -e -L {start},{end} {filename} '.format(start=line,end=line,filename=(args.drive+os.path.abspath(file_name)))
+        blame_cmd ='git blame -e -L {start},{end} {filename} '.format(start=line,end=line,filename=(args.drive+file_name))
  
         try:
             blame_output = subprocess.check_output(blame_cmd, stderr=subprocess.STDOUT,shell=True)
@@ -511,23 +515,18 @@ def blameOnNewWarning(args):
             blameInfo['warning']=warningDict
             unResolveList[emailAddr]=blameInfo
             
-        if args.CIUserEmail:
-            from boosterSocket import sendEmail
-            stdout = sys.stdout
-            sys.stdout = stdOutfile = StringIO.StringIO()
-            
-        for userEmail in unResolveList.keys():
-            name = userEmail.split('@')[0]
-            warningCnt = unResolveList[userEmail]['number']
-            unResolveWarning = unResolveList[userEmail]['warning']
-            print '\n\n\n{} total {} build warning unresolved :'.format(name,warningCnt)
-            for (file_name,line) in unResolveWarning.keys():
-                 print unResolveWarning[file_name,line]
+    for userEmail in unResolveList.keys():
+        name = userEmail.split('@')[0]
+        warningCnt = unResolveList[userEmail]['number']
+        unResolveWarning = unResolveList[userEmail]['warning']
+        print '\n\n\n{} total {} build warning unresolved :'.format(name,warningCnt)
+        for (file_name,line) in unResolveWarning.keys():
+            print unResolveWarning[file_name,line]
                     
     if args.CIUserEmail:           
         sys.stdout = stdout
         if args.releaseTag:
-            mailSubject = '[Notice!] The unresolved build warning between : {} and {}'.format(args.ci_Branch,args.releaseTag)
+            mailSubject = '<!!!> The unresolved build warning between : {} and {}'.format(args.ci_Branch,args.releaseTag)
         else:
             mailSubject = '[Notice!] The unresolved build warning on : {}'.format(args.ci_Branch)
         name = args.CIUserEmail.split('@')[0]
