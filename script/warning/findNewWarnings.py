@@ -527,7 +527,7 @@ def blameOnNewWarning(args):
     if args.CIUserEmail:           
         sys.stdout = stdout
         if args.releaseTag:
-            mailSubject = '[Notice!] The unresolved build warning between : {} and {}'.format(args.ci_Branch,args.releaseTag)
+            mailSubject = '<!!!> The unresolved build warning between : {} and {}'.format(args.ci_Branch,args.releaseTag)
         else:
             mailSubject = '[Notice!] The unresolved build warning on : {}'.format(args.ci_Branch)
         name = args.CIUserEmail.split('@')[0]

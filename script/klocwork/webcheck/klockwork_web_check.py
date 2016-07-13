@@ -113,7 +113,7 @@ def actionOnNewKWissue(response,args,unFixID):
         stdout = sys.stdout
         sys.stdout = stdOutfile = StringIO.StringIO()
         
-    mailSubject = '[Notice!] The new klocwork issue betwean: {} and {}'.format(args.ci_Branch,args.releaseTag)
+    mailSubject = '<!!!> The new klocwork issue betwean: {} and {}'.format(args.ci_Branch,args.releaseTag)
     unFixIssue= OrderedDict()
     
     #get the releaseTag buildnumber
