@@ -7,7 +7,8 @@ var configuration = {
 var hostname = "http://" + location.host;
 
 //Summary data in past 7 days
-var days_in_summary = 7; 
+var days_in_summary = 1; 
+var days_in_summary_hero = 7;
 
 function get_getCIHistory(obj)
 {
@@ -155,7 +156,8 @@ function get_queueStatistics()
 	var qcount = 0;
 	var rt = 0;
 	var rcount = 0;	
-	
+	var latestOne =0;
+    var latestTime = 0;
 	for(var i = 0; i < CIHistory.length; i++)
     {
     	// filter IRs in the past x days
@@ -175,21 +177,35 @@ function get_queueStatistics()
 				rcount += 1;
 			}
 		}
+        else{
+            if(CIHistory[i].startTime > latestTime && CIHistory[i].buildResult == "SUCCESS"){
+                latestTime = CIHistory[i].startTime;
+                latestOne = i;
+            }
+        }
     }
     
-    releaseDuration = 0;
-    queueDuration = 0;
+    var rd = 0;
+    var qd = 0;
     if(0 != rcount)
     {
-		var rd = new Date(parseInt(rt/rcount));
-	    releaseDuration = rd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
+		rd = new Date(parseInt(rt/rcount));
     }
+    else{
+        rt = CIHistory[latestOne].duration;
+		rd = new Date(parseInt(rt));
+    }
+    releaseDuration = rd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
 
     if(0 != qcount)
     {
-	    var qd = new Date(parseInt(qt/qcount));
-	    queueDuration = qd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
-	}
+	    qd = new Date(parseInt(qt/qcount));
+    }
+    else
+    {
+        qd = new Date(0)
+    }
+    queueDuration = qd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
 	//console.log(rt, rcount, releaseDuration, qt, qcount, queueDuration);
 }
 
@@ -205,7 +221,7 @@ function find_heroes()
   	var submitter = new Object();
 
 	var date = new Date();
-	date.setDate(date.getDate() - days_in_summary);
+	date.setDate(date.getDate() - days_in_summary_hero);
 	var miniseconds = date.getTime();
 
 	for(var i = 0; i < CIHistory.length; i++)
