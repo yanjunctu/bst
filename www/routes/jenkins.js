@@ -541,7 +541,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                     var name = pendingCI["submitter"];
                     var branch = pendingCI["subBranch"];
                     var subject = "[Notice!] Your CI : "+branch+" is canceled"
-                    var args={'msg':msg,'subject':subject,"email":submail,"name":name}
+                    var args={'msg':msg,'subject':subject,"email":submail}
                     email.send(args)
                 });
                 //disable PCR-REPT-0-MultiJob
