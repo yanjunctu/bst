@@ -109,7 +109,7 @@ function findParamValue(buildInfo, paramName) {
 
 function fetchTestCaseNum(days){
     // Get the sum of the number of UT cases and IT cases from DB
-    var allTestJobs = ["CI-PCR-REPT-Win32_UT", "CI-PCR-REPT-Win32_IT-TEST-Part1", "CI-PCR-REPT-Win32_IT-TEST-Part2"];
+    var allTestJobs = ["CI-PCR-REPT-Win32_UT", "CI-PCR-REPT-Win32_IT-TEST-Dist", "CI-PCR-REPT-Win32_IT-TEST-Part1", "CI-PCR-REPT-Win32_IT-TEST-Part2"];
     var timestamp = (new Date).getTime() - days*24*3600*1000;
 
     // Only save the data of the latest 'days' days

@@ -4,7 +4,7 @@
 #sudo pip install pymongo
 
 from jenkins import Jenkins
-from jenkins import JenkinsException
+from jenkins import JenkinsException, TimeoutException
 from pymongo import MongoClient
 import ssl
 import subprocess
@@ -18,9 +18,10 @@ JENKINS_TIMEOUT = 60  # 60s
 JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY','PCR-REPT-Memory_Leak_MultiJob-DAILY',"PCR-REPT-Git-KW"]
 JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
 JENKINS_WIN32_UT = 'PCR-REPT-Win32_UT'
+JENKINS_WIN32_IT_DIST = 'PCR-REPT-Win32_IT-TEST-Dist'
 JENKINS_WIN32_IT_PART1 = 'PCR-REPT-Win32_IT-TEST-Part1'
 JENKINS_WIN32_IT_PART2 = 'PCR-REPT-Win32_IT-TEST-Part2'
-JENKINS_WIN32_TEST_JOBS = [JENKINS_WIN32_UT, JENKINS_WIN32_IT_PART1, JENKINS_WIN32_IT_PART2]
+JENKINS_WIN32_TEST_JOBS = [JENKINS_WIN32_UT, JENKINS_WIN32_IT_DIST, JENKINS_WIN32_IT_PART1, JENKINS_WIN32_IT_PART2]
 JENKINS_DAT_JOBS = ['PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY']
 BOOSTER_DB_NAME = 'booster'
 
@@ -147,7 +148,7 @@ def saveAllCI2DB(server, db):
                         info = match.group(0).split()
                         buildInfo['coverage'] = info[len(info)-1]
                 elif job in JENKINS_WIN32_TEST_JOBS and buildInfo['result'] == 'SUCCESS': 
-                    # Test case number(UT test cases + IT test cases)
+                    # Test case number
                     output = server.getConsoleOutput(job, start)
                     if job == JENKINS_WIN32_UT:
                         output = output.split("Unit Test Result:", 1)[1]

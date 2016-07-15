@@ -127,20 +127,7 @@ var ciTable = $("#ciHistoryTbl").DataTable({
             {data: "onTargetBuild", defaultContent: "--"},
             {data: "offTargetBuild", defaultContent: "--"},
             {data: "win32UT", defaultContent: "--"},
-            {
-                data: "win32IT",
-                render: function(data, type, row) {
-                    if (!data)
-                        return "--";
-
-                    var part1 = data["win32ITPart1"], part2 = data["win32ITPart2"];
-
-                    if ("SUCCESS" == part1 && "SUCCESS" == part2)
-                        return "SUCCESS";
-                    else
-                        return "FAILURE";
-                }
-            },
+            {data: "win32IT", defaultContent: "--"},
             {data: "coverage", defaultContent: "--"},
             {
                 data: "codeStaticCheck",
