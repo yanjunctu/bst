@@ -7,8 +7,9 @@ var configuration = {
 var hostname = "http://" + location.host;
 
 //Summary data in past 7 days
-var days_in_summary = 1; 
 var days_in_summary_hero = 7;
+
+var number_in_statistic = 10;
 
 function get_getCIHistory(obj)
 {
@@ -148,63 +149,33 @@ var queueDuration = 0;
 var releaseDuration = 0;
 function get_queueStatistics()
 {
-	var date = new Date();
-	date.setDate(date.getDate() - days_in_summary);
-	var miniseconds = date.getTime();
-	
 	var qt = 0;
 	var qcount = 0;
 	var rt = 0;
 	var rcount = 0;	
-	var latestOne =0;
-	var latestTime = 0;
-	for(var i = 0; i < CIHistory.length; i++)
+
+	for(var i = 0; i < CIHistory.length && rcount < number_in_statistic; i++)
     {
     	// filter IRs in the past x days
-		if(CIHistory[i].startTime > miniseconds)
-		{
-			if(CIHistory[i].queuewTime && CIHistory[i].buildResult == "SUCCESS"
+        if(CIHistory[i].queuewTime && CIHistory[i].buildResult == "SUCCESS"
 			&& CIHistory[i].queuewTime < 3600000 * 8) //filter out queue time > 8 hours as outlier
-			{
-				qt += CIHistory[i].queuewTime;
-				qcount += 1;
+        {
+            qt += CIHistory[i].queuewTime;
+			qcount += 1;
 				//console.log(i, CIHistory[i].queuewTime,  CIHistory[i].queuewTime/3600000, qt/qcount/3600000);
-			}
+        }
 
-			if(CIHistory[i].duration && CIHistory[i].buildResult == "SUCCESS")
-			{
-				rt += CIHistory[i].duration;
-				rcount += 1;
-			}
-		}
-        else{
-            if(CIHistory[i].startTime > latestTime && CIHistory[i].buildResult == "SUCCESS"){
-                latestTime = CIHistory[i].startTime;
-                latestOne = i;
-            }
+        if(CIHistory[i].duration && CIHistory[i].buildResult == "SUCCESS")
+        {
+            rt += CIHistory[i].duration;
+            rcount += 1;
         }
     }
     
-    var rd = 0;
-    var qd = 0;
-    if(0 != rcount)
-    {
-		rd = new Date(parseInt(rt/rcount));
-    }
-    else{
-        rt = CIHistory[latestOne].duration;
-		rd = new Date(parseInt(rt));
-    }
+    var rd = new Date(parseInt(rt/rcount));
     releaseDuration = rd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
 
-    if(0 != qcount)
-    {
-	    qd = new Date(parseInt(qt/qcount));
-    }
-    else
-    {
-        qd = new Date(0)
-    }
+    var qd = new Date(parseInt(qt/qcount));
     queueDuration = qd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
 	//console.log(rt, rcount, releaseDuration, qt, qcount, queueDuration);
 }
