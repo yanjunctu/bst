@@ -7,7 +7,9 @@ var configuration = {
 var hostname = "http://" + location.host;
 
 //Summary data in past 7 days
-var days_in_summary = 7; 
+var days_in_summary_hero = 7;
+
+var number_in_statistic = 10;
 
 function get_getCIHistory(obj)
 {
@@ -147,49 +149,34 @@ var queueDuration = 0;
 var releaseDuration = 0;
 function get_queueStatistics()
 {
-	var date = new Date();
-	date.setDate(date.getDate() - days_in_summary);
-	var miniseconds = date.getTime();
-	
 	var qt = 0;
 	var qcount = 0;
 	var rt = 0;
 	var rcount = 0;	
-	
-	for(var i = 0; i < CIHistory.length; i++)
+
+	for(var i = 0; i < CIHistory.length && rcount < number_in_statistic; i++)
     {
     	// filter IRs in the past x days
-		if(CIHistory[i].startTime > miniseconds)
-		{
-			if(CIHistory[i].queuewTime && CIHistory[i].buildResult == "SUCCESS"
+        if(CIHistory[i].queuewTime && CIHistory[i].buildResult == "SUCCESS"
 			&& CIHistory[i].queuewTime < 3600000 * 8) //filter out queue time > 8 hours as outlier
-			{
-				qt += CIHistory[i].queuewTime;
-				qcount += 1;
+        {
+            qt += CIHistory[i].queuewTime;
+			qcount += 1;
 				//console.log(i, CIHistory[i].queuewTime,  CIHistory[i].queuewTime/3600000, qt/qcount/3600000);
-			}
+        }
 
-			if(CIHistory[i].duration && CIHistory[i].buildResult == "SUCCESS")
-			{
-				rt += CIHistory[i].duration;
-				rcount += 1;
-			}
-		}
+        if(CIHistory[i].duration && CIHistory[i].buildResult == "SUCCESS")
+        {
+            rt += CIHistory[i].duration;
+            rcount += 1;
+        }
     }
     
-    releaseDuration = 0;
-    queueDuration = 0;
-    if(0 != rcount)
-    {
-		var rd = new Date(parseInt(rt/rcount));
-	    releaseDuration = rd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
-    }
+    var rd = new Date(parseInt(rt/rcount));
+    releaseDuration = rd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
 
-    if(0 != qcount)
-    {
-	    var qd = new Date(parseInt(qt/qcount));
-	    queueDuration = qd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
-	}
+    var qd = new Date(parseInt(qt/qcount));
+    queueDuration = qd.toUTCString("en-US", {hour12: false, hour: '2-digit', minute:'2-digit'}).substring(18, 22);
 	//console.log(rt, rcount, releaseDuration, qt, qcount, queueDuration);
 }
 
@@ -205,7 +192,7 @@ function find_heroes()
   	var submitter = new Object();
 
 	var date = new Date();
-	date.setDate(date.getDate() - days_in_summary);
+	date.setDate(date.getDate() - days_in_summary_hero);
 	var miniseconds = date.getTime();
 
 	for(var i = 0; i < CIHistory.length; i++)

@@ -112,6 +112,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString()).jobs;
                 callback(null, data);
             });
@@ -125,6 +126,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString()).jobs;
                 callback(null, data);
             })
@@ -138,6 +140,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString());
                 callback(null, data);
             });
@@ -151,6 +154,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString());
                 callback(null, data);
             });
@@ -164,6 +168,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString());
                 callback(null, data);
             });
@@ -177,6 +182,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString());
                 callback(null, data);
             });
@@ -190,6 +196,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString());
                 callback(null, data);
             });
@@ -203,6 +210,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString());
                 callback(null, data);
             });
@@ -332,6 +340,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body);
                 callback(null, data);
             });
@@ -364,6 +373,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString());
                 callback(null, data);
             });
@@ -385,6 +395,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.parse(body.toString());
                 callback(null, data);
             });
@@ -398,6 +409,7 @@ var init = exports.init = function(host, options) {
                     callback(error || true, response);
                     return;
                 }
+                body = body.replace(/\x1b/g,"");
                 var data = JSON.stringify({"output": body});
                 data = JSON.parse(data);
                 callback(null, data);
