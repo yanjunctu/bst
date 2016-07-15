@@ -687,7 +687,7 @@ var refreshCIHistory = function(db, doc) {
         || (itPart1 == "SUCCESS" && itPart2 == "SUCCESS")) {
         entry[keyMap[CI_OFF_TARGET_IT_JOB]] = "SUCCESS";
     }
-    else {
+    else if (itDist || itPart1 || itPart2){
         entry[keyMap[CI_OFF_TARGET_IT_JOB]] = "FAILURE";
     }
 
