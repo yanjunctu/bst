@@ -157,7 +157,7 @@ function get_queueStatistics()
 	var rt = 0;
 	var rcount = 0;	
 	var latestOne =0;
-    var latestTime = 0;
+	var latestTime = 0;
 	for(var i = 0; i < CIHistory.length; i++)
     {
     	// filter IRs in the past x days
