@@ -29,9 +29,11 @@ const CI_OFF_TARGET_JOB = "PCR-REPT-Off_Target_MultiJob";
 const CI_OFF_TARGET_BUILD_JOB = "PCR-REPT-Off_Target_Build_MultiJob";
 const CI_OFF_TARGET_TEST_JOB = "PCR-REPT-Off_Target_Test_MultiJob";
 const CI_OFF_TARGET_UT_JOB = "PCR-REPT-Win32_UT";
-const CI_OFF_TARGET_IT_JOB = "PCR-REPT-Win32_IT"; // This is not a real jenkins job, it is defined as a key 
+// This is not a real jenkins job, it is defined as a key to get IT build result
+const CI_OFF_TARGET_IT_JOB = "PCR-REPT-Win32_IT";  
 const CI_OFF_TARGET_IT_PART1_JOB = "PCR-REPT-Win32_IT-TEST-Part1";
 const CI_OFF_TARGET_IT_PART2_JOB = "PCR-REPT-Win32_IT-TEST-Part2";
+const CI_OFF_TARGET_IT_DIST_JOB = "PCR-REPT-Win32_IT-TEST-Dist";
 const CI_COVERAGE_CHECK_JOB = "PCR-REPT-Win32_COV_CHECK";
 const CI_RELEASE_JOB = "PCR-REPT-Git-Release";
 const CI_PRECHECK_JOB = "PCR-REPT-Git-Integration";
@@ -51,6 +53,7 @@ keyMap[CI_ON_TAEGET_BUILD_JOB] = "onTargetBuild";
 keyMap[CI_OFF_TARGET_BUILD_JOB] = "offTargetBuild";
 keyMap[CI_OFF_TARGET_UT_JOB] = "win32UT";
 keyMap[CI_OFF_TARGET_IT_JOB] = "win32IT";
+keyMap[CI_OFF_TARGET_IT_DIST_JOB] = "win32ITDist";
 keyMap[CI_OFF_TARGET_IT_PART1_JOB] = "win32ITPart1";
 keyMap[CI_OFF_TARGET_IT_PART2_JOB] = "win32ITPart2";
 
@@ -645,7 +648,8 @@ var getJobCollName = function(jobName) {
 
 var refreshCIHistory = function(db, doc) {
     var entry = {};
-    var allSubJobs = [CI_PRECHECK_JOB, CI_ON_TAEGET_BUILD_JOB, CI_OFF_TARGET_BUILD_JOB, CI_OFF_TARGET_UT_JOB, CI_OFF_TARGET_IT_PART1_JOB, CI_OFF_TARGET_IT_PART2_JOB];
+    var itPart1 = undefined, itPart2 = undefined, itDist = undefined;
+    var allSubJobs = [CI_PRECHECK_JOB, CI_ON_TAEGET_BUILD_JOB, CI_OFF_TARGET_BUILD_JOB, CI_OFF_TARGET_UT_JOB, CI_OFF_TARGET_IT_DIST_JOB, CI_OFF_TARGET_IT_PART1_JOB, CI_OFF_TARGET_IT_PART2_JOB];
     
     entry["buildID"] = doc["number"];
     entry["buildResult"] = doc["result"];
@@ -656,24 +660,35 @@ var refreshCIHistory = function(db, doc) {
     entry["duration"] = doc["duration"];
 
     // Build results of all sub-builds
+    // Note: The original IT test job is divided into two parts: it-part1 and it-part2,
+    // but now these two parts have been merged into one: it-dist. Both the cases should be
+    // considered for compatibility.
     for (var i = 0; i < allSubJobs.length; ++i) {
         var subJobName = allSubJobs[i];
         var entryKey = keyMap[subJobName];
         var buildInfo = findSubBuildInfo(doc, subJobName);
 
         if (buildInfo) {
-            // There are two IT related jobs, we should merge these two jobs into one IT job
-            if ((subJobName == CI_OFF_TARGET_IT_PART1_JOB)
-                || (subJobName == CI_OFF_TARGET_IT_PART2_JOB)) {
-                if (!("win32IT" in entry)) {
-                    entry["win32IT"] = {}
-                }
-                entry["win32IT"][entryKey] = buildInfo["result"];
+            if (subJobName == CI_OFF_TARGET_IT_PART1_JOB) {
+                itPart1 = buildInfo["result"];
+            }
+            else if (subJobName == CI_OFF_TARGET_IT_PART2_JOB) {
+                itPart2 = buildInfo["result"];
+            }
+            else if (subJobName == CI_OFF_TARGET_IT_DIST_JOB) {
+                itDist = buildInfo["result"];
             }
             else {
                 entry[entryKey] = buildInfo["result"];
             }
         }
+    }
+    if (itDist == "SUCCESS"
+        || (itPart1 == "SUCCESS" && itPart2 == "SUCCESS")) {
+        entry[keyMap[CI_OFF_TARGET_IT_JOB]] = "SUCCESS";
+    }
+    else if (itDist || itPart1 || itPart2){
+        entry[keyMap[CI_OFF_TARGET_IT_JOB]] = "FAILURE";
     }
 
     // Coverage
