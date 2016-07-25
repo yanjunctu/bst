@@ -75,9 +75,10 @@ def updateConfig(oldCommit):
 
         # TODO: 1. Only init and sync the changed submodules, not all
         #       2. Update submodule directories if submodules are remmoved or path-changed
-        print 'Init && sync submodule config'
-        cmd = 'git submodule init && git submodule sync --recursive'
-        subprocess.check_call(cmd, shell=True)
+        print 'Init submodule config'
+        subprocess.check_call('git submodule init')
+        print 'Sync submodule config'
+        subprocess.check_call('git submodule sync --recursive')
     except subprocess.CalledProcessError as err:
         print '[ERROR]{}'.format(str(err))
         return RET_ERR
@@ -111,8 +112,8 @@ def updateCommit(oldCommit):
             submoduleName = os.path.basename(submodulePath)
             commitID = objInfo[2]
 
-            print 'Update new submodule commit: {} {} {}'.format(submodulePath, submoduleName, commitID)
             ref = subprocess.check_output('git describe --all {}'.format(commitID))
+            print 'Check new submodule commit: {} {} {}'.format(submodulePath, submoduleName, commitID)
             if not ref or not validateCommit(submoduleName, commitID, ref):
                 print '[ERROR]Invalid submodule commit: {} {} {}'.format(submodulePath, commitID, ref)
                 os.chdir(pwd)
@@ -120,6 +121,7 @@ def updateCommit(oldCommit):
 
             os.chdir(pwd)
 
+        print 'Update new submodule commits'
         for submodulePath in matches:
             subprocess.check_call('git submodule update -f --recursive {}'.format(submodulePath))
     except (OSError, subprocess.CalledProcessError) as err:
