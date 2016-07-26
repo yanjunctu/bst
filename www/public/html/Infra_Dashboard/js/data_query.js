@@ -180,16 +180,18 @@ function get_queueStatistics()
 	//console.log(rt, rcount, releaseDuration, qt, qcount, queueDuration);
 }
 
-function hero(name, XP)
+function hero(name, core_id, XP)
 {
-    this.name=name;
-    this.XP=XP;
+	this.core_id = core_id;
+    this.name = name;
+    this.XP = XP;
 }
 
 var heroes = new Array();
 function find_heroes()
 {
-  	var submitter = new Object();
+  	var submitters = new Object();
+  	var names = new Object();
 
 	var date = new Date();
 	date.setDate(date.getDate() - days_in_summary_hero);
@@ -202,22 +204,31 @@ function find_heroes()
 			CIHistory[i].startTime > miniseconds)
 		{
 			var name = CIHistory[i].submitter;//.toUpperCase();
-			if(submitter[name])
+
+			//if we can find core id, use core id; if not, just use the name
+			var cid = getCoreID(name);
+			if("NULL" == cid)
 			{
-				submitter[name] += 1;	
+				cid = name;	
+			}
+			names[cid] = name;
+			
+			if(submitters[cid])
+			{
+				submitters[cid] += 1;
 			}
 			else
 			{
-				submitter[name] = 1;
+				submitters[cid] = 1;
 			}
 		}
     }
 	//console.log(heroes);
 
 	heroes = [];
-	for(var p in submitter)
+	for(var cid in names)
     {	
-		heroes.push(new hero(p, submitter[p]));
+		heroes.push(new hero(names[cid], cid, submitters[cid]));
     }
     
 	heroes.sort(function(a, b) {
