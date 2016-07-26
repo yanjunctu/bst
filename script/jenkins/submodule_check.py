@@ -1,13 +1,12 @@
 import sys
 import os
-import subprocess
 import re
+import subprocess
 
-RET_OK = 0          # valid submodule commit
-RET_CHECK_FAIL = 1  # invalid submodule commit
-RET_ERR = 2         # error when executing this python script
+RET_OK = 0
+RET_ERR = 1
 VALID_SUBMODULE_REFS = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
-                        'bahama_platform': r'.*', # don't check this submodule for now
+                        'bahama_platform': r'master',
                         'cgiss_subscriber': r'CGISS_SUBSCRIBER_R[0-9.]+$',
                         'gcp_networking': r'GCP_NETWORKING_R[0-9.]+$',
                         'gcp_nucleus_releases': r'GCP_NUCLEUS_R[0-9.]+$',
@@ -29,25 +28,25 @@ VALID_SUBMODULE_REFS = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
                         'tc': r'TC2.7_([DI]|MASTER_I)[0-9.]+$|develop'
                        }
 
-def validateCommit(commitInfo):
-    ret = False
-    commitID = commitInfo[0]
-    submodulePath = commitInfo[1]
-    ref = commitInfo[2]
 
-    key = os.path.basename(submodulePath) 
-    if key in VALID_SUBMODULE_REFS.keys() and re.search(VALID_SUBMODULE_REFS[key], ref):
+def validateCommit(submoduleName, commitID, ref):
+    ret = False
+
+    if submoduleName not in VALID_SUBMODULE_REFS.keys():
+        print '[ERROR]Submodule without any filter rule: {} {} {}'.format(submoduleName, commitID, ref)
+        return False
+
+    rule = VALID_SUBMODULE_REFS[submoduleName]
+    if re.search(rule, ref):
         return True
 
     cmd = 'git log -1 ' + commitID
-    pwd = os.getcwd()
-    pattern = r'Merge pull request #\d+ in .* from .* to (' + VALID_SUBMODULE_REFS[key] + r')'
+    pattern = r'Merge pull request #\d+ in .* from .* to \b(' + rule + r')\b'
     try:
-        os.chdir(submodulePath)
-        logInfo = subprocess.check_output(cmd, stderr=subprocess.STDOUT).split('\n')
+        logInfo = subprocess.check_output(cmd.split(), stderr=subprocess.STDOUT).split('\n')
         '''
         The following is an example output of a valid submodule commit, and the sixth line must be of the
-        format 'Merge pull request #... in ... from ... to your-branch-name':
+        format 'Merge pull request #... in ... from ... to a-valid-branch':
         commit d841b4f33e24c8bd08871a68e7f995b5c7c97984
         Merge: 7f57beb b5664ff
         Author: Garcia Daniel-C00265 <dan.garcia@motorolasolutions.com>
@@ -61,38 +60,111 @@ def validateCommit(commitInfo):
       '''
         if len(logInfo) >= 6 and re.search(pattern, logInfo[5]):
             ret = True
-    except (IOError, subprocess.CalledProcessError) as err:
-        print err
+    except subprocess.CalledProcessError as err:
+        print '[ERROR]{}'.format(err)
 
-    os.chdir(pwd)
+    return ret
+
+# Sync the submodule config if it is changed
+def updateConfig(oldCommit):
+    try:
+        # No need to update submodule config if .gitmodules is not changed
+        cmd = 'git diff-tree {} HEAD -- .gitmodules'.format(oldCommit)
+        if not subprocess.check_output(cmd.split()):
+            return RET_OK
+
+        # TODO: 1. Only init and sync the changed submodules, not all
+        #       2. Update submodule directories if submodules are remmoved or path-changed
+        print 'Init submodule config'
+        subprocess.check_call(['git', 'submodule', 'init'])
+        print 'Sync submodule config'
+        subprocess.check_call(['git', 'submodule', 'sync', '--recursive'])
+    except subprocess.CalledProcessError as err:
+        print '[ERROR]{}'.format(err)
+        return RET_ERR
+
+    return RET_OK
+
+
+# Update submodule directories and check whether the new submodule commits are valid if there are any
+def updateCommit(oldCommit):
+    ret = RET_OK
+    pwd = os.getcwd()
+
+    try:
+        # Submodules newly added, the diff-format looks like this:
+        # +[submodule "booster"]
+        # +       path = booster
+        # +       url = ssh://git@bitbucket.mot-solutions.com:7999/mototrbo_infra_fw/booster.git
+        output = subprocess.check_output('git diff {} HEAD -- .gitmodules'.format(oldCommit).split())
+        matches = re.findall(r'^\+\[submodule .*\]\n^\+\s+path = (.*)\n^\+\s+url = .*', output, re.MULTILINE)
+        # Submodules already added but changed
+        output = subprocess.check_output(['git', 'status'])
+        matches += re.findall(r'^\s+modified:\s+(.*)\s+\(.*\)', output, re.MULTILINE)
+        # Now the list 'matches' should include all changed/added submodules, check them one by one
+        for submodulePath in matches:
+            objInfo = subprocess.check_output('git ls-tree HEAD {}'.format(submodulePath).split()).split()
+            if objInfo[1] != 'commit':
+                print '[INFO]Not a submodule object: {}'.format(objInfo)
+                continue
+
+            os.chdir(submodulePath)
+            submoduleName = os.path.basename(submodulePath)
+            commitID = objInfo[2]
+
+            ref = subprocess.check_output('git describe --all {}'.format(commitID).split())
+            print 'Check new submodule commit: {} {} {}'.format(submodulePath, submoduleName, commitID)
+            if not ref or not validateCommit(submoduleName, commitID, ref):
+                print '[ERROR]Invalid submodule commit: {} {} {}'.format(submodulePath, commitID, ref)
+                os.chdir(pwd)
+                return RET_ERR
+
+            os.chdir(pwd)
+
+        print 'Update new submodule commits'
+        for submodulePath in matches:
+            subprocess.check_call('git submodule update -f --recursive {}'.format(submodulePath).split())
+    except (OSError, subprocess.CalledProcessError) as err:
+        print '[ERROR]{}'.format(err)
+        os.chdir(pwd)
+        ret = RET_ERR
+
     return ret
 
 
 if __name__ == '__main__':
     ret = RET_OK
+    pwd = os.getcwd()
 
     if len(sys.argv) != 2:
-        print 'Usage: {} submodule-status-file'.format(sys.argv[0])
+        print '[ERROR]Invalid argument, usage: {} old-commit'.format(sys.argv[0])
         sys.exit(RET_ERR)
 
+    oldCommit = sys.argv[1]
     try:
-        with open(sys.argv[1], 'r') as f:
-            for line in f:
-                match = re.search(r'([0-9a-fA-F]+)\s+(.*)\s+\((.*)\)', line)
-                if not match:
-                    print 'Invalid submodule status: {}'.format(line)
-                    ret = RET_ERR
-                    continue
+        rootDir = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip()
+    except (OSError, subprocess.CalledProcessError) as err:
+        print '[ERROR]Failed to get root directory of the repo: {}'.format(err)
+        sys.exit(RET_ERR)
+    
+    os.chdir(rootDir)
+    print 'Execute {} {}'.format(sys.argv[0], oldCommit)
+    if not os.path.isfile('.gitmodules'):
+        print '[ERROR]No such file .gitmodules in current directory: {}'.format(rootDir)
+        sys.exit(RET_ERR)
 
-                if not validateCommit(match.groups()):
-                    print 'Invalid submodule commit {}'.format(line)
-                    ret = RET_CHECK_FAIL
-                    break
-            f.close()
+    print 'Process submodule config...'
+    if RET_OK != updateConfig(oldCommit):
+        print '[ERROR]Failed to update submodule config'
+        sys.exit(RET_ERR)
+    print 'Done'
+    
+    print 'Process submodule commit...'
+    if RET_OK != updateCommit(oldCommit):
+        print '[ERROR]Failed to update submodule commit'
+        sys.exit(RET_ERR)
+    print 'Done'
+    os.chdir(pwd)
 
-    except IOError as err:
-        print '{}: {}'.format(sys.argv[0], err)
-        ret = RET_ERR
-
-    sys.exit(ret)
+    sys.exit(RET_OK)
 
