@@ -6,7 +6,7 @@ import subprocess
 RET_OK = 0
 RET_ERR = 1
 VALID_SUBMODULE_REFS = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
-                        'bahama_platform': r'.*', # don't check this submodule for now
+                        'bahama_platform': r'master',
                         'cgiss_subscriber': r'CGISS_SUBSCRIBER_R[0-9.]+$',
                         'gcp_networking': r'GCP_NETWORKING_R[0-9.]+$',
                         'gcp_nucleus_releases': r'GCP_NUCLEUS_R[0-9.]+$',
@@ -41,7 +41,7 @@ def validateCommit(submoduleName, commitID, ref):
         return True
 
     cmd = 'git log -1 ' + commitID
-    pattern = r'Merge pull request #\d+ in .* from .* to (' + rule + r')'
+    pattern = r'Merge pull request #\d+ in .* from .* to \b(' + rule + r')\b'
     try:
         logInfo = subprocess.check_output(cmd.split(), stderr=subprocess.STDOUT).split('\n')
         '''
