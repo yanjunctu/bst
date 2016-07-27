@@ -6,7 +6,7 @@ import argparse
 
 RET_OK = 0
 RET_ERR = 1
-# Patterns for D build
+# Patterns for D/R build
 VALID_SUBMODULE_REFS_D = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
                           'bahama_platform': r'master',
                           'cgiss_subscriber': r'CGISS_SUBSCRIBER_R[0-9.]+$',
@@ -29,8 +29,8 @@ VALID_SUBMODULE_REFS_D = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
                           'ServicePlatformAbstraction': r'SPA2.7_(D|MASTER_I)[0-9.]+$',
                           'tc': r'TC2.7_(D|MASTER_I)[0-9.]+$'
                          }
-# Patterns for R build
-VALID_SUBMODULE_REFS_R = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
+# Patterns for I build
+VALID_SUBMODULE_REFS_I = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
                           'bahama_platform': r'master',
                           'cgiss_subscriber': r'CGISS_SUBSCRIBER_R[0-9.]+$',
                           'gcp_networking': r'GCP_NETWORKING_R[0-9.]+$',
@@ -52,7 +52,7 @@ VALID_SUBMODULE_REFS_R = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
                           'ServicePlatformAbstraction': r'SPA(2.7_([DI]|MASTER_I)|_R)[0-9.]+$|develop',
                           'tc': r'TC2.7_([DI]|MASTER_I)[0-9.]+$|develop'
                          }
-ALL_VALID_SUBMODULE_REFS = {'d': VALID_SUBMODULE_REFS_D, 'r': VALID_SUBMODULE_REFS_R}
+ALL_VALID_SUBMODULE_REFS = {'d': VALID_SUBMODULE_REFS_D, 'i': VALID_SUBMODULE_REFS_I, 'r': VALID_SUBMODULE_REFS_D}
 
 def validateCommit(buildType, submoduleName, commitID, ref):
     ret = False
@@ -165,8 +165,8 @@ if __name__ == '__main__':
 
     print ' '.join(sys.argv)
 
-    parser.add_argument('-t', dest='type', choices=['d', 'D', 'r', 'R'], required=True,
-                        help='build types, d/D for D build, r/R for R build'
+    parser.add_argument('-t', dest='type', choices=['d', 'D', 'i', 'I', 'r', 'R'], required=True,
+                        help='build types, i/I for I build, d/D for D build, r/R for R build'
                        )
     parser.add_argument('oldCommit', metavar='old-commit',
                         help='old commit id used to get the differences from HEAD commit'
