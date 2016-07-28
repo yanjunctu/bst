@@ -8,7 +8,7 @@ RET_OK = 0
 RET_ERR = 1
 # Patterns for D/R build
 VALID_SUBMODULE_REFS_D = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
-                          'bahama_platform': r'master',
+                          'bahama_platform': r'BAHAMA_PLATFORM_D[0-9.]+$|master',
                           'cgiss_subscriber': r'CGISS_SUBSCRIBER_R[0-9.]+$',
                           'gcp_networking': r'GCP_NETWORKING_R[0-9.]+$',
                           'gcp_nucleus_releases': r'GCP_NUCLEUS_R[0-9.]+$',
@@ -31,7 +31,7 @@ VALID_SUBMODULE_REFS_D = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
                          }
 # Patterns for I build
 VALID_SUBMODULE_REFS_I = {'bahama_codeplug': r'BAHAMA_CODEPLUG_FW_R[0-9.]+$',
-                          'bahama_platform': r'master',
+                          'bahama_platform': r'BAHAMA_PLATFORM_D[0-9.]+$|master',
                           'cgiss_subscriber': r'CGISS_SUBSCRIBER_R[0-9.]+$',
                           'gcp_networking': r'GCP_NETWORKING_R[0-9.]+$',
                           'gcp_nucleus_releases': r'GCP_NUCLEUS_R[0-9.]+$',
