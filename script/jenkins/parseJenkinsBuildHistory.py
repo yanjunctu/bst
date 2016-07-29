@@ -149,16 +149,21 @@ def saveAllCI2DB(server, db):
                         buildInfo['coverage'] = info[len(info)-1]
                 elif job in JENKINS_WIN32_TEST_JOBS and buildInfo['result'] == 'SUCCESS': 
                     # Test case number
+                    matches = None
                     output = server.getConsoleOutput(job, start)
+
                     if job == JENKINS_WIN32_UT:
-                        output = output.split("Unit Test Result:", 1)[1]
-                        pattern = r'\w+\s+OK \((\d+) tests,'
+                        index = output.find('Unit Test Result:')
+                        if index == -1:
+                            print '\tCan not find UT result'
+                        else:
+                            matches = re.findall(r'\w+\s+OK \((\d+) tests,', output[index:])
                     else:
-                        pattern = r'Done!! Totally (\d+) win32 cases run'
-                    matchs = re.findall(pattern, output)
-                    if matchs:
+                        matches = re.findall(r'Done!! Totally (\d+) win32 cases run', output)
+
+                    if matches:
                         buildInfo['testcaseNum'] = 0
-                        for num in matchs:
+                        for num in matches:
                             buildInfo['testcaseNum'] += int(num)
                 # We want to get the actual EXIT CODE from IDAT exe and store it in DB
                 elif job in JENKINS_DAT_JOBS:
@@ -166,6 +171,7 @@ def saveAllCI2DB(server, db):
                     buildInfo['IDAT_EXIT_CODES'] = []
                     output = server.getConsoleOutput(job, start)
                     matches = re.findall(r'IDATAutoTestTrigger Exit: \d+', output)
+
                     if matches:
                         for match in matches:
                             match = match.split(':')[1].strip()
