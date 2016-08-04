@@ -14,6 +14,12 @@ import gridfs
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
+
+JENKINS_WIN32_URL = 'http://jfrc74-02:8080'
+#JENKINS_WIN32_URL = 'http://10.193.227.141:8080'
+JENKINS_WIN32_USERNAME = 'admin'
+JENKINS_WIN32_TOKEN = '0f15c71a49f4382912e81805fd27197f'
+
 JENKINS_TIMEOUT = 60  # 60s
 JENKINS_TRIGGER_JOBS = ['PCR-REPT-0-MultiJob', 'PCR-REPT-0-MultiJob-Emerald', 'PCR-REPT-0-MultiJob-nonEmerald', 'PCR-REPT-DAT_LATEST', 'PCR-REPT-DAT_DAILY','PCR-REPT-Memory_Leak_MultiJob-DAILY',"PCR-REPT-Git-KW"]
 JENKINS_COVERAGE_JOB = 'PCR-REPT-Win32_COV_CHECK'
@@ -56,7 +62,7 @@ class BoosterJenkins():
         url = self.url + '/job/' + job + '/' + str(buildNum) + '/consoleText'
         cmd ='wget --no-check-certificate --auth-no-challenge --http-user={} --http-password={} {} -q -O -'.format(self.username, self.password, url)
         output = ""
-        
+
         try:
             return subprocess.check_output(cmd.split(), stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError, e:
@@ -94,7 +100,7 @@ class BoosterDB():
         return fs.put(blockData)
 
 
-def saveAllCI2DB(server, db):
+def saveAllCI2DB(server,Win32server,db):
     i = 0
     allJobs = JENKINS_TRIGGER_JOBS
     jobSet = set(JENKINS_TRIGGER_JOBS)
@@ -148,19 +154,38 @@ def saveAllCI2DB(server, db):
                         info = match.group(0).split()
                         buildInfo['coverage'] = info[len(info)-1]
                 elif job in JENKINS_WIN32_TEST_JOBS and buildInfo['result'] == 'SUCCESS': 
-                    # Test case number
+                    #win32 Test case number
                     matches = None
                     output = server.getConsoleOutput(job, start)
 
                     if job == JENKINS_WIN32_UT:
                         index = output.find('Unit Test Result:')
                         if index == -1:
-                            print '\tCan not find UT result'
+                            index = output.find(r'WIN32 UT Success, please check at:')
+                            if index == -1:
+                                print '\tCan not find UT result'
+                            else:
+                                #get the win32 UT console url
+                                #WIN32 UT Success, please check at: http://jfrc74-02:8080/job/WIN32_IT/302/console
+                                m = re.match(r"WIN32 UT Success, please check at: (?P<jenkins>.+)/job/(?P<jobname>.+)/(?P<buildNum>\d+)/",output[index:])
+                                utJob = m.group("jobname")
+                                utBuildNumber = int(m.group("buildNum"))
+                                output = Win32server.getConsoleOutput(utJob, utBuildNumber)
+                                matches = re.findall(r'\w+\s+OK \((\d+) tests,', output)
                         else:
+                            # the old condition 
                             matches = re.findall(r'\w+\s+OK \((\d+) tests,', output[index:])
                     else:
-                        matches = re.findall(r'Done!! Totally (\d+) win32 cases run', output)
-
+                        index = output.find('WIN32 IT Success, please check at:')
+                        if index != -1:
+                            #the new condition win32 pipline get the win32 IT console url
+                            #WIN32 IT Success, please check at: http://jfrc74-02:8080/job/WIN32_IT/302/console
+                            m = re.match(r"WIN32 IT Success, please check at: (?P<jenkins>.+)/job/(?P<jobname>.+)/(?P<buildNum>\d+)/",output[index:])
+                            itJob = m.group("jobname")
+                            itBuildNumber = int(m.group("buildNum"))
+                            output = Win32server.getConsoleOutput(itJob, itBuildNumber)
+                        matches = re.findall(r'Done!! Totally (\d+) win32 cases run', output)  
+                        
                     if matches:
                         buildInfo['testcaseNum'] = 0
                         for num in matches:
@@ -212,6 +237,8 @@ if __name__ == "__main__":
     server = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN, JENKINS_TIMEOUT)
     dbClient = MongoClient()
     db = BoosterDB(dbClient, BOOSTER_DB_NAME)
+    
+    Win32server = BoosterJenkins(JENKINS_WIN32_URL, JENKINS_WIN32_USERNAME, JENKINS_WIN32_TOKEN, JENKINS_TIMEOUT)
 
-    saveAllCI2DB(server, db)
+    saveAllCI2DB(server,Win32server,db)
 
