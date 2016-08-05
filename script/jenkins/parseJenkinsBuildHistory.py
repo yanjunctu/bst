@@ -177,15 +177,17 @@ def saveAllCI2DB(server,Win32server,db):
                             matches = re.findall(r'\w+\s+OK \((\d+) tests,', output[index:])
                     else:
                         index = output.find('WIN32 IT Success, please check at:')
-                        if index != -1:
+                        if index == -1:
+                            matches = re.findall(r'Done!! Totally (\d+) win32 cases run', output)
+                        else:
                             #the new condition win32 pipline get the win32 IT console url
                             #WIN32 IT Success, please check at: http://jfrc74-02:8080/job/WIN32_IT/302/console
                             m = re.match(r"WIN32 IT Success, please check at: (?P<jenkins>.+)/job/(?P<jobname>.+)/(?P<buildNum>\d+)/",output[index:])
                             itJob = m.group("jobname")
                             itBuildNumber = int(m.group("buildNum"))
                             output = Win32server.getConsoleOutput(itJob, itBuildNumber)
-                        matches = re.findall(r'Done!! Totally (\d+) win32 cases run', output)  
-                        
+                            matches = re.findall(r'^\d{4}-\d{2}-\d{2}.+Done!! Totally (\d+) win32 cases run', output,re.M)
+       
                     if matches:
                         buildInfo['testcaseNum'] = 0
                         for num in matches:
