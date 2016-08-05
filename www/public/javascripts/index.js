@@ -250,6 +250,7 @@ var refreshQ = function(QueueInfo)
   
   //create pending row info
   $.each(QueueInfo.queue,function(index,value){
+        
     var displayIndex = index+1;
     $c1 = $("<td>").text("pending CI "+displayIndex);
     $c1.addClass("text-center");
@@ -269,14 +270,45 @@ var refreshQ = function(QueueInfo)
       $c4 = $("<td>").text("na")
       $c4.addClass("text-center");      
     }     
+   
+    var $cancelElement = $("<a>")
+    $cancelElement.addClass("btn")
+    $cancelElement.attr({"data-toggle":"tooltip","data-placement":"right","title":"click to cancel this CI"})
+    var $cancelIron = $("<i>")
+    $cancelIron.addClass("fa fa-trash-o")
+    $cancelIron.attr("aria-hidden","true")
+    $cancelElement.append($cancelIron)
+
+    var $c5 = $("<td>").append($cancelElement)
     
-    $addrow = $("<tr>");
+    var $addrow = $("<tr>");
     $addrow.append($c1)
     $addrow.append($c2)
     $addrow.append($c3)
     $addrow.append($c4)    
+    $addrow.append($c5)
     $tblBody.append($addrow)
     
+    $cancelElement.on("click",function(evt){
+        if (confirm('Are you sure you want to cancel this CI ?')) {
+            try
+            {
+                var postBody={"id":value.id,"submitter":value.submitter,"submitBranch":value.subBranch};
+                $.post("/jenkins/removePendingItem", postBody, function (result) {
+                      if(result == "true"){
+                        $addrow.remove();
+                      }else{
+                        alert("remove fail, please contact administrator");
+                      }
+              })
+            }
+            catch(err)
+            {
+              alert(err.message)
+            }
+        }
+     }
+    )    
   });
 };
 
@@ -370,6 +402,7 @@ var main = function()
   
   setInterval(acquireJenkinsAllInfo, GET_JENKINS_INTERVAL);  
   setInterval(acquireCIHistoryInfo, CI_HISTORY_INTERVAL);
+  
 };
 
 $(document).ready(main);
