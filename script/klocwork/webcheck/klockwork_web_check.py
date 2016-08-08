@@ -22,6 +22,7 @@ JENKINS_USERNAME = 'jhv384'
 JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
 KW_JOB = "PCR-REPT-Git-KW"
 CI_KW_JOB_COLL = "CI-PCR-REPT-Git-KW"
+CI_RELEASE_JOB_COLL = "CI-PCR-REPT-Git-Release"
 #data base
 CI_KW_COLL_NAME = "klocwork";
 BOOSTER_DB_NAME = 'booster'
@@ -214,6 +215,13 @@ def getParameterValue(buildInfo, paramName):
                 if param["name"] == paramName:
                     return param["value"]
     return;
+def getSubEmail(db,coll,releaseTag):
+    obj = {"name": "NEW_BASELINE", "value": releaseTag};
+    condition ={"actions.parameters": {'$in': [obj]}}
+    sortType=('number',-1)
+    docs = db.findInfo(coll,condition,sortType)
+    if len(docs)>0
+        return getParameterValue(docs[0], 'EMAIL')
             
 def actionOnCIMode(args):
     from jenkins import Jenkins
@@ -247,8 +255,12 @@ def actionOnCIMode(args):
             
             if re.match(r'REPT_[DI]02.*', releaseTag):
                 result = buildInfo['result']
-                email =getParameterValue(buildInfo,'EMAIL')
-                submitter = getParameterValue(buildInfo,'SUBMITTER')
+                #the klowwork job in jenkins do not content the submitter info,need get the submitter info from db
+                
+                email =getSubEmail(db,CI_RELEASE_JOB_COLL,releaseTag)
+                if not email:
+                    email = "boosterTeam@motorolasolutions"
+                submitter = email.split("@")[0];
                 record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":buildInfo['timestamp'],"issueIDs":[]};
                 
                 kwbuild=releaseTag.replace(".","_")
