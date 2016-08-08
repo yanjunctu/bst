@@ -220,7 +220,8 @@ def getSubEmail(db,coll,releaseTag):
     condition ={"actions.parameters": {'$in': [obj]}}
     sortType=('number',-1)
     docs = db.findInfo(coll,condition,sortType)
-    return getParameterValue(docs[0], 'EMAIL')
+    if len(docs)>0
+        return getParameterValue(docs[0], 'EMAIL')
             
 def actionOnCIMode(args):
     from jenkins import Jenkins
