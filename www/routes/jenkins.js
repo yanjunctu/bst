@@ -952,5 +952,24 @@ router.post('/doUnblockCI', function(req, res, next) {
     })
 })
   
+router.post('/removePendingItem', function(req, res, next) {
+    var id = req.body.id;
+    var submitter = req.body.submitter;
+    var submitBranch = req.body.submitBranch;
+    console.log("/removePendingItem",id,submitter,submitBranch)
+   
+    jenkins.cancel_item(id, function(err) {
+        if (err) {
+            console.log("failed to cancel item["+id.toString()+"]"+err);
+            res.send("false")
+        }
+        else {
+            console.log("succeeded to cancel item["+id.toString()+"]");
+            res.send("true")
+        }
+    });    
+    
+    return false;    
+})  
 
 module.exports = router;
