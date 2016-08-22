@@ -934,6 +934,9 @@ router.get('/getCIHistory', function(req, res, next){
 router.get('/ControlPanel', function(req, res, next){
     res.render('controlPanel',{ title: 'unblock CI' });
 })
+router.get('/infraDashboard', function(req, res, next){
+    res.render('infraDashboard',{ title: 'infra Dashboard' });
+})
 router.post('/doUnblockCI', function(req, res, next) {
     console.log("/doUnblockCI")
     var jenkinsci = req.body.jenkinsCI;
