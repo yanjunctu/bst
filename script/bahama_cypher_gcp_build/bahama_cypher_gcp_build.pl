@@ -159,7 +159,7 @@ _EOF_
 
     # clean folders
     chdir($parent_path);
-    mkdir( "$target_path", 0777 );
+    mkpath( "$target_path",1, 0777 );
     chdir("$target_path");
     system("cd");
 
