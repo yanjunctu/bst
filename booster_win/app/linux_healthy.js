@@ -1,6 +1,6 @@
 const fs = require('fs');
 const Console = require('console').Console;
-//const Console = console.Console;
+var email = require('../../www/models/email.js');
 
 const output = fs.createWriteStream('./app/stdout.log');
 //const errorOutput = fs.createWriteStream('./app/stderr.log');
@@ -12,27 +12,6 @@ const logger = new Console(output, errorOutput);
 var count = 0;
 //logger.log('count: %d', count);
 //logger.error('1111count: %d', count);
-
-var nodemailer = require('nodemailer');
-// create reusable transporter object using the default SMTP transport
-var transporter = nodemailer.createTransport('smtps://user%40gmail.com:pass@smtp.gmail.com');
-
-// setup e-mail data with unicode symbols
-var mailOptions = {
-    from: '"test" <test@test.com>', // sender address
-    to: 'baocheng.su@motorolasolutions.com', // list of receivers
-    subject: 'Test', // Subject line
-    text: 'Hello world', // plaintext body
-    html: '<b>Hello world</b>' // html body
-};
-
-// send mail with defined transport object
-transporter.sendMail(mailOptions, function(error, info){
-    if(error){
-        return console.log(error);
-    }
-    console.log('Message sent: ' + info.response);
-});
 
 
 function onFeedDog(message)
@@ -55,12 +34,22 @@ function onTimer(message)
 {
 	//logger.log('I am running!!!');
 	count = count + 1;
-	if (count > 60)
+	if (count > 10)
 	{
-		count = 60;
+		//count = 60;
+		count = 0;
 		logger.log('Booster Cron is down!!!');
 		
 		// issue an email
+		var subject = '[Notice!] Linux Cron is not working!';
+		var msg ="Linux Cron is not working now, please check";
+		var args = {
+			'msg':msg,
+			'subject':subject,
+			"email":"boosterteam@motorolasolutions.com", 
+			"win":"1" // this is a winserver
+		};
+		email.send(args);
 	}
 }
 

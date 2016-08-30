@@ -23,8 +23,15 @@ var argsParser=function(args){
     if(args.name){
         name = args.name
     }
-    cmd = "python /opt/booster_project/script/boosterSocket/sendEmail.py -n "+name+" -e "+email+" -m \""+msg+"\" -s "+subject
-    
+	
+    if(args.win){
+		cmd = "python ../script/boosterSocket/sendEmail.py -n "+name+" -e "+email+" -m \""+msg+"\" -s "+subject		
+    }
+	else
+	{
+		cmd = "python /opt/booster_project/script/boosterSocket/sendEmail.py -n "+name+" -e "+email+" -m \""+msg+"\" -s "+subject
+	}
+	
     return cmd
 }
 

@@ -52,11 +52,10 @@ Precondition:
 """
 
 import sys,socket,random,json,datetime
-import smtplib
-import email.utils
-from email.mime.text import MIMEText
 from pymongo import MongoClient
 from SocketServer import ThreadingUDPServer,DatagramRequestHandler
+from sendEmail import sendEmail
+
 
 SREVER_HOST_NAME = "booster"
 SREVER_PORT = 16979
@@ -74,20 +73,7 @@ SOCKET_MAX_LEN = 65500
 MSG_MAX_LEN = SOCKET_MAX_LEN-42
 ##########utility functions###################################
 
-def sendEmail(name,mail,text,title):
-  # Create the message
-  msg = MIMEText(text)
 
-  msg['To'] = email.utils.formataddr((name, mail))
-  msg['From'] = email.utils.formataddr(('booster', 'booster@motorolasolutions.com'))
-  msg['Subject'] = title
-
-  server = smtplib.SMTP('remotesmtp.mot-solutions.com')
-  #server.set_debuglevel(True) # show communication with the server
-  try:
-      server.sendmail('booster@motorolasolutions.com', [mail,'qpcb36@motorolasolutions.com','jhv384@motorolasolutions.com'], msg.as_string())
-  finally:
-      server.quit()
 
 #######define all your opcode handlers functions here##########
 def handleWarnKlocCheckResult(data):
