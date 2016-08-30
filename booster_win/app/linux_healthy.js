@@ -34,11 +34,12 @@ function onTimer(message)
 {
 	//logger.log('I am running!!!');
 	count = count + 1;
-	if (count > 10)
+	if (count > 240)
 	{
-		//count = 60;
-		count = 0;
+		count = 240;
+		//count = 0;
 		logger.log('Booster Cron is down!!!');
+		//console.log('Booster Cron is down!!!');
 		
 		// issue an email
 		var subject = '[Notice!] Linux Cron is not working!';
