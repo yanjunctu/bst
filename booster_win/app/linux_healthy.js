@@ -13,6 +13,7 @@ var count = 0;
 //logger.log('count: %d', count);
 //logger.error('1111count: %d', count);
 
+const interval = 240;
 
 function onFeedDog(message)
 {
@@ -48,14 +49,14 @@ function onTimer(message)
 {
 	//logger.log('I am running!!!');
 	count = count + 1;
-	if (count >= 240)
+	if (count >= interval)
 	{
 		//count = 240;
 		//count = 0;
 		logger.log('Booster Cron is down!!!');
 		//console.log('Booster Cron is down!!!');
 		
-		if (count % 240 == 0)
+		if (count % interval == 0)
 		{
 			sendEmails();
 		}
