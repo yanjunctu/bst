@@ -169,8 +169,11 @@ def fetchIssueFromKlocworkWeb(query):
     for record in res :
         issue=json.loads(record, object_hook=from_json)
         response.append(issue)
-        issueID.append(issue.id)
-    return (response,issueID)
+        if "\\pcr_csa\\" in issue.file:
+            csaIssueID.append(issue.id)
+        else:
+            issueID.append(issue.id)
+    return (response,issueID,csaIssueID)
 
 def fetchBuildListFromKlocworkWeb():
     
@@ -193,7 +196,7 @@ def actionOnAuditMode(args):
     newbuild = args.releaseTag.replace('.','_')
     oldbuild = args.ci_Branch.replace('.','_')
     query = "state:+'{}' diff:'{}','{}'".format(args.state,oldbuild,newbuild)
-    response,issueID = fetchIssueFromKlocworkWeb(query)
+    response,issueID,csaIssueID= fetchIssueFromKlocworkWeb(query)
 
     if len(response)>0:
         actionOnNewKWissue(response,args,issueID)
@@ -269,25 +272,27 @@ def actionOnCIMode(args):
                     #kwbuild = 'REPT_I02_07_02_49'
                     queryNew = "build:'{}' state:+New".format(kwbuild)
                     queryFix = "build:'{}' state:+Fixed".format(kwbuild)
-                    responseNew,issueIDNew = fetchIssueFromKlocworkWeb(queryNew)
+                    responseNew,issueIDNew,csaIssueIDNew = fetchIssueFromKlocworkWeb(queryNew)
 
-                    record["klocworkCnt"]=len(issueIDNew)
+                    record["klocworkCnt"]=len(issueIDNew)+len(csaIssueIDNew)
                     record["issueIDs"] = issueIDNew
+                    record["csaIssueIDs"] = csaIssueIDNew
                     if len(issueIDNew)!=0:
                         arrdic = convert_to_dicts(responseNew)
                         record["details"] = arrdic
                     db.insertOne(CI_KW_COLL_NAME, record) 
                         
-                    responseFix,issueIDFix = fetchIssueFromKlocworkWeb(queryFix)
+                    responseFix,issueIDFix,csaIssueTDFix = fetchIssueFromKlocworkWeb(queryFix)
                     
                     #send email
                     if email:
                         stdout = sys.stdout
                         sys.stdout = stdOutfile = StringIO.StringIO()
-                        emailSubject =  '[Notice!] You introduced {} new klocwork issue,Fixed {} klocwork issue on :  {}'.format(len(issueIDNew),len(issueIDFix),releaseTag)
-                    if len(issueIDNew)!=0:
+                        emailSubject =  '[Notice!] You introduced {} new klocwork issue,Fixed {} klocwork issue on :  {}'.format(len(issueIDNew)+len(csaIssueIDNew),len(issueIDFix),releaseTag)
+                    if record["klocworkCnt"]!=0:
                         print "\n The new klockwork issue you introduced:"
                         print issueIDNew
+                        print csaIssueIDNew
                         for issue in responseNew:
                             print issue
                     if len(issueIDFix)!=0:
