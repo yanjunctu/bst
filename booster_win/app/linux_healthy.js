@@ -30,27 +30,35 @@ function onFeedDog(message)
 	
 }
 
+function sendEmails()
+{
+	// issue an email
+	var subject = '[Notice!] Linux Cron is not working!';
+	var msg ="Linux Cron is not working now, please check";
+	var args = {
+		'msg':msg,
+		'subject':subject,
+		"email":"boosterteam@motorolasolutions.com", 
+		"win":"1" // this is a winserver
+	};
+	email.send(args);
+}
+
 function onTimer(message)
 {
 	//logger.log('I am running!!!');
 	count = count + 1;
-	if (count > 240)
+	if (count >= 240)
 	{
-		count = 240;
+		//count = 240;
 		//count = 0;
 		logger.log('Booster Cron is down!!!');
 		//console.log('Booster Cron is down!!!');
 		
-		// issue an email
-		var subject = '[Notice!] Linux Cron is not working!';
-		var msg ="Linux Cron is not working now, please check";
-		var args = {
-			'msg':msg,
-			'subject':subject,
-			"email":"boosterteam@motorolasolutions.com", 
-			"win":"1" // this is a winserver
-		};
-		email.send(args);
+		if (count % 240 == 0)
+		{
+			sendEmails();
+		}
 	}
 }
 
