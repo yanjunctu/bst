@@ -3,6 +3,7 @@ import sys
 import os
 import subprocess
 import shutil
+import zipfile
 from pymongo import MongoClient
 from pydrive.auth import GoogleAuth, InvalidCredentialsError, RefreshError, AuthenticationError
 from pydrive.drive import GoogleDrive
@@ -58,14 +59,19 @@ def export_db(db_name, collections=None):
             subprocess.check_call(cmd.split())
         
         # Archive directory output_dir and save it as output_dir.zip at the same level of output_dir
-        archive_file = shutil.make_archive(output_dir, format='zip', root_dir=output_dir)
+        #        archive_file = shutil.make_archive(output_dir, format='zip', root_dir=output_dir)
+        with zipfile.ZipFile(output_dir+'.zip',"w",zipfile.ZIP_DEFLATED,allowZip64=True) as zf:
+          for root,_,filenames in os.walk(os.path.basename(output_dir)):
+            for name in filenames:
+              name = os.path.join(root,name)
+              name = os.path.normpath(name)
+              zf.write(name,name)
     except (OSError, subprocess.CalledProcessError) as err:
         print 'Failed to dump db collection: {}'.format(err)
-        archive_file = None
 
     shutil.rmtree(output_dir, ignore_errors=True)
 
-    return archive_file
+    return output_dir+'.zip'
 
 
 def connect_gdrive(settings_file):
@@ -148,11 +154,7 @@ def upload_gdrive(drive, src, dest, max_files):
 def main():
     args = process_argument() 
 
-    print 'Exporting Booster DB...'
-    backup_file = export_db(BOOSTER_DB_NAME, BACKUP_COLLECTIONS)
-    if not backup_file:
-        print 'Failed to export db: {}, {}'.format(BOOSTER_DB_NAME, BACKUP_COLLECTIONS)
-        sys.exit(RET_ERR)
+
 
     print 'Connecting to Google Drive...'
     drive = connect_gdrive(args.settings_file)
@@ -161,15 +163,8 @@ def main():
         os.remove(backup_file)
         sys.exit(RET_ERR)
 
-    print 'Uploading backup file {} to {} on Google Drive...'.format(backup_file, args.backup_dir)
-    if not upload_gdrive(drive, backup_file, args.backup_dir, args.max_files):
-        print 'Failed to upload backup file {} to Google Drive'.format(backup_file)
-        os.remove(backup_file)
-        sys.exit(RET_ERR)
 
-    print 'Done successfully.'
-    os.remove(backup_file)
-    sys.exit(RET_OK)
+
 
 
 if __name__ == '__main__':
