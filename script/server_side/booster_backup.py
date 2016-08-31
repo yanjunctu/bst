@@ -154,7 +154,11 @@ def upload_gdrive(drive, src, dest, max_files):
 def main():
     args = process_argument() 
 
-
+    print 'Exporting Booster DB...'
+    backup_file = export_db(BOOSTER_DB_NAME, BACKUP_COLLECTIONS)
+    if not backup_file:
+        print 'Failed to export db: {}, {}'.format(BOOSTER_DB_NAME, BACKUP_COLLECTIONS)
+        sys.exit(RET_ERR)
 
     print 'Connecting to Google Drive...'
     drive = connect_gdrive(args.settings_file)
@@ -163,8 +167,15 @@ def main():
         os.remove(backup_file)
         sys.exit(RET_ERR)
 
+    print 'Uploading backup file {} to {} on Google Drive...'.format(backup_file, args.backup_dir)
+    if not upload_gdrive(drive, backup_file, args.backup_dir, args.max_files):
+        print 'Failed to upload backup file {} to Google Drive'.format(backup_file)
+        os.remove(backup_file)
+        sys.exit(RET_ERR)
 
-
+    print 'Done successfully.'
+    os.remove(backup_file)
+    sys.exit(RET_OK)
 
 
 if __name__ == '__main__':
