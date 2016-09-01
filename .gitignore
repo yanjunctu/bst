@@ -1,3 +1,6 @@
 *.bak
+*.pyc
 data.pkl
 /log/
+www_win/node_modules/
+www_win/app/stdout.log

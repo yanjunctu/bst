@@ -19,4 +19,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 0  1    * * 7   root    python /opt/booster_project/script/klocwork/webcheck/klockwork_web_check.py -m audit -s New -p y -e rept-ci@googlegroups.com > /opt/kloc.log
 30 1    * * 7   root    python /opt/booster_project/script/warning/findNewWarnings.py -m period -a Y -d /opt/bitbucket_repo/comm/ -e rept-ci@googlegroups.com >/opt/find.log
 0  6    * * *   root    python /opt/booster_project/script/server_side/booster_backup.py -f /opt/booster_project/script/server_side/settings.yaml /backup
-
+*/2 *   * * *   root    python /home/booster-admin/cronMon/cronMon.py
