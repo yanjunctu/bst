@@ -166,6 +166,7 @@ def fetchIssueFromKlocworkWeb(query):
      
     response=[]
     issueID =[]
+    csaIssueID=[]
     for record in res :
         issue=json.loads(record, object_hook=from_json)
         response.append(issue)
