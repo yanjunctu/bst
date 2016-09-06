@@ -97,7 +97,7 @@ def handleWarnKlocCheckResult(data):
 
 def handleWarnKlocFindResult(data):
   """
-  This handler will response to write received klock and warning check result into database
+  This handler will response to get klock and warning check result from database
   """
   
   print "I am in handleWarnKlocFindResult"
@@ -167,19 +167,20 @@ class WarnKlocCheckResult(BoosterMsg):
   """  
   OPCODE = KLOCWORK_WARNING_CHECK_OPCODE;
   
-  def __init__(self,releaseTag,engineerName,engineerMail,buildWarningCnt=0,klocworkCnt=0):
+  def __init__(self,project,releaseTag,engineerName,engineerMail,buildWarningCnt=0,klocworkCnt=0):
     self.releaseTag = releaseTag;
     self.engineerName = engineerName;
     self.engineerMail = engineerMail;
     self.buildWarningCnt = buildWarningCnt;
     self.klocworkCnt = klocworkCnt;
+    self.project = project;
     
     i = datetime.datetime.now();
     self.date = "{year}/{month}/{day}".format(year=i.year,month=i.month,day=i.day);
 
   def getSendMsg(self):
     msg = BoosterMsg.getSendMsg(self);
-    payload = {"releaseTag":self.releaseTag,"engineerName":self.engineerName,"engineerMail":self.engineerMail,"date":self.date,"buildWarningCnt":self.buildWarningCnt,"klocworkCnt":self.klocworkCnt};
+    payload = {"releaseTag":self.releaseTag,"engineerName":self.engineerName,"engineerMail":self.engineerMail,"date":self.date,"buildWarningCnt":self.buildWarningCnt,"klocworkCnt":self.klocworkCnt,"project":self.project};
     msg["data"]= payload;
     return msg;
     

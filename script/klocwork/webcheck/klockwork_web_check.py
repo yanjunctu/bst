@@ -15,7 +15,7 @@ HOST = '10.193.226.186'
 PORT = 8080
 USER = 'huang rurong-QPCB36'
 TOKEN = '3ce1d76aae49dc433da70c546f634b25f8734d9a59490831c41f8b261fe0e57e'
-PROJECT = 'REPT2.7'
+PROJECT = ['REPT2.7','main']
 #jenkins
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
@@ -39,6 +39,7 @@ class klocworkapi(object):
 
         data = urllib.urlencode(self.values)
         req = urllib2.Request(self.url, data)
+        response = ""
         try:
             response = urllib2.urlopen(req)
         except HTTPError as e:
@@ -83,6 +84,7 @@ def convert_to_dicts(objs):
     return obj_arr
 
 def findInServerDB(qury):
+
     findresult = WarnKlocFindResult(qury)
     interface = BoosterClient();
     ret = interface.send(findresult);
@@ -93,14 +95,15 @@ def findInServerDB(qury):
         return result;
     return;
 
-def recursiveFind(start,end):
-    qury = {"buildNumber":{"$gte":start, "$lte":end}}
+def recursiveFind(project,start,end):
+
+    qury = {"buildNumber":{"$gte":start, "$lte":end},"project":project}
     record = findInServerDB(qury);
     #result = record["result"]
     if record == "FAIL":
         middle =start + ((end-start)//2)
-        record1 = recursiveFind(start,middle)
-        record2 = recursiveFind((middle+1),end)
+        record1 = recursiveFind(project,start,middle)
+        record2 = recursiveFind(project,(middle+1),end)
         record=record1+record2     
         return record
     else:
@@ -128,7 +131,7 @@ def actionOnNewKWissue(response,args,unFixID):
     minBuildNumber = record[0]['buildNumber']
     
     #find the all the db record between the two tag
-    records = recursiveFind(minBuildNumber,maxBuildNumber)
+    records = recursiveFind(args.project,minBuildNumber,maxBuildNumber)
     
     for record in records:
         for ID in record['issueIDs']:
@@ -155,10 +158,10 @@ def actionOnNewKWissue(response,args,unFixID):
         name = args.email.split('@')[0]
         sendEmail(name,args.email,stdOutfile.getvalue(),mailSubject); 
         
-def fetchIssueFromKlocworkWeb(query):    
+def fetchIssueFromKlocworkWeb(project,query):    
 
     kwapi = klocworkapi(HOST,PORT,USER,TOKEN)
-    kwapi.setParameter("project",PROJECT)
+    kwapi.setParameter("project",project)
     kwapi.setParameter("action","search")
     kwapi.setParameter("query",query)
     
@@ -176,10 +179,10 @@ def fetchIssueFromKlocworkWeb(query):
             issueID.append(issue.id)
     return (response,issueID,csaIssueID)
 
-def fetchBuildListFromKlocworkWeb():
+def fetchBuildListFromKlocworkWeb(project):
     
     kwapi = klocworkapi(HOST,PORT,USER,TOKEN)
-    kwapi.setParameter("project",PROJECT)
+    kwapi.setParameter("project",project)
     kwapi.setParameter("action","builds")
     
     res =kwapi.urlRequest()
@@ -197,7 +200,7 @@ def actionOnAuditMode(args):
     newbuild = args.releaseTag.replace('.','_')
     oldbuild = args.ci_Branch.replace('.','_')
     query = "state:+'{}' diff:'{}','{}'".format(args.state,oldbuild,newbuild)
-    response,issueID,csaIssueID= fetchIssueFromKlocworkWeb(query)
+    response,issueID,csaIssueID= fetchIssueFromKlocworkWeb(args.project,query)
 
     if len(response)>0:
         actionOnNewKWissue(response,args,issueID)
@@ -242,7 +245,9 @@ def actionOnCIMode(args):
     jobInfo = jenkinsServer.getJobInfo(KW_JOB)
     
     #get build list in klocwork web 
-    buildList = fetchBuildListFromKlocworkWeb()
+    buildList={}
+    for project in PROJECT:
+        buildList[project] = fetchBuildListFromKlocworkWeb(project)
     
     firstBuildNum = jobInfo['firstBuild']['number'] if 'firstBuild' in jobInfo else 0
     lastBuildNum = jobInfo['lastCompletedBuild']['number'] if 'lastCompletedBuild' in jobInfo else 0
@@ -256,6 +261,7 @@ def actionOnCIMode(args):
         
         if buildInfo:
             releaseTag=getParameterValue(buildInfo,'NEW_BASELINE')
+            projectName =getParameterValue(buildInfo,'PROJECT_NAME')
             
             if re.match(r'REPT_[DI]02.*', releaseTag):
                 result = buildInfo['result']
@@ -265,15 +271,15 @@ def actionOnCIMode(args):
                 if not email:
                     email = "boosterTeam@motorolasolutions"
                 submitter = email.split("@")[0];
-                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":buildInfo['timestamp'],"issueIDs":[]};
+                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":buildInfo['timestamp'],"issueIDs":[],"project":projectName};
                 
                 kwbuild=releaseTag.replace(".","_")
-                if (result == 'SUCCESS') and (kwbuild in buildList):
+                if (result == 'SUCCESS') and (kwbuild in buildList[projectName]):
                 #save data to database and send email to author if issue number is not 0
                     #kwbuild = 'REPT_I02_07_02_49'
                     queryNew = "build:'{}' state:+New".format(kwbuild)
                     queryFix = "build:'{}' state:+Fixed".format(kwbuild)
-                    responseNew,issueIDNew,csaIssueIDNew = fetchIssueFromKlocworkWeb(queryNew)
+                    responseNew,issueIDNew,csaIssueIDNew = fetchIssueFromKlocworkWeb(projectName,queryNew)
 
                     record["klocworkCnt"]=len(issueIDNew)+len(csaIssueIDNew)
                     record["issueIDs"] = issueIDNew
@@ -283,7 +289,7 @@ def actionOnCIMode(args):
                         record["details"] = arrdic
                     db.insertOne(CI_KW_COLL_NAME, record) 
                         
-                    responseFix,issueIDFix,csaIssueTDFix = fetchIssueFromKlocworkWeb(queryFix)
+                    responseFix,issueIDFix,csaIssueTDFix = fetchIssueFromKlocworkWeb(projectName,queryFix)
                     
                     #send email
                     if email:
@@ -342,6 +348,7 @@ def process_argument():
     #the unit is day
     parser.add_argument('-D',dest="pdays",default = 7,type=int)
     parser.add_argument('-m',dest="mode",choices=['audit', 'CI'],required = True)
+    parser.add_argument('-prj',dest="project",default = "REPT2.7")
     
     args = parser.parse_args()
 
