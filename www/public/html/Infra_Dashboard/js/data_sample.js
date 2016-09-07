@@ -1,3 +1,12 @@
+var project = getProjectName()
+// update dashboard's title after get the project name
+if (project != null){
+    var title = $('#dashboardTitle').text()
+    title = title+project
+    $('#dashboardTitle').html(title);
+}
+
+
 
 //http://booster/jenkins/getTheWholeCI
 var theWholeCI = eval(

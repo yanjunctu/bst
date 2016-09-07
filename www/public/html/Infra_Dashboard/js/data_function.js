@@ -1,3 +1,22 @@
+
+function getProjectName()
+{
+    var search = window.location.search;
+
+    // remove '?'
+    search = search.slice(1);
+    // extract project name
+    var args = search.split('&')
+    if (args.length>=1){
+        var firstArgPair = args[0].split('=')
+        if (firstArgPair[0] === "project"){
+            return firstArgPair[1]
+        }
+
+    }
+
+}
+
 function formatTime(time_string)
 {
 	var time;
