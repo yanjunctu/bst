@@ -32,6 +32,13 @@ html
             a(href="/html/CheckBeforeCI.html" target="_blank") CheckBeforeCI
           li
             a(href="/jenkins/ControlPanel" target="_blank") ControlPanel
+        div(class="pull-right")
+          br
+          ul(class="nav navbar-nav")
+            li( class="radio-inline")
+              |<input type="radio" name="projectChooseRadio" checked="checked" value="REPT_MCL"><mark>Main CI</mark>
+            li( class="radio-inline")
+              |<input type="radio" name="projectChooseRadio" value="REPT2.7"><mark>2.7 CI</mark>
   
     - var n=0
     while n<3

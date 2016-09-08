@@ -31,7 +31,17 @@ const CI_TRIGGER_JOB = {"REPT2.7":"PCR-REPT-0-MultiJob","REPT_MCL":"PCR-REPT-0-M
 var CILastTriggerBuildID={}
 var CIHistory = {};
 for ( var i in ALL_PRJ){
-    CISTATUS[ALL_PRJ[i]] = CISTATUS_CONTENT;
+    CISTATUS[ALL_PRJ[i]] = {
+  "idleState":{"status":"running","duration":0},
+  "preCheckState":{"status":"not start","duration":2},
+  "buildFwState":{"status":"not start","duration":3},
+  "testFwState":{"status":"not start","duration":4},
+  "buildWin32State":{"status":"not start","duration":5},
+  "testWin32State":{"status":"not start","duration":0},
+  "preReleaseState":{"status":"not start","duration":0},
+  "overall":{"current":{"branch":"na","subTime":"na"}},
+  "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na",manualControl:"FALSE"}
+};
     CILastTriggerBuildID[ALL_PRJ[i]] = 0;
     CIHistory[ALL_PRJ[i]] = [];
 
@@ -538,7 +548,6 @@ var onTargertTestInfo = function(job){
 
 var updateLatestBuildInfo = function(prjName){
     job = CI_TRIGGER_JOB[prjName]
-    job = "PCR-REPT-0-MultiJob"
     getJobLastBuild(job,function(err,data){
         if(err) 
         {
@@ -547,8 +556,11 @@ var updateLatestBuildInfo = function(prjName){
           console.log("err in getJobLastBuild");
           return;
         }
-    
+        console.log("updateLatestBuildInfo")
+        console.log(prjName)
+        console.log(job)
         updateStatus(CISTATUS[prjName],data); 
+        console.log(CISTATUS)
        
     });
 }
@@ -716,15 +728,10 @@ var updateCIHistoryInfo = function() {
         var klocworkDocs = db.getCollection(CI_KLOCWORK_COLL_NAME).find({"buildNumber": {$gt: CILastKlocworkBuildID}}).sort({"number": -1}).toArray();
         
         for (var i in CI_TRIGGER_JOB){
-            console.log("cihistory update")
-            console.log(i)
-            console.log(getJobCollName(CI_TRIGGER_JOB[i]))
-            var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB[i])).find({"number": {$gt: CILastTriggerBuildID[i]}}).sort({"number": 1}).toArray();
-            console.log(triggerDocs)
+            var prjName =i
+            var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB[prjName])).find({"number": {$gt: CILastTriggerBuildID[prjName]}}).sort({"number": 1}).toArray();
             triggerDocs.forEach(function(doc) {
-                console.log("in")
-                console.log(i)
-                refreshCIHistory(db, doc,i);
+                refreshCIHistory(db, doc,prjName);
             });
         };
         // The result of Sanity test, Extended Regression test and Memory Leak test of a new release
@@ -849,7 +856,6 @@ router.get('/getCIStatus/:prj', function(req, res, next) {
   var projName = req.params.prj;
 
   if (ALL_PRJ.indexOf(projName) !== -1){
-      console.log("getCIStatus"); 
 
       return res.json(CISTATUS[projName]);  
   }
@@ -940,9 +946,7 @@ router.get('/getCIHistory/:prj', function(req, res, next){
 
    var projName = req.params.prj;
    if (ALL_PRJ.indexOf(projName) !== -1){
-       console.log('/getCIHistory/:prj')
-       console.log(projName)
-       console.log(CIHistory)
+
       return res.json(CIHistory[projName]);
    }
 })
