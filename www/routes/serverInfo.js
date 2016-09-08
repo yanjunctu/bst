@@ -159,7 +159,7 @@ setInterval(function() {
     fetchTestCaseNum(days);
 }, TESTCASE_NUM_INTERVAL);
 
-router.get('/testCaseNum', function (req, res, next) {
+router.get('/testCaseNum/:prj', function (req, res, next) {
     return res.json(testcaseNum);
 })
 

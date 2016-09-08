@@ -97,7 +97,7 @@ def findInServerDB(qury):
 
 def recursiveFind(project,start,end):
 
-    qury = {"buildNumber":{"$gte":start, "$lte":end},"project":project}
+    qury = {"buildNumber":{"$gte":start, "$lte":end},"PROJECT_NAME":project}
     record = findInServerDB(qury);
     #result = record["result"]
     if record == "FAIL":
@@ -161,7 +161,7 @@ def actionOnNewKWissue(response,args,unFixID):
 def fetchIssueFromKlocworkWeb(project,query):    
 
     kwapi = klocworkapi(HOST,PORT,USER,TOKEN)
-    kwapi.setParameter("project",project)
+    kwapi.setParameter("PROJECT_NAME",project)
     kwapi.setParameter("action","search")
     kwapi.setParameter("query",query)
     
@@ -182,7 +182,7 @@ def fetchIssueFromKlocworkWeb(project,query):
 def fetchBuildListFromKlocworkWeb(project):
     
     kwapi = klocworkapi(HOST,PORT,USER,TOKEN)
-    kwapi.setParameter("project",project)
+    kwapi.setParameter("PROJECT_NAME",project)
     kwapi.setParameter("action","builds")
     
     res =kwapi.urlRequest()
@@ -271,7 +271,7 @@ def actionOnCIMode(args):
                 if not email:
                     email = "boosterTeam@motorolasolutions"
                 submitter = email.split("@")[0];
-                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":buildInfo['timestamp'],"issueIDs":[],"project":projectName};
+                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":buildInfo['timestamp'],"issueIDs":[],"PROJECT_NAME":projectName};
                 
                 kwbuild=releaseTag.replace(".","_")
                 if (result == 'SUCCESS') and (kwbuild in buildList[projectName]):
@@ -308,6 +308,7 @@ def actionOnCIMode(args):
                     if email :
                         sys.stdout = stdout #recover sys.stdout  
                         if len(issueIDNew)!=0 or len(issueIDFix)!=0:
+                            print "send email"
                             #sendEmail(submitter,email,stdOutfile.getvalue(),emailSubject);
                             sendEmail(submitter,email,stdOutfile.getvalue(),emailSubject);
                 else :

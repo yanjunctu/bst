@@ -25,15 +25,16 @@ var SIDELINE_PRJ = "REPT2.7"
 var MAINLINE_PRJ = "REPT_MCL"
 var ALL_PRJ = [MAINLINE_PRJ,SIDELINE_PRJ]
 var CISTATUS = {}
-for ( var prj in ALL_PRJ){
-    CISTATUS[prj] = CISTATUS_CONTENT;
-}
 
 // Variables for CI history info
-const CI_TRIGGER_JOB = {SIDELINE_PRJ:"PCR-REPT-0-MultiJob",MAINLINE_PRJ:"PCR-REPT-0-MultiJob_MCL"};
+const CI_TRIGGER_JOB = {"REPT2.7":"PCR-REPT-0-MultiJob","REPT_MCL":"PCR-REPT-0-MultiJob_MCL"};
 var CILastTriggerBuildID={}
-for ( var prj in ALL_PRJ){
-    CILastTriggerBuildID[prj] = 0;
+var CIHistory = {};
+for ( var i in ALL_PRJ){
+    CISTATUS[ALL_PRJ[i]] = CISTATUS_CONTENT;
+    CILastTriggerBuildID[ALL_PRJ[i]] = 0;
+    CIHistory[ALL_PRJ[i]] = [];
+
 }
 
 const CI_ON_TARGET_JOB = "PCR-REPT-On_Target_MultiJob";
@@ -57,7 +58,6 @@ const CI_WARNING_COLL_NAME = "warningKlocwork";
 const CI_KLOCWORK_COLL_NAME = "klocwork";
 var  CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0,CIMemoryLeakBuildID=0;
 var CILastKlocworkBuildID=0;
-var CIHistory = [];
 var keyMap = {};
 
 // Associate job names with keys of CI history info
@@ -456,8 +456,8 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             var objPrj = {"name":"PROJECT_NAME","value":prjName}
             //get last success tag
             datColl = db.getCollection(getJobCollName(job));
-            docLastS = datColl..find({"result":"SUCCESS","IDAT_EXIT_CODES":{"$in":[[],["0"],["0","0"]]},"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1)
-            ciBlockInfo.lastSuccessTag = getParameterValue(docLastS,"NEW_BASELINE")
+            docLastS = datColl.find({"result":"SUCCESS","IDAT_EXIT_CODES":{"$in":[[],["0"],["0","0"]]},"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1).toArray()
+            ciBlockInfo.lastSuccessTag = getParameterValue(docLastS[0],"NEW_BASELINE")
         
             var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
             var objS = {"name": "NEW_BASELINE", "value": ciBlockInfo.lastSuccessTag};
@@ -520,17 +520,16 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
 
 var onTargertTestInfo = function(job){
 
-    for( var prjName in ALL_PRJ ){
-        
+    for( var i in ALL_PRJ ){
+        prjName = ALL_PRJ[i]
         fiber(function() {
             var server = new Server('127.0.0.1');
             var db = server.db("booster");
             var objPrj = {"name":"PROJECT_NAME","value":prjName}
             //get last tag
-            datColl = db.getCollection(getJobCollName(job));
-            docLast = datColl..find({"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1)
-        
-            updateOnTargetTestStatus(CISTATUS.prjName.ciBlockInfo,docLast,job); 
+            coll = db.getCollection(getJobCollName(job));
+            docLast = coll.find({"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1).toArray()
+            updateOnTargetTestStatus(CISTATUS[prjName].ciBlockInfo,docLast[0],job); 
             server.close();
         }).run();        
 
@@ -539,9 +538,12 @@ var onTargertTestInfo = function(job){
 
 var updateLatestBuildInfo = function(prjName){
     job = CI_TRIGGER_JOB[prjName]
+    job = "PCR-REPT-0-MultiJob"
     getJobLastBuild(job,function(err,data){
         if(err) 
         {
+          console.log(prjName)
+          console.log(job)
           console.log("err in getJobLastBuild");
           return;
         }
@@ -714,9 +716,14 @@ var updateCIHistoryInfo = function() {
         var klocworkDocs = db.getCollection(CI_KLOCWORK_COLL_NAME).find({"buildNumber": {$gt: CILastKlocworkBuildID}}).sort({"number": -1}).toArray();
         
         for (var i in CI_TRIGGER_JOB){
-            var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB[i])).find({"number": {$gt: CILastTriggerBuildID}}).sort({"number": 1}).toArray();
-            
+            console.log("cihistory update")
+            console.log(i)
+            console.log(getJobCollName(CI_TRIGGER_JOB[i]))
+            var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB[i])).find({"number": {$gt: CILastTriggerBuildID[i]}}).sort({"number": 1}).toArray();
+            console.log(triggerDocs)
             triggerDocs.forEach(function(doc) {
+                console.log("in")
+                console.log(i)
                 refreshCIHistory(db, doc,i);
             });
         };
@@ -725,7 +732,7 @@ var updateCIHistoryInfo = function() {
         // them if necessary
         klocworkDocs.forEach(function(doc) {
             var rlsTag =doc['releaseTag'];
-            var prjName = findParamValue(doc, "PROJECT_NAME");
+            var prjName = doc['PROJECT_NAME'];
             for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
                 if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
                     if (CIHistory[prjName][i]["codeStaticCheck"]) {
@@ -824,7 +831,8 @@ setInterval(function(){
     // block CI depends on DAT status 
     onTargertTestInfo('PCR-REPT-DAT_LATEST');
     // runing CI status
-    for(var prjName in ALL_PRJ){
+    for(var i in ALL_PRJ){
+        prjName = ALL_PRJ[i]
         updateLatestBuildInfo(prjName); 
     }
 
@@ -837,8 +845,9 @@ setInterval(function() {
 
 /* GET feedback about git page. */
 router.get('/getCIStatus/:prj', function(req, res, next) {
-    
+
   var projName = req.params.prj;
+
   if (ALL_PRJ.indexOf(projName) !== -1){
       console.log("getCIStatus"); 
 
@@ -847,14 +856,15 @@ router.get('/getCIStatus/:prj', function(req, res, next) {
 });
 
 router.get('/getCIPendingReq/:prj', function(req, res, next){
-  console.log("getCIPendingReq");
+
   var projName = req.params.prj;
   if (ALL_PRJ.indexOf(projName) !== -1){
+        console.log('/getCIPendingReq/:prj');
         getPendingReq(projName, function(err, data){
             if (err) { return res.end(); }
-            data.current.submitter = CISTATUS.overall.current.submitter;
-            data.current.subTime = CISTATUS.overall.current.subTime;
-            data.current.subBranch = CISTATUS.overall.current.subBranch;   
+            data.current.submitter = CISTATUS[projName].overall.current.submitter;
+            data.current.subTime = CISTATUS[projName].overall.current.subTime;
+            data.current.subBranch = CISTATUS[projName].overall.current.subBranch;   
             return res.json(data);
         });
   }
@@ -866,6 +876,7 @@ router.get('/dashboard', function(req, res, next){
 })
 
 router.get('/getOnTargetBuild/:prj', function(req, res, next){
+  console.log('/getOnTargetBuild/')
   var projName = req.params.prj;
   if (ALL_PRJ.indexOf(projName) !== -1){
       getJobDuration('PCR-REPT-On_Target_Build_MultiJob',projName,days,function(err,data){
@@ -875,6 +886,7 @@ router.get('/getOnTargetBuild/:prj', function(req, res, next){
 })
 
 router.get('/getOnTargetTest/:prj', function(req, res, next){
+
   var projName = req.params.prj;
   if (ALL_PRJ.indexOf(projName) !== -1){
       getJobDuration('PCR-REPT-DAT_LATEST',projName,days,function(err,data){
@@ -884,8 +896,10 @@ router.get('/getOnTargetTest/:prj', function(req, res, next){
 })
 
 router.get('/getOffTargetBuild/:prj', function(req, res, next){
+
   var projName = req.params.prj;
   if (ALL_PRJ.indexOf(projName) !== -1){
+      
       getJobDuration('PCR-REPT-Off_Target_Build_MultiJob',projName,days,function(err,data){
         return res.json(data);
       });
@@ -893,6 +907,7 @@ router.get('/getOffTargetBuild/:prj', function(req, res, next){
 })
 
 router.get('/getOffTargetTest/:prj', function(req, res, next){
+
   var projName = req.params.prj;
   if (ALL_PRJ.indexOf(projName) !== -1){ 
       getJobDuration('PCR-REPT-Off_Target_Test_MultiJob',projName,days,function(err,data){
@@ -902,6 +917,7 @@ router.get('/getOffTargetTest/:prj', function(req, res, next){
 })
 
 router.get('/getTheWholeCI/:prj', function(req, res, next){
+
   var projName = req.params.prj;
   if (ALL_PRJ.indexOf(projName) !== -1){
       getJobDuration(CI_TRIGGER_JOB[projName],projName,days,function(err,data){
@@ -921,8 +937,12 @@ router.get('/getFailInfo/:prj', function(req, res, next){
 })
 
 router.get('/getCIHistory/:prj', function(req, res, next){
+
    var projName = req.params.prj;
    if (ALL_PRJ.indexOf(projName) !== -1){
+       console.log('/getCIHistory/:prj')
+       console.log(projName)
+       console.log(CIHistory)
       return res.json(CIHistory[projName]);
    }
 })
