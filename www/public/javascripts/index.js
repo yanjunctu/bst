@@ -217,7 +217,6 @@ var refreshQ = function(QueueInfo)
   var $tblBody = undefined;
   
   //clear old tables
-  console.log("empty ciQ")
   $tblBody = $("#ciQTbl");
   $tblBody.empty()
   //create running CI row info

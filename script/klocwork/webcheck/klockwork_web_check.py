@@ -161,7 +161,7 @@ def actionOnNewKWissue(response,args,unFixID):
 def fetchIssueFromKlocworkWeb(project,query):    
 
     kwapi = klocworkapi(HOST,PORT,USER,TOKEN)
-    kwapi.setParameter("PROJECT_NAME",project)
+    kwapi.setParameter("project",project)
     kwapi.setParameter("action","search")
     kwapi.setParameter("query",query)
     
@@ -182,7 +182,7 @@ def fetchIssueFromKlocworkWeb(project,query):
 def fetchBuildListFromKlocworkWeb(project):
     
     kwapi = klocworkapi(HOST,PORT,USER,TOKEN)
-    kwapi.setParameter("PROJECT_NAME",project)
+    kwapi.setParameter("project",project)
     kwapi.setParameter("action","builds")
     
     res =kwapi.urlRequest()

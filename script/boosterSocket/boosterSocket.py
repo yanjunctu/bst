@@ -173,14 +173,14 @@ class WarnKlocCheckResult(BoosterMsg):
     self.engineerMail = engineerMail;
     self.buildWarningCnt = buildWarningCnt;
     self.klocworkCnt = klocworkCnt;
-    self.project = project;
+    self.PROJECT_NAME = project;
     
     i = datetime.datetime.now();
     self.date = "{year}/{month}/{day}".format(year=i.year,month=i.month,day=i.day);
 
   def getSendMsg(self):
     msg = BoosterMsg.getSendMsg(self);
-    payload = {"releaseTag":self.releaseTag,"engineerName":self.engineerName,"engineerMail":self.engineerMail,"date":self.date,"buildWarningCnt":self.buildWarningCnt,"klocworkCnt":self.klocworkCnt,"project":self.project};
+    payload = {"releaseTag":self.releaseTag,"engineerName":self.engineerName,"engineerMail":self.engineerMail,"date":self.date,"buildWarningCnt":self.buildWarningCnt,"klocworkCnt":self.klocworkCnt,"PROJECT_NAME":self.project};
     msg["data"]= payload;
     return msg;
     

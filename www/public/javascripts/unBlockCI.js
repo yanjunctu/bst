@@ -22,7 +22,6 @@ var main = function()
             }
             else{
                 var unblockInfo = {"jenkinsCI":JenkinsCI, "boosterdisplay":boosterDisplay,"project":project,"password":password};
-
                 try{
                     $.post("/jenkins/doUnblockCI", unblockInfo, function (result) {    
                         msg = result
