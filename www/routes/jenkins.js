@@ -9,7 +9,8 @@ var cnt=0;
 var GET_JENKINS_INTERVAL = 15000; // 15seconds
 var CI_HISTORY_INTERVAL = 60000*20; // 20 minutes
 var days=30;
-var CISTATUS = {
+
+var CISTATUS_CONTENT = {
   "idleState":{"status":"running","duration":0},
   "preCheckState":{"status":"not start","duration":2},
   "buildFwState":{"status":"not start","duration":3},
@@ -19,10 +20,22 @@ var CISTATUS = {
   "preReleaseState":{"status":"not start","duration":0},
   "overall":{"current":{"branch":"na","subTime":"na"}},
   "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na",manualControl:"FALSE"}
-};  
+}; 
+var SIDELINE_PRJ = "REPT2.7"
+var MAINLINE_PRJ = "REPT_MCL"
+var ALL_PRJ = [MAINLINE_PRJ,SIDELINE_PRJ]
+var CISTATUS = {}
+for ( var prj in ALL_PRJ){
+    CISTATUS[prj] = CISTATUS_CONTENT;
+}
 
 // Variables for CI history info
-const CI_TRIGGER_JOB = "PCR-REPT-0-MultiJob";
+const CI_TRIGGER_JOB = {SIDELINE_PRJ:"PCR-REPT-0-MultiJob",MAINLINE_PRJ:"PCR-REPT-0-MultiJob_MCL"};
+var CILastTriggerBuildID={}
+for ( var prj in ALL_PRJ){
+    CILastTriggerBuildID[prj] = 0;
+}
+
 const CI_ON_TARGET_JOB = "PCR-REPT-On_Target_MultiJob";
 const CI_ON_TAEGET_BUILD_JOB = "PCR-REPT-On_Target_Build_MultiJob";
 const CI_OFF_TARGET_JOB = "PCR-REPT-Off_Target_MultiJob";
@@ -42,7 +55,7 @@ const CI_EXT_REGRESSION_JOB = "PCR-REPT-DAT_DAILY";
 const CI_MEMORY_LEAK_JOB = "PCR-REPT-Memory_Leak_MultiJob-DAILY";
 const CI_WARNING_COLL_NAME = "warningKlocwork";
 const CI_KLOCWORK_COLL_NAME = "klocwork";
-var CILastTriggerBuildID = 0, CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0,CIMemoryLeakBuildID=0;
+var  CILastSanityBuildID = 0, CILastExtRegressionBuildID = 0,CIMemoryLeakBuildID=0;
 var CILastKlocworkBuildID=0;
 var CIHistory = [];
 var keyMap = {};
@@ -57,7 +70,6 @@ keyMap[CI_OFF_TARGET_IT_DIST_JOB] = "win32ITDist";
 keyMap[CI_OFF_TARGET_IT_PART1_JOB] = "win32ITPart1";
 keyMap[CI_OFF_TARGET_IT_PART2_JOB] = "win32ITPart2";
 
-const CI_JOB='PCR-REPT-0-MultiJob';
 
 var getJobLastBuild = function(job,callback)
 {
@@ -75,33 +87,7 @@ var getJobBuild = function(job,build,callback)
     callback(err,data);
   });  
 };
-var getAllBuild = function (job,param,callback)
-{
-   jenkins.all_build(job,param,function(err, tempdata) {
-    data={};
-    if (tempdata.hasOwnProperty("allBuilds")) {
-       data = tempdata.allBuilds;
-    }
-	   
-    callback(err,data);
-  });  
-};
-var getJobLastCompletedBuild = function(job,callback)
-{
-  var result;
-  jenkins.last_completed_build_info(job, function(err, data) {
-    callback(err,data);
-  });
 
-};
-var getJobLastSuccessBuild = function(job,callback)
-{
-  var result;
-  jenkins.last_success(job, function(err, data) {
-    callback(err,data);
-  });
-
-};
 function getParameterValue(data,parameter){
   var actions = data.actions;
   var found;
@@ -330,49 +316,33 @@ function pushdata(id,duration,submitter,timestamp,data){
 
 }
 
-function getJobDuration(job,days,callback){
+function getJobDuration(job,prjName,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
     var durationDic = {"id":[],"duration":[],"submitter":[],"timestamp":[]};
-	
-	
-	var parameters;
-	var param = 'id,duration,result,timestamp,actions[parameters[*]]'
-	
-    getAllBuild(job,param,function(err,data){
-    if(err) 
-    {
-      console.log("err in getJobDuration");
-      return;
-    }
-
-	for (var i = 0; i < data.length; i++) 
-	{
-	    if(data[i].timestamp > oldestTimeStamp)
-		{
-		   if((data[i].result == "SUCCESS") && ("REPT2.7" == getParameterValue(data[i],"PROJECT_NAME")))
-		   {
-               pushdata(durationDic.id,durationDic.duration,durationDic.submitter,durationDic.timestamp,data[i]);
-
-		   }
-		}
-		else
-		{
-			callback(err,durationDic);
-			return;
-		}
-	}
-	callback(err,durationDic);
-	return;
-	})
+	err =""
+    fiber(function() {
+        var server = new Server('127.0.0.1');
+        var db = server.db("booster");
+        var objPrj = {"name":"PROJECT_NAME","value":prjName}
+       
+        coll = db.getCollection(getJobCollName(job));
+        docs = coll.find({"result":"SUCCESS","timestamp":{$gt:oldestTimeStamp},"actions.parameters": {$in: [objPrj]}}).toArray();
+        
+        for( var i =0 ; i< docs.length;i++){
+            pushdata(durationDic.id,durationDic.duration,durationDic.submitter,durationDic.timestamp,docs[i]);  
+        }
+        callback(err,durationDic);
+        server.close();
+    }).run();
+    
 }
 
 function getJobFailureInfo(job,days,callback){
 
 	var oldestTimeStamp = (Math.round(new Date().getTime()))-(days * 24 * 60 * 60 * 1000);
-	var param = 'timestamp,result,subBuilds[*],actions[parameters[*]]'
 	var subBuilds;
-	var parameters;
+
 	var failureInfoDic={};
 	failureInfoDic['allBuildNumber'] =0;
 	failureInfoDic['failureNumber'] =0;
@@ -381,64 +351,51 @@ function getJobFailureInfo(job,days,callback){
 	failureInfoDic['failBuildNum'] =new Array(0,0,0,0,0);
 	failureInfoDic['failSubmitter'] =new Array();
 	failureInfoDic['failTimeStamp'] =new Array();
-	
-	
-    getAllBuild(job,param,function(err,data){
-    if(err) 
-    {
-      console.log("err in getJobFailureInfo");
-      return;
-    }
-	for (var i = 0; i < data.length; i++) 
-	{
-	    if(data[i].timestamp > oldestTimeStamp)
-		{
-		   failureInfoDic['allBuildNumber']++;
-		   if(data[i].result== "FAILURE")
-		   {
-		       failureInfoDic['failureNumber']++;
-			   failureInfoDic.failTimeStamp.push(data[i].timestamp); 
-			   subBuilds = data[i].subBuilds;
-			   if (subBuilds.length == 0)
-			   {
-			        failureInfoDic.failBuildNum[0]++; 
-			   }
-			   else
-			   {
-			       for(var sub =0;sub < subBuilds.length;sub++)
-			       {
-			           if(subBuilds[sub].result== "FAILURE")
-				       {
-							for(var j = 1;j<failureInfoDic.failBuildName.length;j++)
-							{
-							    if(subBuilds[sub].jobName == failureInfoDic.failBuildName[j])
-                                {
-							        failureInfoDic.failBuildNum[j]++;
-									continue;
-								}
-							}
-						}
-					}
-			   }
+    
+    
+	err =""
+    fiber(function() {
+        var server = new Server('127.0.0.1');
+        var db = server.db("booster");
+       
+        coll = db.getCollection(getJobCollName(job));
+        failureInfoDic['allBuildNumber'] = coll.find({"timestamp":{$gt:oldestTimeStamp}}).count();
+        failureInfoDic['abortedNumber'] = coll.find({"result": "ABORTED","timestamp":{$gt:oldestTimeStamp}}).count();
+        
+        docFs = coll.find({"result": "FAILURE","timestamp":{$gt:oldestTimeStamp}}).count();
+        
+        for( var i =0 ; i< docFs.length;i++){
+            failureInfoDic['failureNumber']++;
+            failureInfoDic.failTimeStamp.push(docFs[i].timestamp); 
+            subBuilds = docFs[i].subBuilds;
+            if (subBuilds.length == 0)
+            {
+                failureInfoDic.failBuildNum[0]++; 
+			 }
+			 else
+			 {
+			     for(var sub =0;sub < subBuilds.length;sub++)
+			    {
+			        if(subBuilds[sub].result== "FAILURE")
+				    {
+				        for(var j = 1;j<failureInfoDic.failBuildName.length;j++)
+				        {
+				           if(subBuilds[sub].jobName == failureInfoDic.failBuildName[j])
+                            {
+							     failureInfoDic.failBuildNum[j]++;
+								continue;
+				            }
+				         }
+				    }
+				}
+			 }
 
-				failureInfoDic.failSubmitter.push(getParameterValue(data[i],"SUBMITTER")); 
-   
-		   }
-		   else if(data[i].result== "ABORTED")
-		   {
-		       failureInfoDic['abortedNumber']++;
-		   }
-
-		}
-		else
-		{
-			callback(err,failureInfoDic);
-			return;
-		}
-	}
-    callback(err,failureInfoDic);
-	return;
-	})
+             failureInfoDic.failSubmitter.push(getParameterValue(docFs[i],"SUBMITTER"));  
+        }
+        callback(err,failureInfoDic);
+        server.close();
+    }).run();
+	
 }
 var passwordVerify=function(user,password,callback){
     ret = false
@@ -455,21 +412,21 @@ var passwordVerify=function(user,password,callback){
         server.close();
     }).run();
 }
-var ciUnblock = function(jenkinsUnlock,boosterUnlock){
+var ciUnblock = function(projName,jenkinsUnlock,boosterUnlock){
     console.log('ciUnblock')
     status = "SUCCESS";
     if (jenkinsUnlock == "TRUE"){
-        jenkinsCIJob(CI_JOB,"enable")
+        jenkinsCIJob(CI_TRIGGER_JOB[projName],"enable")
     }
     if(boosterUnlock == "TRUE"){
-        if(CISTATUS.ciBlockInfo.result == "FAILURE"){
+        if(CISTATUS[projName].ciBlockInfo.result == "FAILURE"){
             var subject = '[Notice!] CI is unblocked'
             var msg ="You can submit your CI now"
             var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
             email.send(args)
         }
-        CISTATUS.ciBlockInfo.manualControl = "TRUE"
-        CISTATUS.ciBlockInfo.result = "SUCCESS"
+        CISTATUS[projName].ciBlockInfo.manualControl = "TRUE"
+        CISTATUS[projName].ciBlockInfo.result = "SUCCESS"
     }
     console.log(CISTATUS.ciBlockInfo)
     return status
@@ -477,6 +434,7 @@ var ciUnblock = function(jenkinsUnlock,boosterUnlock){
 var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     var preResult = ciBlockInfo.result;
     var preReleaseTag = ciBlockInfo.releaseTag;
+    var prjName=getParameterValue(data,"PROJECT_NAME");
 
     ciBlockInfo.result = data.result;
     ciBlockInfo.releaseTag=getParameterValue(data,"NEW_BASELINE");
@@ -492,44 +450,41 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
     else if (ciBlockInfo.result == "FAILURE"){
         ciBlockInfo.manualControl = "FALSE"
         console.log("CI is blocked")
-        getJobLastSuccessBuild(job,function(err,data){
-            if(err) {
-                console.log("err in onTargertTestInfo");
-                return;
+        fiber(function() {
+            var server = new Server('127.0.0.1');
+            var db = server.db("booster");
+            var objPrj = {"name":"PROJECT_NAME","value":prjName}
+            //get last success tag
+            datColl = db.getCollection(getJobCollName(job));
+            docLastS = datColl..find({"result":"SUCCESS","IDAT_EXIT_CODES":{"$in":[[],["0"],["0","0"]]},"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1)
+            ciBlockInfo.lastSuccessTag = getParameterValue(docLastS,"NEW_BASELINE")
+        
+            var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
+            var objS = {"name": "NEW_BASELINE", "value": ciBlockInfo.lastSuccessTag};
+            var objF = {"name": "NEW_BASELINE", "value": ciBlockInfo.releaseTag};
+            var docS = rlsColl.findOne({"actions.parameters": {$in: [objS]}});
+            var docF = rlsColl.findOne({"actions.parameters": {$in: [objF]}});
+            var docs = rlsColl.find({"number": {$gt: docS["number"],$lte: docF["number"]},"actions.parameters": {$in: [objPrj]}}).toArray();
+
+            var submitter = "";
+            docs.forEach(function(doc) {
+                
+                submitter = submitter + findParamValue(doc, "SUBMITTER")+";";
+   
+            });
+            ciBlockInfo.submitter = submitter;
+            if (preResult == "SUCCESS"){
+                var msg = "Block Reason:  DAT test failed on tag :" +ciBlockInfo.releaseTag +"\n The Submitter(s):" +ciBlockInfo.submitter+"\n Last Success Tag:"+ciBlockInfo.lastSuccessTag;
+                var subject = '[Notice!] CI is blocked'
+                var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
+                email.send(args)
             }
-            ciBlockInfo.lastSuccessTag=getParameterValue(data,"NEW_BASELINE");
 
-            fiber(function() {
-                var server = new Server('127.0.0.1');
-                var db = server.db("booster");
-                var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
-                var objS = {"name": "NEW_BASELINE", "value": ciBlockInfo.lastSuccessTag};
-                var objF = {"name": "NEW_BASELINE", "value": ciBlockInfo.releaseTag};
-                var docS = rlsColl.findOne({"actions.parameters": {$in: [objS]}});
-                var docF = rlsColl.findOne({"actions.parameters": {$in: [objF]}});
-                var docs = rlsColl.find({"number": {$gt: docS["number"],$lte: docF["number"]}}).toArray();
-
-                var submitter = "";
-                docs.forEach(function(doc) {
-                   if(findParamValue(doc, "PROJECT_NAME") == "REPT2.7"){
-                       submitter = submitter + findParamValue(doc, "SUBMITTER")+";";
-                   }
-                   
-                });
-                ciBlockInfo.submitter = submitter;
-                if (preResult == "SUCCESS"){
-                    var msg = "Block Reason:  DAT test failed on tag :" +ciBlockInfo.releaseTag +"\n The Submitter(s):" +ciBlockInfo.submitter+"\n Last Success Tag:"+ciBlockInfo.lastSuccessTag;
-                    var subject = '[Notice!] CI is blocked'
-                    var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
-                    email.send(args)
-                }
-
-                server.close();
-            }).run();
-        });
+            server.close();
+        }).run();
         if (preResult == "SUCCESS" ){
             // send email to the submitters whoes CI is canceled
-            getPendingReq("REPT2.7", function(err, data){
+            getPendingReq(prjName, function(err, data){
                 if (err) {
                     console.log(err);
                     return;
@@ -545,7 +500,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                     email.send(args)
                 });
                 //disable PCR-REPT-0-MultiJob
-                jenkinsCIJob(CI_JOB,"disable")
+                jenkinsCIJob(CI_TRIGGER_JOB.prjName,"disable")
             });
         }
     }
@@ -553,7 +508,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
         //let CI unblocked
         ciBlockInfo.manualControl = "FALSE"
         if (preResult == "FAILURE"){
-            ciUnblock("TRUE","FALSE")
+            ciUnblock(prjName,"TRUE","FALSE")
             var subject = '[Notice!] CI is unblocked'
             var msg ="You can submit your CI now"
             var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
@@ -565,19 +520,25 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
 
 var onTargertTestInfo = function(job){
 
-    getJobLastCompletedBuild(job,function(err,data){
-        if(err) 
-        {
-            console.log("err in onTargertTestInfo");
-            return;
-        }
+    for( var prjName in ALL_PRJ ){
+        
+        fiber(function() {
+            var server = new Server('127.0.0.1');
+            var db = server.db("booster");
+            var objPrj = {"name":"PROJECT_NAME","value":prjName}
+            //get last tag
+            datColl = db.getCollection(getJobCollName(job));
+            docLast = datColl..find({"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1)
+        
+            updateOnTargetTestStatus(CISTATUS.prjName.ciBlockInfo,docLast,job); 
+            server.close();
+        }).run();        
 
-        updateOnTargetTestStatus(CISTATUS.ciBlockInfo,data,job);  
-    });
+    }
 }
 
-var updateLatestBuildInfo = function(job){
-    
+var updateLatestBuildInfo = function(prjName){
+    job = CI_TRIGGER_JOB[prjName]
     getJobLastBuild(job,function(err,data){
         if(err) 
         {
@@ -585,7 +546,7 @@ var updateLatestBuildInfo = function(job){
           return;
         }
     
-        updateStatus(CISTATUS,data); 
+        updateStatus(CISTATUS[prjName],data); 
        
     });
 }
@@ -646,7 +607,7 @@ var getJobCollName = function(jobName) {
     return 'CI-' + jobName;
 }
 
-var refreshCIHistory = function(db, doc) {
+var refreshCIHistory = function(db, doc,prjName) {
     var entry = {};
     var itPart1 = undefined, itPart2 = undefined, itDist = undefined;
     var allSubJobs = [CI_PRECHECK_JOB, CI_ON_TAEGET_BUILD_JOB, CI_OFF_TARGET_BUILD_JOB, CI_OFF_TARGET_UT_JOB, CI_OFF_TARGET_IT_DIST_JOB, CI_OFF_TARGET_IT_PART1_JOB, CI_OFF_TARGET_IT_PART2_JOB];
@@ -733,9 +694,9 @@ var refreshCIHistory = function(db, doc) {
         }
     }
 
-    CIHistory.push(entry);
-    if (entry["buildID"] > CILastTriggerBuildID) {
-        CILastTriggerBuildID = entry["buildID"];
+    CIHistory[prjName].push(entry);
+    if (entry["buildID"] > CILastTriggerBuildID[prjName]) {
+        CILastTriggerBuildID[prjName] = entry["buildID"];
     }
 }
 
@@ -744,7 +705,6 @@ var updateCIHistoryInfo = function() {
     fiber(function() {
         var server = new Server('127.0.0.1');
         var db = server.db("booster");
-        var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB)).find({"number": {$gt: CILastTriggerBuildID}}).sort({"number": 1}).toArray();
         // Maybe the same release version will be tested many times, we only care the last one, so we
         // sort the results in descending order
         var sanityDocs = db.getCollection(getJobCollName(CI_SANITY_TEST_JOB)).find({"number": {$gt: CILastSanityBuildID}}).sort({"number": -1}).toArray();
@@ -753,22 +713,25 @@ var updateCIHistoryInfo = function() {
         
         var klocworkDocs = db.getCollection(CI_KLOCWORK_COLL_NAME).find({"buildNumber": {$gt: CILastKlocworkBuildID}}).sort({"number": -1}).toArray();
         
-         
-        triggerDocs.forEach(function(doc) {
-            refreshCIHistory(db, doc);
-        });
+        for (var i in CI_TRIGGER_JOB){
+            var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB[i])).find({"number": {$gt: CILastTriggerBuildID}}).sort({"number": 1}).toArray();
+            
+            triggerDocs.forEach(function(doc) {
+                refreshCIHistory(db, doc,i);
+            });
+        };
         // The result of Sanity test, Extended Regression test and Memory Leak test of a new release
         // version can not be gotten immediately, so we should check the db periodically and update
         // them if necessary
         klocworkDocs.forEach(function(doc) {
             var rlsTag =doc['releaseTag'];
-
-            for (var i = CIHistory.length-1; i >= 0; --i) {
-                if (rlsTag && CIHistory[i]["rlsTag"] == rlsTag) {
-                    if (CIHistory[i]["codeStaticCheck"]) {
-                        CIHistory[i]["codeStaticCheck"]["klocwork"] = doc['klocworkCnt'];
+            var prjName = findParamValue(doc, "PROJECT_NAME");
+            for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
+                if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
+                    if (CIHistory[prjName][i]["codeStaticCheck"]) {
+                        CIHistory[prjName][i]["codeStaticCheck"]["klocwork"] = doc['klocworkCnt'];
                         if (doc["buildNumber"] > CILastKlocworkBuildID) {
-                            CIMemoryLeakBuildID = doc["buildNumber"];
+                            CILastKlocworkBuildID = doc["buildNumber"];
                         }
                     }
                     break;
@@ -777,16 +740,16 @@ var updateCIHistoryInfo = function() {
         });
         sanityDocs.forEach(function(doc) {
             var rlsTag = findParamValue(doc, "NEW_BASELINE");
-
-            for (var i = CIHistory.length-1; i >= 0; --i) {
-                if (rlsTag && CIHistory[i]["rlsTag"] == rlsTag) {
-                    if (!CIHistory[i]["onTargetSanity"]) {
+            var prjName = findParamValue(doc, "PROJECT_NAME");
+            for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
+                if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
+                    if (!CIHistory[prjName][i]["onTargetSanity"]) {
                         //datExitCodes value should like ['0','1','2']
                         //it contain all the exit codes return from DAT, including succeeded or failed code
                         datExitCodes = doc['IDAT_EXIT_CODES']
                         
                         // assign a default value for on Target result
-                        CIHistory[i]["onTargetSanity"] = doc["result"];
+                        CIHistory[prjName][i]["onTargetSanity"] = doc["result"];
                         
                         //itr all codes, if have non 0(Success) and non 5(TestCaseFailed) value, means have system err happen, assign 'DAT sys error' string
                         /*below is enum of exitcode
@@ -805,7 +768,7 @@ var updateCIHistoryInfo = function() {
                         if (datExitCodes){
                           for (var index=0;index<datExitCodes.length;index++)             
                             if(datExitCodes[index] != '0' && datExitCodes[index] != '5')
-                              CIHistory[i]["onTargetSanity"] = 'DAT sys error ' + datExitCodes[index]
+                              CIHistory[prjName][i]["onTargetSanity"] = 'DAT sys error ' + datExitCodes[index]
                               break                          
                         }
     
@@ -820,11 +783,11 @@ var updateCIHistoryInfo = function() {
         });
         extRegressionDocs.forEach(function(doc) {
             var rlsTag = findParamValue(doc, "NEW_BASELINE");
-
-            for (var i = CIHistory.length-1; i >= 0; --i) {
-                if (rlsTag && CIHistory[i]["rlsTag"] == rlsTag) {
-                    if (!CIHistory[i]["extRegression"]){
-                        CIHistory[i]["extRegression"] = doc["result"];
+            var prjName = findParamValue(doc, "PROJECT_NAME");
+            for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
+                if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
+                    if (!CIHistory[prjName][i]["extRegression"]){
+                        CIHistory[prjName][i]["extRegression"] = doc["result"];
                         if (doc["number"] > CILastExtRegressionBuildID) {
                             CILastExtRegressionBuildID = doc["number"];
                         }
@@ -835,11 +798,11 @@ var updateCIHistoryInfo = function() {
         });
         memoryLeakDocs.forEach(function(doc) {
             var rlsTag = findParamValue(doc, "NEW_BASELINE");
-
-            for (var i = CIHistory.length-1; i >= 0; --i) {
-                if (rlsTag && CIHistory[i]["rlsTag"] == rlsTag) {
-                    if (!CIHistory[i]["memoryLeak"]) {
-                        CIHistory[i]["memoryLeak"] = doc["result"];
+            var prjName = findParamValue(doc, "PROJECT_NAME");
+            for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
+                if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
+                    if (!CIHistory[prjName][i]["memoryLeak"]) {
+                        CIHistory[prjName][i]["memoryLeak"] = doc["result"];
                         if (doc["number"] > CIMemoryLeakBuildID) {
                             CIMemoryLeakBuildID = doc["number"];
                         }
@@ -855,10 +818,15 @@ var updateCIHistoryInfo = function() {
 
 }
 
+
 updateCIHistoryInfo();
 setInterval(function(){
+    // block CI depends on DAT status 
     onTargertTestInfo('PCR-REPT-DAT_LATEST');
-    updateLatestBuildInfo('PCR-REPT-0-MultiJob');    
+    // runing CI status
+    for(var prjName in ALL_PRJ){
+        updateLatestBuildInfo(prjName); 
+    }
 
 }, GET_JENKINS_INTERVAL);
 
@@ -868,22 +836,28 @@ setInterval(function() {
 
 
 /* GET feedback about git page. */
-router.get('/getCIStatus', function(req, res, next) {
+router.get('/getCIStatus/:prj', function(req, res, next) {
+    
+  var projName = req.params.prj;
+  if (ALL_PRJ.indexOf(projName) !== -1){
+      console.log("getCIStatus"); 
 
-  console.log("getCIStatus"); 
-
-  return res.json(CISTATUS);      
+      return res.json(CISTATUS[projName]);  
+  }
 });
 
-router.get('/getCIPendingReq', function(req, res, next){
-    console.log("getCIPendingReq");
-    getPendingReq("REPT2.7", function(err, data){
-        if (err) { return res.end(); }
-        data.current.submitter = CISTATUS.overall.current.submitter;
-        data.current.subTime = CISTATUS.overall.current.subTime;
-        data.current.subBranch = CISTATUS.overall.current.subBranch;   
-        return res.json(data);
-    });
+router.get('/getCIPendingReq/:prj', function(req, res, next){
+  console.log("getCIPendingReq");
+  var projName = req.params.prj;
+  if (ALL_PRJ.indexOf(projName) !== -1){
+        getPendingReq(projName, function(err, data){
+            if (err) { return res.end(); }
+            data.current.submitter = CISTATUS.overall.current.submitter;
+            data.current.subTime = CISTATUS.overall.current.subTime;
+            data.current.subBranch = CISTATUS.overall.current.subBranch;   
+            return res.json(data);
+        });
+  }
 });
 
 
@@ -891,45 +865,66 @@ router.get('/dashboard', function(req, res, next){
     res.render('CIDashboard',{ title: 'CI DashBoard' });
 })
 
-router.get('/getOnTargetBuild', function(req, res, next){
-  getJobDuration('PCR-REPT-On_Target_Build_MultiJob',days,function(err,data){
-    return res.json(data);
-  });
+router.get('/getOnTargetBuild/:prj', function(req, res, next){
+  var projName = req.params.prj;
+  if (ALL_PRJ.indexOf(projName) !== -1){
+      getJobDuration('PCR-REPT-On_Target_Build_MultiJob',projName,days,function(err,data){
+        return res.json(data);
+     });
+  }
 })
 
-router.get('/getOnTargetTest', function(req, res, next){
-  getJobDuration('PCR-REPT-DAT_LATEST',days,function(err,data){
-    return res.json(data);
-  });
+router.get('/getOnTargetTest/:prj', function(req, res, next){
+  var projName = req.params.prj;
+  if (ALL_PRJ.indexOf(projName) !== -1){
+      getJobDuration('PCR-REPT-DAT_LATEST',projName,days,function(err,data){
+        return res.json(data);
+      });
+  }
 })
 
-router.get('/getOffTargetBuild', function(req, res, next){
-  getJobDuration('PCR-REPT-Off_Target_Build_MultiJob',days,function(err,data){
-    return res.json(data);
-  });
+router.get('/getOffTargetBuild/:prj', function(req, res, next){
+  var projName = req.params.prj;
+  if (ALL_PRJ.indexOf(projName) !== -1){
+      getJobDuration('PCR-REPT-Off_Target_Build_MultiJob',projName,days,function(err,data){
+        return res.json(data);
+      });
+  }
 })
 
-router.get('/getOffTargetTest', function(req, res, next){
-  getJobDuration('PCR-REPT-Off_Target_Test_MultiJob',days,function(err,data){
-    return res.json(data);
-  });
+router.get('/getOffTargetTest/:prj', function(req, res, next){
+  var projName = req.params.prj;
+  if (ALL_PRJ.indexOf(projName) !== -1){ 
+      getJobDuration('PCR-REPT-Off_Target_Test_MultiJob',projName,days,function(err,data){
+        return res.json(data);
+      });
+  }
 })
 
-router.get('/getTheWholeCI', function(req, res, next){
-  getJobDuration('PCR-REPT-0-MultiJob',days,function(err,data){
-    return res.json(data);
-  });
+router.get('/getTheWholeCI/:prj', function(req, res, next){
+  var projName = req.params.prj;
+  if (ALL_PRJ.indexOf(projName) !== -1){
+      getJobDuration(CI_TRIGGER_JOB[projName],projName,days,function(err,data){
+        return res.json(data);
+      });
+  }
 })
 
 
-router.get('/getFailInfo', function(req, res, next){
-  getJobFailureInfo('PCR-REPT-0-MultiJob',days,function(err,data){
-    return res.json(data);
-  });
+router.get('/getFailInfo/:prj', function(req, res, next){
+  var projName = req.params.prj;
+  if (ALL_PRJ.indexOf(projName) !== -1){
+      getJobFailureInfo(CI_TRIGGER_JOB[projName],days,function(err,data){
+        return res.json(data);
+      });
+  }
 })
 
-router.get('/getCIHistory', function(req, res, next){
-    return res.json(CIHistory);
+router.get('/getCIHistory/:prj', function(req, res, next){
+   var projName = req.params.prj;
+   if (ALL_PRJ.indexOf(projName) !== -1){
+      return res.json(CIHistory[projName]);
+   }
 })
 router.get('/ControlPanel', function(req, res, next){
     res.render('controlPanel',{ title: 'unblock CI' });
@@ -942,10 +937,11 @@ router.post('/doUnblockCI', function(req, res, next) {
     var jenkinsci = req.body.jenkinsCI;
     var boosterdisplay = req.body.boosterdisplay;
     var password = req.body.password;
+    var project = req.body.project;
 
     passwordVerify("unblock",password,function(result){
         if (result){
-            status = ciUnblock(jenkinsci,boosterdisplay)
+            status = ciUnblock(project,jenkinsci,boosterdisplay)
         }
         else{
             status = "Invalid password"

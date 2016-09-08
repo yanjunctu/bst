@@ -330,12 +330,12 @@ var refreshCIHistoryInfo = function(ciHistory) {
 var acquireJenkinsAllInfo = function(){
       try
       {
-        $.get("/jenkins/getCIStatus",function (result) {
+        $.get("/jenkins/getCIStatus/REPT2.7",function (result) {
             refreshCi(result);
               
         })
             
-        $.get("/jenkins/getCIPendingReq",function (result) {
+        $.get("/jenkins/getCIPendingReq/REPT2.7",function (result) {
             refreshQ(result);
               
         })              
@@ -350,7 +350,7 @@ var acquireJenkinsAllInfo = function(){
 var acquireCIHistoryInfo = function() {
     try
     {
-        $.get("/jenkins/getCIHistory", function(result) {
+        $.get("/jenkins/getCIHistory/REP2.7", function(result) {
             refreshCIHistoryInfo(result);
         })              
     }
