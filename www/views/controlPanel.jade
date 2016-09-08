@@ -17,6 +17,15 @@ block content
                 li
                   h3 booster block display 
                     input(type="checkbox" name="boosterdisplay" value = "TRUE")
+                li
+                  choose which CI you want to unblock:
+                  div
+                    label( class="radio-inline")
+                      |<input type="radio" name="projectChooseRadio" checked="checked" value="main">Main CI
+                    | &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                    label( class="radio-inline")
+                      |<input type="radio" name="projectChooseRadio"  value="2.7">2.7 CI
+
           div(class="form-group")
             h3 <strong>password:</strong>
               input(type="password" id="inputPassword" placeholder="password" maxlength="20")
