@@ -1,6 +1,16 @@
 extends layout
 
 block content
+  br
+  div(class="text-center")
+    label( class="radio-inline")
+      |<input type="radio" name="projectChooseRadio" checked="checked" value="main"><mark>Main CI</mark>
+    | &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+    label( class="radio-inline")
+      |<input type="radio" name="projectChooseRadio" value="2.7"><mark>2.7 CI</mark>
+
+  br
+
   div.container-fluid
     div.row-fluid
       div(class="col-sm-12")

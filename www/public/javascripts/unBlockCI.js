@@ -7,6 +7,7 @@ var main = function()
     
         var JenkinsCI = $("#unblock_form input[name='jenkinsCI']:checked").val();
         var boosterDisplay = $("#unblock_form input[name='boosterdisplay']:checked").val();
+        var project = $('input[name=projectChooseRadio]:checked').val()
 
         var password = $("#unblock_form input[id='inputPassword']").val();
         var msg = ''
@@ -20,7 +21,7 @@ var main = function()
                 msg = "please input password"
             }
             else{
-                var unblockInfo = {"jenkinsCI":JenkinsCI, "boosterdisplay":boosterDisplay,"password":password};
+                var unblockInfo = {"jenkinsCI":JenkinsCI, "boosterdisplay":boosterDisplay,"project":project,"password":password};
 
                 try{
                     $.post("/jenkins/doUnblockCI", unblockInfo, function (result) {    

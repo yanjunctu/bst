@@ -328,14 +328,16 @@ var refreshCIHistoryInfo = function(ciHistory) {
 };
 
 var acquireJenkinsAllInfo = function(){
+
+      var project = $('input[name=projectChooseRadio]:checked').val()
       try
       {
-        $.get("/jenkins/getCIStatus",function (result) {
+        $.get("/jenkins/getCIStatus/"+project,function (result) {
             refreshCi(result);
               
         })
             
-        $.get("/jenkins/getCIPendingReq",function (result) {
+        $.get("/jenkins/getCIPendingReq/"+project,function (result) {
             refreshQ(result);
               
         })              
@@ -348,9 +350,12 @@ var acquireJenkinsAllInfo = function(){
 };
 
 var acquireCIHistoryInfo = function() {
+
+    var project = $('input[name=projectChooseRadio]:checked').val()
+
     try
     {
-        $.get("/jenkins/getCIHistory", function(result) {
+        $.get("/jenkins/getCIHistory/"+project, function(result) {
             refreshCIHistoryInfo(result);
         })              
     }
@@ -362,9 +367,15 @@ var acquireCIHistoryInfo = function() {
 
 var main = function()
 {
-  var $subBtn = $("#submit_btn");
-   
-  $subBtn.click( function () {
+
+      $('input[type=radio][name=projectChooseRadio]').change(function() {
+          acquireJenkinsAllInfo();
+          acquireCIHistoryInfo();
+      });
+
+      var $subBtn = $("#submit_btn");
+
+      $subBtn.click( function () {
       
       var feedback_rateOfGit = $("#feedback_form input[type='radio']:checked").val();
       var feedback_advise = $("#comment").val()
