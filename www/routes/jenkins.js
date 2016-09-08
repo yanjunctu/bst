@@ -129,7 +129,7 @@ function getParameterValue(data,parameter){
 
 
 function getPendingReq(project, callback){
-    var result = {"current":{"submitter":"","subBranch":"","subTime":0},"queue":[]};
+    var result = {"current":{"submitter":"","subBranch":"","subCommitId":"","subTime":0},"queue":[]};
 
     try {
         jenkins.queue(function(err, data){
@@ -145,7 +145,7 @@ function getPendingReq(project, callback){
             items.forEach(function(item){
                 //if ((item.blocked || item.stuck) && item.params.indexOf(prjName) > -1){
                 if (item.blocked || item.stuck) {
-                    var projName = '';
+                    var projName = '',submitter='',branch='',pushTime='',commitId='',submail='';
                     var paraArray = item.params.split('\n');
                     //console.log('array=',paraArray);
                     var id = item['id'];
@@ -163,7 +163,11 @@ function getPendingReq(project, callback){
                         if(keyValue[0] == 'IR_BRANCH')
                         {
                             branch = keyValue[1];
-                        }                        
+                        }
+                        if(keyValue[0] == 'GIT_COMMIT')
+                        {
+                            commitId = keyValue[1];
+                        }
                         if(keyValue[0] == 'PUSH_TIME')
                         {
                             pushTime = keyValue[1];
@@ -177,11 +181,11 @@ function getPendingReq(project, callback){
                     
                     if(projName == project){
                         var jobName = /pcr-rept-0-multijob/ig.exec(item.task.name);
-                        if (jobName && submitter && branch && pushTime){
+                        if (jobName && submitter && branch && pushTime && commitId){
                      
                             console.log('jobname:'+item.task.name);
-                                        console.log(submitter,branch,pushTime,submail);
-                            result.queue.push({"id": id,"submitter":submitter,"subBranch":branch,"subTime":pushTime,"submail":submail});
+                                        console.log(submitter,branch,commitId,pushTime,submail);
+                            result.queue.push({"id": id,"submitter":submitter,"subBranch":branch,"subCommitId":commitId,"subTime":pushTime,"submail":submail});
                         }     
                     }
                 }
@@ -206,7 +210,8 @@ var updateStatus = function(ciStatus,data){
     ciStatus.preReleaseState.status="not start";   
     ciStatus.overall.current.submitter="na";
     ciStatus.overall.current.subTime="na";
-    ciStatus.overall.current.subBranch="na";    
+    ciStatus.overall.current.subBranch="na";
+    ciStatus.overall.current.subCommitId="na";
     if (data.building==false){
       //return res.json(ciStatus);
       ciStatus.idleState.status="running";
@@ -214,7 +219,8 @@ var updateStatus = function(ciStatus,data){
       ciStatus.idleState.status="done"; 
       ciStatus.overall.current.submitter= getParameterValue(data,"SUBMITTER");//data.actions[0].parameters[1].value;
       ciStatus.overall.current.subBranch= getParameterValue(data,"IR_BRANCH");//data.actions[0].parameters[1].value;      
-      ciStatus.overall.current.subTime = data.timestamp; 
+      ciStatus.overall.current.subCommitId= getParameterValue(data,"GIT_COMMIT");//data.actions[0].parameters[1].value;
+      ciStatus.overall.current.subTime = data.timestamp;
       
       data.subBuilds.forEach(function(element, index, array){
         if(element.jobName =='PCR-REPT-Git-Integration'){
@@ -540,7 +546,8 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                     var submail = pendingCI["submail"];
                     var name = pendingCI["submitter"];
                     var branch = pendingCI["subBranch"];
-                    var subject = "[Notice!] Your CI : "+branch+" is canceled"
+                    var commitId = pendingCI["subCommitId"];
+                    var subject = "[Notice!] Your CI : "+branch+":"+commitId+" is canceled"
                     var args={'msg':msg,'subject':subject,"email":submail}
                     email.send(args)
                 });
@@ -881,7 +888,8 @@ router.get('/getCIPendingReq', function(req, res, next){
         if (err) { return res.end(); }
         data.current.submitter = CISTATUS.overall.current.submitter;
         data.current.subTime = CISTATUS.overall.current.subTime;
-        data.current.subBranch = CISTATUS.overall.current.subBranch;   
+        data.current.subBranch = CISTATUS.overall.current.subBranch;
+        data.current.subCommitId = CISTATUS.overall.current.subCommitId;
         return res.json(data);
     });
 });

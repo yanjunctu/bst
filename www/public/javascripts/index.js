@@ -227,18 +227,19 @@ var refreshQ = function(QueueInfo)
   $c2.addClass("text-center");  
   $c3 = $("<td>").text(QueueInfo.current.subBranch)
   $c3.addClass("text-center");  
-  
+  $c4 = $("<td>").text(QueueInfo.current.subCommitId)
+  $c4.addClass("text-center");
   var utcSeconds = parseInt(QueueInfo.current.subTime);
   
   if (!isNaN(utcSeconds)){
     var d = new Date(utcSeconds);
     var n = d.toLocaleTimeString();      
-    $c4 = $("<td>").text(n)
-    $c4.addClass("text-center");    
+    $c5 = $("<td>").text(n)
+    $c5.addClass("text-center");
   }
   else{
-    $c4 = $("<td>").text("na")
-    $c4.addClass("text-center");    
+    $c5 = $("<td>").text("na")
+    $c5.addClass("text-center");
   }     
   
   $addrow = $("<tr>");
@@ -246,6 +247,7 @@ var refreshQ = function(QueueInfo)
   $addrow.append($c2)
   $addrow.append($c3)
   $addrow.append($c4)
+  $addrow.append($c5)
   $tblBody.append($addrow)
   
   //create pending row info
@@ -257,18 +259,20 @@ var refreshQ = function(QueueInfo)
     $c2 = $("<td>").text(value.submitter);
     $c2.addClass("text-center");
     $c3 = $("<td>").text(value.subBranch);
-    $c3.addClass("text-center");    
+    $c3.addClass("text-center");
+    $c4 = $("<td>").text(value.subCommitId);
+    $c4.addClass("text-center");
     var utcSeconds = parseInt(value.subTime);
     
     if (!isNaN(utcSeconds)){
       var d = new Date(utcSeconds);
       var n = d.toLocaleTimeString();      
-      $c4 = $("<td>").text(n)
-      $c4.addClass("text-center");
+      $c5 = $("<td>").text(n)
+      $c5.addClass("text-center");
     }
     else{
-      $c4 = $("<td>").text("na")
-      $c4.addClass("text-center");      
+      $c5 = $("<td>").text("na")
+      $c5.addClass("text-center");
     }     
    
     var $cancelElement = $("<a>")
@@ -279,7 +283,7 @@ var refreshQ = function(QueueInfo)
     $cancelIron.attr("aria-hidden","true")
     $cancelElement.append($cancelIron)
 
-    var $c5 = $("<td>").append($cancelElement)
+    var $c6 = $("<td>").append($cancelElement)
     
     var $addrow = $("<tr>");
     $addrow.append($c1)
@@ -287,13 +291,14 @@ var refreshQ = function(QueueInfo)
     $addrow.append($c3)
     $addrow.append($c4)    
     $addrow.append($c5)
+    $addrow.append($c6)
     $tblBody.append($addrow)
     
     $cancelElement.on("click",function(evt){
         if (confirm('Are you sure you want to cancel this CI ?')) {
             try
             {
-                var postBody={"id":value.id,"submitter":value.submitter,"submitBranch":value.subBranch};
+                var postBody={"id":value.id,"submitter":value.submitter,"submitBranch":value.subBranch,"subCommitId":value.subCommitId};
                 $.post("/jenkins/removePendingItem", postBody, function (result) {
                       if(result == "true"){
                         $addrow.remove();

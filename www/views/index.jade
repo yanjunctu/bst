@@ -20,13 +20,15 @@ block content
                         tr
                           th(class="text-center")                             
                           th(class="text-center text-info bg-info") submitter
-                          th(class="text-center text-info bg-info") branch                              
+                          th(class="text-center text-info bg-info") branch
+                          th(class="text-center text-info bg-info") commitId
                           th(class="text-center text-info bg-info") submit time
                       tbody(id="ciQTbl")
                         tr
                           th(class="text-center text-info bg-info") running CI                            
                           td(class="currentSubmitter text-center") na
-                          td(class="currentSubmitBranch text-center") na                              
+                          td(class="currentSubmitBranch text-center") na
+                          td(class="currentSubmitCommitId text-center") na
                           td(class="currentSubmitTime text-center") na
                 br
                 - var escapseSpace=0
