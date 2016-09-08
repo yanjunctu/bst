@@ -14,7 +14,7 @@ var number_in_statistic = 10;
 function get_getCIHistory(obj)
 {
 	 $.ajax({
-        url: hostname + "/jenkins/getCIHistory",
+        url: hostname + "/jenkins/getCIHistory/"+project,
         dataType:'json',
         success: function(data){
             if (data != null) {
@@ -60,7 +60,7 @@ function get_getCIHistory(obj)
 function get_ciStatus()
 {
         $.ajax({
-            url: hostname + "/jenkins/getCIStatus",
+            url: hostname + "/jenkins/getCIStatus/"+project,
             dataType:'json',
             success: function(data){
                 if (data != null) {
@@ -76,7 +76,7 @@ function get_ciStatus()
 function get_ciPending()
 {
         $.ajax({
-            url: hostname + "/jenkins/getCIPendingReq",
+            url: hostname + "/jenkins/getCIPendingReq/"+project,
             dataType:'json',
             success: function(data){
                 if (data != null) {
@@ -116,7 +116,7 @@ var testCaseNum;
 function get_testCaseNum()
 {
     $.ajax({
-        url: hostname + "/serverInfo/testCaseNum",
+        url: hostname + "/serverInfo/testCaseNum/"+project,
         dataType:'json',
         success: function(data){
             if (data != null) {

@@ -3,17 +3,19 @@
 
 var INTERVAL = 8000; //8s
 
+var iFrames = {curIndex:2,// in order to show board27 firstly, so set initialize value to 2
+               boards:[$("#board27"),$("#boardMain"),$("#metric")]
+              };
+
 var alternateDisplay = function() {
-    var $mtric = $("#metric");
-    var $dboard = $("#board");
-    console.log("display2")
-    if($mtric[0].style.display=="block") {
-        $mtric[0].style.display="none";
-        $dboard[0].style.display="block";}
-    else {
-        $mtric[0].style.display="block";
-        $dboard[0].style.display="none";
-    } 
+    // mask last frame
+    iFrames.boards[iFrames.curIndex][0].style.display = "none"
+    // increase index number
+    iFrames.curIndex = (iFrames.curIndex+1)%iFrames.boards.length;
+    // show next frame
+    iFrames.boards[iFrames.curIndex][0].style.display = "block"
+
+
 };
 
 var main = function()
