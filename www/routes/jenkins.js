@@ -17,11 +17,10 @@ var ALL_PRJ = [MAINLINE_PRJ,SIDELINE_PRJ]
 var CISTATUS = {}
 
 // Variables for CI history info
-const CI_TRIGGER_JOB = {"REPT2.7":"PCR-REPT-0-MultiJob","REPT_MCL":"PCR-REPT-0-MultiJob-MCL"};
 var CILastTriggerBuildID={}
 var CIHistory = {};
-for ( var i in ALL_PRJ){
-    CISTATUS[ALL_PRJ[i]] = {
+ALL_PRJ.forEach(function(project){
+    CISTATUS[project] = {
       "idleState":{"status":"running","duration":0},
       "preCheckState":{"status":"not start","duration":2},
       "buildFwState":{"status":"not start","duration":3},
@@ -32,10 +31,12 @@ for ( var i in ALL_PRJ){
       "overall":{"current":{"subBranch":"na",subCommitId:"na","subTime":"na"}},
       "ciBlockInfo":{"result":"SUCCESS","submitter":"na","releaseTag":"na",lastSuccessTag:"na",manualControl:"FALSE"}
     };
-    CILastTriggerBuildID[ALL_PRJ[i]] = 0;
-    CIHistory[ALL_PRJ[i]] = [];
-}
-
+    CILastTriggerBuildID[project] = 0;
+    CIHistory[project] = [];
+});
+var CI_TRIGGER_JOB = {};
+CI_TRIGGER_JOB[SIDELINE_PRJ] = "PCR-REPT-0-MultiJob";
+CI_TRIGGER_JOB[MAINLINE_PRJ] = "PCR-REPT-0-MultiJob-MCL";
 const CI_ON_TARGET_JOB = "PCR-REPT-On_Target_MultiJob";
 const CI_ON_TAEGET_BUILD_JOB = "PCR-REPT-On_Target_Build_MultiJob";
 const CI_OFF_TARGET_JOB = "PCR-REPT-Off_Target_MultiJob";
@@ -88,27 +89,24 @@ var getJobBuild = function(job,build,callback)
 };
 
 function getParameterValue(data,parameter){
-  var actions = data.actions;
-  var found;
-  
-  actions.forEach(function(action){
-    if (action.hasOwnProperty("parameters")) {
-      var paras = action.parameters;
-      paras.forEach(function(para){
-        //console.log(para.name);
-        if(para.name==parameter){
-          //console.log("found",para.value)
-          found = para.value;
-          return found;
+
+  var found="";
+  if (data.hasOwnProperty("actions")){
+      var actions = data.actions;
+      actions.forEach(function(action){
+        if (action.hasOwnProperty("parameters")) {
+          var paras = action.parameters;
+          paras.forEach(function(para){
+            //console.log(para.name);
+            if(para.name==parameter){
+              //console.log("found",para.value)
+              found = para.value;
+              return found;
+            }   
+          })
         }
-        {
-          //console.log()
-        }
-          
-      })
-    }
+      });
   }
-  );
   return found;
 }
 
@@ -331,8 +329,8 @@ function getJobDuration(job,prjName,days,callback){
         var db = server.db("booster");
         var objPrj = {"name":"PROJECT_NAME","value":prjName}
        
-        coll = db.getCollection(getJobCollName(job));
-        docs = coll.find({"result":"SUCCESS","timestamp":{$gt:oldestTimeStamp},"actions.parameters": {$in: [objPrj]}}).toArray();
+        var coll = db.getCollection(getJobCollName(job));
+        var docs = coll.find({"result":"SUCCESS","timestamp":{$gt:oldestTimeStamp},"actions.parameters": {$in: [objPrj]}}).toArray();
         
         for( var i =0 ; i< docs.length;i++){
             pushdata(durationDic.id,durationDic.duration,durationDic.submitter,durationDic.timestamp,docs[i]);  
@@ -363,12 +361,12 @@ function getJobFailureInfo(job,days,callback){
         var server = new Server('127.0.0.1');
         var db = server.db("booster");
        
-        coll = db.getCollection(getJobCollName(job));
+        var coll = db.getCollection(getJobCollName(job));
         failureInfoDic['allBuildNumber'] = coll.find({"timestamp":{$gt:oldestTimeStamp}}).count();
         failureInfoDic['abortedNumber'] = coll.find({"result": "ABORTED","timestamp":{$gt:oldestTimeStamp}}).count();
-        
-        docFs = coll.find({"result": "FAILURE","timestamp":{$gt:oldestTimeStamp}}).count();
-        
+        console.log(job)
+        var docFs = coll.find({"result": "FAILURE","timestamp":{$gt:oldestTimeStamp}}).toArray()
+
         for( var i =0 ; i< docFs.length;i++){
             failureInfoDic['failureNumber']++;
             failureInfoDic.failTimeStamp.push(docFs[i].timestamp); 
@@ -460,8 +458,8 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             var db = server.db("booster");
             var objPrj = {"name":"PROJECT_NAME","value":prjName}
             //get last success tag
-            datColl = db.getCollection(getJobCollName(job));
-            docLastS = datColl.find({"result":"SUCCESS","IDAT_EXIT_CODES":{"$in":[[],["0"],["0","0"]]},"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1).toArray()
+            var datColl = db.getCollection(getJobCollName(job));
+            var docLastS = datColl.find({"result":"SUCCESS","IDAT_EXIT_CODES":{"$in":[[],["0"],["0","0"]]},"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1).toArray()
             ciBlockInfo.lastSuccessTag = getParameterValue(docLastS[0],"NEW_BASELINE")
         
             var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
@@ -480,7 +478,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             ciBlockInfo.submitter = submitter;
             if (preResult == "SUCCESS"){
                 var msg = "Block Reason:  DAT test failed on tag :" +ciBlockInfo.releaseTag +"\n The Submitter(s):" +ciBlockInfo.submitter+"\n Last Success Tag:"+ciBlockInfo.lastSuccessTag;
-                var subject = '[Notice!] CI is blocked'
+                var subject = '[Notice!]'+prjName+' CI is blocked'
                 var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
                 email.send(args)
             }
@@ -506,7 +504,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
                     email.send(args)
                 });
                 //disable PCR-REPT-0-MultiJob
-                jenkinsCIJob(CI_TRIGGER_JOB.prjName,"disable")
+                jenkinsCIJob(CI_TRIGGER_JOB[prjName],"disable")
             });
         }
     }
@@ -515,7 +513,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
         ciBlockInfo.manualControl = "FALSE"
         if (preResult == "FAILURE"){
             ciUnblock(prjName,"TRUE","FALSE")
-            var subject = '[Notice!] CI is unblocked'
+            var subject = '[Notice!]'+prjName+' CI is unblocked'
             var msg ="You can submit your CI now"
             var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
             email.send(args)
@@ -526,20 +524,21 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
 
 var onTargertTestInfo = function(job){
 
-    for( var i in ALL_PRJ ){
-        prjName = ALL_PRJ[i]
+    ALL_PRJ.forEach(function(prjName){
         fiber(function() {
             var server = new Server('127.0.0.1');
             var db = server.db("booster");
             var objPrj = {"name":"PROJECT_NAME","value":prjName}
             //get last tag
-            coll = db.getCollection(getJobCollName(job));
-            docLast = coll.find({"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1).toArray()
-            updateOnTargetTestStatus(CISTATUS[prjName].ciBlockInfo,docLast[0],job); 
+            var coll = db.getCollection(getJobCollName(job));
+            var docLast = coll.find({"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1).toArray()
+            if (docLast.length!=0){
+                updateOnTargetTestStatus(CISTATUS[prjName].ciBlockInfo,docLast[0],job);
+            }
             server.close();
         }).run();        
 
-    }
+    })
 }
 
 var updateLatestBuildInfo = function(prjName){
@@ -829,10 +828,9 @@ setInterval(function(){
     // block CI depends on DAT status 
     onTargertTestInfo('PCR-REPT-DAT_LATEST');
     // runing CI status
-    for(var i in ALL_PRJ){
-        prjName = ALL_PRJ[i]
+    ALL_PRJ.forEach(function(prjName){
         updateLatestBuildInfo(prjName); 
-    }
+    });
 
 }, GET_JENKINS_INTERVAL);
 

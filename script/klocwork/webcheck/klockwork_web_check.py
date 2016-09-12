@@ -308,7 +308,6 @@ def actionOnCIMode(args):
                     if email :
                         sys.stdout = stdout #recover sys.stdout  
                         if len(issueIDNew)!=0 or len(issueIDFix)!=0:
-                            print "send email"
                             #sendEmail(submitter,email,stdOutfile.getvalue(),emailSubject);
                             sendEmail(submitter,email,stdOutfile.getvalue(),emailSubject);
                 else :

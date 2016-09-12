@@ -1,4 +1,4 @@
-
+PROJECT = "REPT2.7"
  var fetchBuildFInfo = function(){
     //$tblBody = $("#emerTbl");
     var $tblHead = $("#infoHead");
@@ -27,7 +27,7 @@
     
     var $addBrow1 = $("<tr>");
     //var $addBrow2 = $("<tr>");
-    var $bc1 = $("<td>").text("REPT 2.7");
+    var $bc1 = $("<td>").text(PROJECT);
     $bc1.addClass("text-center");
     $addBrow1.append($bc1);
        
@@ -81,7 +81,7 @@ var main = function(){
     };
     fetchBuildFInfo();
     
-  $.get("/jenkins/getTheWholeCI/REPT2.7",function (result) {
+  $.get("/jenkins/getTheWholeCI/"+PROJECT,function (result) {
 
     var plotHandler = document.getElementById('theWholeCI');
     
@@ -91,7 +91,7 @@ var main = function(){
 
   })
 
-  $.get("/jenkins/getOnTargetBuild/REPT2.7",function (result) {
+  $.get("/jenkins/getOnTargetBuild/"+PROJECT,function (result) {
 
     var plotHandler = document.getElementById('onTargetbuild');
     
@@ -101,7 +101,7 @@ var main = function(){
 
   })  
   
-  $.get("/jenkins/getOnTargetTest/REPT2.7",function (result) {
+  $.get("/jenkins/getOnTargetTest/"+PROJECT,function (result) {
 
     var plotHandler = document.getElementById('onTargetTest');
     Plotly.plot( plotHandler, [{
@@ -112,7 +112,7 @@ var main = function(){
   
 
   
-    $.get("/jenkins/getOffTargetBuild/REPT2.7",function (result) {
+    $.get("/jenkins/getOffTargetBuild/"+PROJECT,function (result) {
 
     var plotHandler = document.getElementById('offTargetbuild');
     
@@ -122,7 +122,7 @@ var main = function(){
 
   })  
   
-    $.get("/jenkins/getOffTargetTest/REPT2.7",function (result) {
+    $.get("/jenkins/getOffTargetTest/"+PROJECT,function (result) {
 
     var plotHandler = document.getElementById('offTargetTest');
     
@@ -131,7 +131,7 @@ var main = function(){
         y: result.duration }], layout)
 
   })  
-    $.get("/serverInfo/testCaseNum/REPT2.7",function (result) {
+    $.get("/serverInfo/testCaseNum/"+PROJECT,function (result) {
     
     var plotHandler = document.getElementById('testCaseNum');
     var layout = {
