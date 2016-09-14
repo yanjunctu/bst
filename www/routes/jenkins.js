@@ -718,8 +718,8 @@ var updateCIHistoryInfo = function() {
         
         var klocworkDocs = db.getCollection(CI_KLOCWORK_COLL_NAME).find({"buildNumber": {$gt: CILastKlocworkBuildID}}).sort({"number": -1}).toArray();
         
-        for (var i in CI_TRIGGER_JOB){
-            var prjName =i
+        for (var key in CI_TRIGGER_JOB){
+            var prjName =key
             var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB[prjName])).find({"number": {$gt: CILastTriggerBuildID[prjName]}}).sort({"number": 1}).toArray();
             triggerDocs.forEach(function(doc) {
                 refreshCIHistory(db, doc,prjName);
