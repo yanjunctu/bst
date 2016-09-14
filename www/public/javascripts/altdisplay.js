@@ -13,7 +13,9 @@ var alternateDisplay = function() {
     else {
         $mtric[0].style.display="block";
         $dboard[0].style.display="none";
-    } 
+    }
+    $mtric.src = $mtric.src
+    $dboard.src = $dboard.src
 };
 
 var main = function()
