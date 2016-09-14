@@ -14,8 +14,9 @@ var alternateDisplay = function() {
         $mtric[0].style.display="block";
         $dboard[0].style.display="none";
     }
-    $mtric[0].src = $mtric[0].src
-    $dboard[0].src = $dboard[0].src
+
+    $("div#metric iframe")[0].src = $("div#metric iframe")[0].src
+    $("div#board iframe")[0].src = $("div#board iframe")[0].src
 };
 
 var main = function()
