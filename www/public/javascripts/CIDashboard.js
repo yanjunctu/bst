@@ -32,7 +32,7 @@ PROJECT = "REPT2.7"
     $addBrow1.append($bc1);
        
     
-    $.get("/jenkins/getFailInfo/REPT2.7",function (data){
+    $.get("/jenkins/getFailInfo/"+PROJECT,function (data){
         var $bca1= $("<td>").text(data.allBuildNumber);
         $bca1.addClass("text-center");
         percent =(data.allBuildNumber ==0)? "NA":Math.round((data.failureNumber/data.allBuildNumber)*100);

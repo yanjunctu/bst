@@ -33,12 +33,12 @@ CI_RELEASE_JOB_COLL = "CI-PCR-REPT-Git-Release"
 CI_KW_COLL_NAME = "klocwork";
 BOOSTER_DB_NAME = 'booster'
 
-AUDIT_TIME = 10*24*60*60 #10 days 
+AUDIT_TIME = 10*24*60*60*1000 #10 days 
 
 WelcomeWords = '''
 \n############################
-you should fix the issue in time,otherwise CI system will note down. and the issue allowed exist time is {} days                   \n############################
-'''.format(AUDIT_TIME/(24*60*60))
+you should fix the issue in time,otherwise CI system will tag it as audit finding. and the issue allowed exist time is {} days   \n############################
+'''.format(AUDIT_TIME/(24*60*60*1000))
 
 managerEmail=["anlon.lee@motorolasolutions.com","xiao-fan.zhang@motorolasolutions.com","mengge.duan@motorolasolutions.com"]
 
@@ -178,7 +178,7 @@ def actionOnAuditMode(args):
 def actionOnIntersection(existIssueID,issueDocs,db): 
 
     existIssueID = set(existIssueID)
-    nowTime = time.time()
+    nowTime = time.time()*1000
     auditInfo= OrderedDict()
    
     for doc in issueDocs:
@@ -239,11 +239,11 @@ def send_email(auditInfo):
         print WelcomeWords
                               
         for issueDetail in auditInfo[engineerName]['detail']:
-            existdays =  issueDetail["existTime"]/(24*60*60)           
+            existdays =  issueDetail["existTime"]/(24*60*60*1000)           
             print "\n {}: unfixed issue:{},   Exist : {}, days".format(issueDetail['releaseTag'],issueDetail["issueID"],round(existdays))
                             
             if issueDetail["existTime"] > AUDIT_TIME:
-                print "those issue exceed the time limit {}，and already be node down".format(AUDIT_TIME/24/60/60)
+                print "those issue exceed the time limit {}，and already be node down".format(AUDIT_TIME/24/60/60/1000)
                 audit = True
 
         if audit:
@@ -310,7 +310,7 @@ def actionOnCIMode(args):
                 if not email:
                     email = "boosterTeam@motorolasolutions"
                 submitter = email.split("@")[0];
-                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":time.time(),"issueIDs":[],"PROJECT_NAME":projectName,"fixedIDs":[],"ignoreIDs":[],"status":"existing","auditIDs":[]};
+                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":time.time()*1000,"issueIDs":[],"PROJECT_NAME":projectName,"fixedIDs":[],"ignoreIDs":[],"status":"existing","auditIDs":[]};
                 
                 kwbuild=releaseTag.replace(".","_")
                 if (result == 'SUCCESS') and (kwbuild in buildList[projectName]):
