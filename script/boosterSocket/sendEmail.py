@@ -7,19 +7,24 @@ import email.utils
 from email.mime.text import MIMEText
 
 def sendEmail(name,mail,text,title):
-  # Create the message
-  msg = MIMEText(text)
+    # Create the message
+    msg = MIMEText(text)
 
-  msg['To'] = email.utils.formataddr((name, mail))
-  msg['From'] = email.utils.formataddr(('booster', 'booster@motorolasolutions.com'))
-  msg['Subject'] = title
+    msg['To'] = email.utils.formataddr((name, mail))
+    msg['From'] = email.utils.formataddr(('booster', 'booster@motorolasolutions.com'))
+    msg['Subject'] = title
 
-  server = smtplib.SMTP('remotesmtp.mot-solutions.com')
-  #server.set_debuglevel(True) # show communication with the server
-  try:
-      server.sendmail('booster@motorolasolutions.com', [mail,'qpcb36@motorolasolutions.com','jhv384@motorolasolutions.com'], msg.as_string())
-  finally:
-      server.quit()
+    server = smtplib.SMTP('remotesmtp.mot-solutions.com')
+    #server.set_debuglevel(True) # show communication with the server
+    mailAdr = ['qpcb36@motorolasolutions.com','jhv384@motorolasolutions.com']
+    for adr in mail:
+        mailAdr.append(adr)
+
+    try:
+        server.sendmail('booster@motorolasolutions.com', mailAdr, msg.as_string())
+        #server.sendmail('booster@motorolasolutions.com', ['qpcb36@motorolasolutions.com'], msg.as_string())
+    finally:
+        server.quit()
 
 def process_argument():
     parser = argparse.ArgumentParser(description="description:email send", epilog=" %(prog)s description end")
