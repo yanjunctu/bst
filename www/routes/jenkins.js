@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var jenkins = require('../models/jenkins.js');
 var email = require('../models/email.js');
+var passWord = require('../models/password.js');
 var jenkinsCIJob = require('../models/jenkinsJob.js');
 var fiber = require('fibers');
 var Server = require('mongo-sync').Server;
@@ -400,21 +401,7 @@ function getJobFailureInfo(job,days,callback){
     }).run();
 	
 }
-var passwordVerify=function(user,password,callback){
-    ret = false
-    fiber(function() {
-        var server = new Server('127.0.0.1');
-        var db = server.db("booster");
-        var doc = db.getCollection('booster_password').find({"user": {$eq:user}}).toArray();
-        var dbPassword = doc[0]["password"]
-        if(password ==dbPassword ){
-            ret = true
-        }
 
-        callback(ret)
-        server.close();
-    }).run();
-}
 var ciUnblock = function(projName,jenkinsUnlock,boosterUnlock){
     console.log('ciUnblock')
     status = "SUCCESS";
@@ -716,7 +703,7 @@ var updateCIHistoryInfo = function() {
         var extRegressionDocs = db.getCollection(getJobCollName(CI_EXT_REGRESSION_JOB)).find({"number": {$gt: CILastExtRegressionBuildID}}).sort({"number": -1}).toArray();
         var memoryLeakDocs = db.getCollection(getJobCollName(CI_MEMORY_LEAK_JOB)).find({"number": {$gt: CIMemoryLeakBuildID}}).sort({"number": -1}).toArray();
         
-        var klocworkDocs = db.getCollection(CI_KLOCWORK_COLL_NAME).find({"buildNumber": {$gt: CILastKlocworkBuildID}}).sort({"number": -1}).toArray();
+        var klocworkDocs = db.getCollection(CI_KLOCWORK_COLL_NAME).find({"buildNumber": {$gt: CILastKlocworkBuildID}}).sort({"buildNumber": -1}).toArray();
         
         for (var key in CI_TRIGGER_JOB){
             var prjName =key
@@ -948,7 +935,7 @@ router.post('/doUnblockCI', function(req, res, next) {
     var password = req.body.password;
     var project = req.body.project;
     
-    passwordVerify("unblock",password,function(result){
+    passWord.verify("unblock",password,function(result){
         if (result){
             status = ciUnblock(project,jenkinsci,boosterdisplay)
         }
