@@ -5,7 +5,7 @@ var fiber = require('fibers');
 var Server = require('mongo-sync').Server;
 
 var SIDELINE_PRJ = "REPT2.7"
-var MAINLINE_PRJ = "REPT_MCL"
+var MAINLINE_PRJ = "REPT_MAIN"
 var ALL_PRJ = [MAINLINE_PRJ,SIDELINE_PRJ]
 
 var days=30
