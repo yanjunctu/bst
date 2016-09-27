@@ -17,9 +17,6 @@ var alternateDisplay = function() {
     iFrames.curIndex = (iFrames.curIndex+1)%iFrames.boards.length;
     // show next frame
     $(iFrames.boards[iFrames.curIndex])[0].style.display = "block"
-
-
-
 };
 
 var main = function()

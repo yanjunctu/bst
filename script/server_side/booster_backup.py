@@ -61,7 +61,7 @@ def export_db(db_name, collections=None):
         # Archive directory output_dir and save it as output_dir.zip at the same level of output_dir
         #        archive_file = shutil.make_archive(output_dir, format='zip', root_dir=output_dir)
         with zipfile.ZipFile(output_dir+'.zip',"w",zipfile.ZIP_DEFLATED,allowZip64=True) as zf:
-          for root,_,filenames in os.walk(os.path.basename(output_dir)):
+          for root,_,filenames in os.walk(output_dir):
             for name in filenames:
               name = os.path.join(root,name)
               name = os.path.normpath(name)
