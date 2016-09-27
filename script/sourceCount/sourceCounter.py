@@ -22,7 +22,7 @@ from findNewWarnings import parseLatestCITag
 SOCKET_DIR = '/..\\boosterSocket'
 script_from_dir = os.path.abspath(cwd+SOCKET_DIR)
 path.append(script_from_dir)
-from boosterSocket import sendEmail
+from sendEmail import sendEmail
 
 THRESHOLD = 30
 
