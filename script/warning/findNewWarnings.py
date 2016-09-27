@@ -331,7 +331,7 @@ def process_argument():
     parser.add_argument('-D',dest="pdays",default = 7,type=int)
     #whether need git blame
     parser.add_argument('-a',dest="audit",default = "N")
-    parser.add_argument('-prj',dest="project",default = "REPT2.7")
+    parser.add_argument('-prj',dest="project",default = "REPT_MAIN")
     
     args = parser.parse_args()
     #the drive is the dir for period mode
@@ -357,13 +357,13 @@ def process_argument():
 
 def parseLatestCITag(mergedTags):
 
-    tagString = 'REPT_I02.07' 
+    tagString = 'REPT_I16'
     storeLagest = 0;
     storeTag = '';
     for line in mergedTags.splitlines():
         line = line.strip()
         if line.startswith(tagString):
-            # A typical tag name is 'REPT_Emerald_I02.07.01.90'
+            # A typical tag name is like 'REPT_I16.04.01.07'
             # Below code is go to get the biggest one, it will extract the last two number 01 and 90 to compare
             splitArr = line.split('.')
             lastIndex = len(splitArr)-1;

@@ -21,7 +21,7 @@ HOST = '10.193.226.186'
 PORT = 8080
 USER = 'huang rurong-QPCB36'
 TOKEN = '3ce1d76aae49dc433da70c546f634b25f8734d9a59490831c41f8b261fe0e57e'
-PROJECT = ['REPT2.7','REPT_MCL']
+PROJECT = ['REPT2.7','REPT_MAIN']
 #jenkins
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
@@ -33,7 +33,7 @@ CI_RELEASE_JOB_COLL = "CI-PCR-REPT-Git-Release"
 CI_KW_COLL_NAME = "klocwork";
 BOOSTER_DB_NAME = 'booster'
 
-AUDIT_TIME = 10*24*60*60*1000 #10 days 
+AUDIT_TIME = 14*24*60*60*1000 #14 days
 
 WelcomeWords = '''
 \n############################
@@ -370,7 +370,7 @@ def process_argument():
     #the unit is day
     parser.add_argument('-D',dest="pdays",default = 7,type=int)
     parser.add_argument('-m',dest="mode",choices=['audit', 'CI'],required = True)
-    parser.add_argument('-prj',dest="project",default = "REPT2.7")
+    parser.add_argument('-prj',dest="project",default = "REPT_MAIN")
     
     args = parser.parse_args()
 
