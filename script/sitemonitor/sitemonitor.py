@@ -9,7 +9,7 @@ from sys import path
 #script_from_dir = '/vagrant/booster_project/script/boosterSocket'
 script_from_dir = '/opt/booster_project/script/boosterSocket'
 path.append(script_from_dir)
-from boosterSocket import sendEmail
+from sendEmail import sendEmail
 
 
 def is_status_changed(prev_results,url):

@@ -160,7 +160,8 @@ if __name__ == "__main__":
     print 'Totally use {minute} minutes {seconds} seconds\n'.format(minute = int((tEnd-tStart).total_seconds() / 60),seconds = int((tEnd-tStart).total_seconds() % 60))
     
     if args.mode == 'CI':
-        from boosterSocket import WarnKlocCheckResult,BoosterClient,sendEmail
+        from boosterSocket import WarnKlocCheckResult,BoosterClient
+        from sendEmail import sendEmail
         sys.stdout = stdout #recover sys.stdout
         if number >0:
             actionOnNewKWissue(args.releaseTag,args.CIUserName,args.CIUserEmail,stdOutfile,number) 

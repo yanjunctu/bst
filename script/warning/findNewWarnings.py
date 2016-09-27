@@ -562,7 +562,7 @@ def blameOnNewWarning(args):
     cwd = os.getcwd()
     unResolveList= OrderedDict()
     if args.CIUserEmail:
-        from boosterSocket import sendEmail
+        from sendEmail import sendEmail
         stdout = sys.stdout
         sys.stdout = stdOutfile = StringIO.StringIO()
     for (file_name,line) in ALL_NEW_WARNINGS.keys():
@@ -642,7 +642,7 @@ if __name__ == "__main__":
         sys.path.append('/opt/booster_project/script/boosterSocket/')
         sys.path.append('/opt/booster_project/script/jenkins/')
         sys.path.append('/opt/booster_project/script/klocwork/webcheck/')
-        from boosterSocket import sendEmail
+        from sendEmail import sendEmail
         from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
         from klockwork_web_check import findBoundaryTag,getParameterValue
         dbClient = MongoClient()
@@ -686,7 +686,8 @@ if __name__ == "__main__":
     # and the seconds difference is need exclude the default.xml which is no needed to analysis, but in CI env, there will be have
     # default.xml generated from win32 build
     elif args.mode == 'CI':
-        from boosterSocket import WarnKlocCheckResult,BoosterClient,sendEmail
+        from boosterSocket import WarnKlocCheckResult,BoosterClient
+        from sendEmail import sendEmail
         logfiles =[]
         for annofileDir in ANNOFILE_DIR:
             logfiles =logfiles + [fn for fn in glob.glob(args.drive+annofileDir+ '*.xml') if 'default.xml' not in fn]
