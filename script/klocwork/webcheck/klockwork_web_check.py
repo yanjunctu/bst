@@ -9,13 +9,19 @@ import StringIO
 from pymongo import MongoClient
 import math
 import ssl
+from jenkins import Jenkins
+from jenkins import JenkinsException
+sys.path.append('/opt/booster_project/script/boosterSocket/')
+sys.path.append('/opt/booster_project/script/jenkins/')
+from sendEmail import sendEmail
+from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
 
 #klocwork
 HOST = '10.193.226.186'
 PORT = 8080
 USER = 'huang rurong-QPCB36'
 TOKEN = '3ce1d76aae49dc433da70c546f634b25f8734d9a59490831c41f8b261fe0e57e'
-PROJECT = 'REPT2.7'
+PROJECT = ['REPT2.7','REPT_MAIN']
 #jenkins
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'
@@ -26,6 +32,15 @@ CI_RELEASE_JOB_COLL = "CI-PCR-REPT-Git-Release"
 #data base
 CI_KW_COLL_NAME = "klocwork";
 BOOSTER_DB_NAME = 'booster'
+
+AUDIT_TIME = 14*24*60*60*1000 #14 days
+
+WelcomeWords = '''
+\n############################
+you should fix the issue in time,otherwise CI system will tag it as audit finding. and the issue allowed exist time is {} days   \n############################
+'''.format(AUDIT_TIME/(24*60*60*1000))
+
+managerEmail=["anlon.lee@motorolasolutions.com","xiao-fan.zhang@motorolasolutions.com","mengge.duan@motorolasolutions.com"]
 
 class klocworkapi(object):
     def __init__(self, host,port,user,token):
@@ -39,6 +54,7 @@ class klocworkapi(object):
 
         data = urllib.urlencode(self.values)
         req = urllib2.Request(self.url, data)
+        response = ""
         try:
             response = urllib2.urlopen(req)
         except HTTPError as e:
@@ -82,83 +98,11 @@ def convert_to_dicts(objs):
         obj_arr.append(dict)
     return obj_arr
 
-def findInServerDB(qury):
-    findresult = WarnKlocFindResult(qury)
-    interface = BoosterClient();
-    ret = interface.send(findresult);
-    if ret:
-        receive =interface.recv();
-        receive = json.loads(receive)
-        result = receive["result"]
-        return result;
-    return;
-
-def recursiveFind(start,end):
-    qury = {"buildNumber":{"$gte":start, "$lte":end}}
-    record = findInServerDB(qury);
-    #result = record["result"]
-    if record == "FAIL":
-        middle =start + ((end-start)//2)
-        record1 = recursiveFind(start,middle)
-        record2 = recursiveFind((middle+1),end)
-        record=record1+record2     
-        return record
-    else:
-        return record
-
-def actionOnNewKWissue(response,args,unFixID):
-    
-    kwIssueNum = len(response)
-
-    if args.email :
-        stdout = sys.stdout
-        sys.stdout = stdOutfile = StringIO.StringIO()
         
-    mailSubject = '<!!!> The new klocwork issue betwean: {} and {}'.format(args.ci_Branch,args.releaseTag)
-    unFixIssue= OrderedDict()
-    
-    #get the releaseTag buildnumber
-    qury = {"releaseTag":args.releaseTag}
-    record = findInServerDB(qury)
-    maxBuildNumber = record[0]['buildNumber']
-    
-    #get the lastTag buildnumber
-    qury = {"releaseTag":args.ci_Branch}
-    record = findInServerDB(qury)
-    minBuildNumber = record[0]['buildNumber']
-    
-    #find the all the db record between the two tag
-    records = recursiveFind(minBuildNumber,maxBuildNumber)
-    
-    for record in records:
-        for ID in record['issueIDs']:
-            engineerName = record['engineerName']
-            if ID in unFixID:
-                if unFixIssue.has_key(engineerName):
-                    unFixIssue[engineerName]['number']=unFixIssue[engineerName]['number']+1;
-                    unFixIssue[engineerName]['unFixID'].append(ID)
-                else: 
-                    info = OrderedDict()
-                    info['number']=1
-                    info['unFixID']=[]
-                    info['unFixID'].append(ID)
-                    unFixIssue[engineerName]=info
-    #print the issue info
-    for engineerName in unFixIssue.keys():
-        issueCnt = unFixIssue[engineerName]['number']
-        issueIDs = unFixIssue[engineerName]['unFixID']
-        klocworkMsg='\n\n\n{}: total {} klocworkIssue unfixed \n issueID:  {}'.format(engineerName,issueCnt,issueIDs)            
-        print klocworkMsg
-        
-    if  args.email :
-        sys.stdout = stdout #recover sys.stdout  
-        name = args.email.split('@')[0]
-        sendEmail(name,args.email,stdOutfile.getvalue(),mailSubject); 
-        
-def fetchIssueFromKlocworkWeb(query):    
+def fetchIssueFromKlocworkWeb(project,query):    
 
     kwapi = klocworkapi(HOST,PORT,USER,TOKEN)
-    kwapi.setParameter("project",PROJECT)
+    kwapi.setParameter("project",project)
     kwapi.setParameter("action","search")
     kwapi.setParameter("query",query)
     
@@ -176,10 +120,10 @@ def fetchIssueFromKlocworkWeb(query):
             issueID.append(issue.id)
     return (response,issueID,csaIssueID)
 
-def fetchBuildListFromKlocworkWeb():
+def fetchBuildListFromKlocworkWeb(project):
     
     kwapi = klocworkapi(HOST,PORT,USER,TOKEN)
-    kwapi.setParameter("project",PROJECT)
+    kwapi.setParameter("project",project)
     kwapi.setParameter("action","builds")
     
     res =kwapi.urlRequest()
@@ -193,19 +137,124 @@ def fetchBuildListFromKlocworkWeb():
 
 
 def actionOnAuditMode(args):
-    #REPT_I02.07.01.84 convert to REPT_I02_07_01_84
-    newbuild = args.releaseTag.replace('.','_')
-    oldbuild = args.ci_Branch.replace('.','_')
-    query = "state:+'{}' diff:'{}','{}'".format(args.state,oldbuild,newbuild)
-    response,issueID,csaIssueID= fetchIssueFromKlocworkWeb(query)
+    ######
+    #1.get the existing issue from kw
+    #####
+    dbClient = MongoClient()
+    db = dbClient[BOOSTER_DB_NAME]
+    #get the newest klocwork 
+    docs = db[CI_KW_COLL_NAME].find().sort("date",-1)
 
-    if len(response)>0:
-        actionOnNewKWissue(response,args,issueID)
-    else:
-        if args.email :
-            mailSubject = '[Notice!] No new klocwork issue betwean: {} and {}'.format(args.ci_Branch,args.releaseTag)
-            name = args.email.split('@')[0]
-            sendEmail(name,args.email,"",mailSubject); 
+    newestTag = docs[0]['releaseTag']
+    newestbuild = newestTag.replace('.','_')
+    query = "build:'{}' state:+'{}'".format(newestbuild,args.state)
+    #get the existing issue
+    response,existIssueID,csaIssueID= fetchIssueFromKlocworkWeb(args.project,query)
+
+    ######
+    #2.get the unfixed issue from db
+    ######
+
+    docs = db[CI_KW_COLL_NAME].find({'releaseTag':args.baseline})
+    oldestDate = docs[0]['date']
+
+    #issueDocs = db[CI_KW_COLL_NAME].find({'date':{'$gte':oldestDate},'status':{'$in',['new','audit']}})
+    issueDocs = db[CI_KW_COLL_NAME].find({"PROJECT_NAME":args.project},{'date':{'$gte':oldestDate},'$or':[{'status':'existing'},{'status':'audit'}]})
+    ######
+    #3.get the intersection between step1 and step2
+    ######
+ 
+    if not issueDocs or not existIssueID:
+        return
+
+    auditInfo = actionOnIntersection(existIssueID,issueDocs,db)
+                              
+    ######
+    #4.send email
+    ######
+    print auditInfo
+    send_email(auditInfo)
+    
+def actionOnIntersection(existIssueID,issueDocs,db): 
+
+    existIssueID = set(existIssueID)
+    nowTime = time.time()*1000
+    auditInfo= OrderedDict()
+   
+    for doc in issueDocs:
+        
+        ID = set(doc['issueIDs'])
+        issueExistTime = (nowTime - doc["date"])
+        unfixIssue = ID & existIssueID;
+        fixedIssue = ID - unfixIssue;
+        unfixIssue = list(unfixIssue)
+        fixedIssue = list(fixedIssue)
+   
+        if len(unfixIssue)>0:
+           
+            engineerName = doc['engineerName']
+            date = doc['date']
+            detail = {"releaseTag":doc['releaseTag'],"existTime":issueExistTime,"issueID":unfixIssue}
+            if auditInfo.has_key(engineerName):
+                auditInfo[engineerName]['number']=auditInfo[engineerName]['number']+len(unfixIssue);
+                auditInfo[engineerName]['detail'].append(detail)
+            else: 
+                info = OrderedDict()
+                info['number']=1
+                info['detail']=[]
+                info['detail'].append(detail)
+                auditInfo[engineerName]=info
+        #update db
+        if len(unfixIssue)>0 or len(fixedIssue)>0:
+            state = doc["status"]
+            auditIssue =doc["auditIDs"]
+            if len(unfixIssue)==0:
+                # no issue left
+                if state == 'audit':
+                    state = "audit_fixed"
+                else:
+                    state = "fixed"     
+            else:
+                
+                if (issueExistTime > AUDIT_TIME) and (doc["status"]!='audit' and doc["status"]!='audit_fixed') :
+                    #time expire
+                    state = "audit"
+                    auditIssue = list(set(auditIssue)|set(unfixIssue))
+            
+            fixedIssue = list(set(fixedIssue)|set(doc["fixedIDs"]))
+           
+            db[CI_KW_COLL_NAME].update_one({"releaseTag":doc['releaseTag']},{"$set":{"status":state,"issueIDs":unfixIssue,"fixedIDs":fixedIssue,"auditIDs":auditIssue}})
+                          
+    return auditInfo
+                          
+def send_email(auditInfo):
+    for engineerName in auditInfo.keys():
+        stdout = sys.stdout
+        sys.stdout = stdOutfile = StringIO.StringIO()
+        audit = False
+        emailAdr = []
+            
+        issueCnt = auditInfo[engineerName]['number']
+        mailSubject = "{} you have total {} klocworkIssue unfixed".format(engineerName,issueCnt)
+        print WelcomeWords
+                              
+        for issueDetail in auditInfo[engineerName]['detail']:
+            existdays =  issueDetail["existTime"]/(24*60*60*1000)           
+            print "\n {}: unfixed issue:{},   Exist : {}, days".format(issueDetail['releaseTag'],issueDetail["issueID"],round(existdays))
+                            
+            if issueDetail["existTime"] > AUDIT_TIME:
+                print "those issue exceed the time limit {}，and already be node down".format(AUDIT_TIME/24/60/60/1000)
+                audit = True
+
+        if audit:
+            for mail in managerEmail:
+                emailAdr.append(mail)
+    
+                              
+        emailAdr.append(engineerName + "@motorolasolutions.com")
+  
+        sendEmail(engineerName,emailAdr,stdOutfile.getvalue(),mailSubject);
+        sys.stdout = stdout
             
 def getParameterValue(buildInfo, paramName):
     
@@ -228,13 +277,6 @@ def getSubEmail(db,coll,releaseTag):
         return getParameterValue(docs[0], 'EMAIL')
             
 def actionOnCIMode(args):
-    from jenkins import Jenkins
-    from jenkins import JenkinsException
-    sys.path.append('/opt/booster_project/script/boosterSocket/')
-    sys.path.append('/opt/booster_project/script/jenkins/')
-    from boosterSocket import sendEmail
-    from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
-    
     jenkinsServer = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
     dbClient = MongoClient()
     db = BoosterDB(dbClient, BOOSTER_DB_NAME)
@@ -242,7 +284,9 @@ def actionOnCIMode(args):
     jobInfo = jenkinsServer.getJobInfo(KW_JOB)
     
     #get build list in klocwork web 
-    buildList = fetchBuildListFromKlocworkWeb()
+    buildList={}
+    for project in PROJECT:
+        buildList[project] = fetchBuildListFromKlocworkWeb(project)
     
     firstBuildNum = jobInfo['firstBuild']['number'] if 'firstBuild' in jobInfo else 0
     lastBuildNum = jobInfo['lastCompletedBuild']['number'] if 'lastCompletedBuild' in jobInfo else 0
@@ -256,6 +300,7 @@ def actionOnCIMode(args):
         
         if buildInfo:
             releaseTag=getParameterValue(buildInfo,'NEW_BASELINE')
+            projectName =getParameterValue(buildInfo,'PROJECT_NAME')
             
             if re.match(r'REPT_[DI]02.*', releaseTag):
                 result = buildInfo['result']
@@ -265,15 +310,15 @@ def actionOnCIMode(args):
                 if not email:
                     email = "boosterTeam@motorolasolutions"
                 submitter = email.split("@")[0];
-                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":buildInfo['timestamp'],"issueIDs":[]};
+                record= {"releaseTag":releaseTag,"buildNumber":buildInfo['number'],"engineerName":submitter,"engineerMail":email,"date":time.time()*1000,"issueIDs":[],"PROJECT_NAME":projectName,"fixedIDs":[],"ignoreIDs":[],"status":"existing","auditIDs":[]};
                 
                 kwbuild=releaseTag.replace(".","_")
-                if (result == 'SUCCESS') and (kwbuild in buildList):
+                if (result == 'SUCCESS') and (kwbuild in buildList[projectName]):
                 #save data to database and send email to author if issue number is not 0
                     #kwbuild = 'REPT_I02_07_02_49'
                     queryNew = "build:'{}' state:+New".format(kwbuild)
                     queryFix = "build:'{}' state:+Fixed".format(kwbuild)
-                    responseNew,issueIDNew,csaIssueIDNew = fetchIssueFromKlocworkWeb(queryNew)
+                    responseNew,issueIDNew,csaIssueIDNew = fetchIssueFromKlocworkWeb(projectName,queryNew)
 
                     record["klocworkCnt"]=len(issueIDNew)+len(csaIssueIDNew)
                     record["issueIDs"] = issueIDNew
@@ -283,7 +328,7 @@ def actionOnCIMode(args):
                         record["details"] = arrdic
                     db.insertOne(CI_KW_COLL_NAME, record) 
                         
-                    responseFix,issueIDFix,csaIssueTDFix = fetchIssueFromKlocworkWeb(queryFix)
+                    responseFix,issueIDFix,csaIssueTDFix = fetchIssueFromKlocworkWeb(projectName,queryFix)
                     
                     #send email
                     if email:
@@ -314,34 +359,18 @@ def actionOnCIMode(args):
                         msg = "{}\n but there is no build info on klockwork web".format(msg)
                     sendEmail("booster","boosterTeam@motorolasolutions.com",msg,emailSubject);
         start += 1
-
-    
-def findBoundaryTag(args,db,collname):
-    
-    oldestTimeStamp =math.floor(time.time()*1000-(int(args.pdays) * 24 * 60 * 60*1000));
-    condition ={'timestamp':{"$gte":oldestTimeStamp},'result':'SUCCESS'}
-    sortType=('number',-1)
-    docs = db.findInfo(collname,condition,sortType)
-
-    #newer Tag
-    args.releaseTag = getParameterValue(docs[0],'NEW_BASELINE')
-    print args.releaseTag
-    #older Tag
-    args.ci_Branch = getParameterValue(docs[len(docs)-1],'NEW_BASELINE')
-    print args.ci_Branch
-    
-    return args
             
 def process_argument():
     parser = argparse.ArgumentParser(description="description:get the klocwork issue info", epilog=" %(prog)s description end")
-    parser.add_argument('-r',dest="releaseTag")
-    parser.add_argument('-l',dest="ci_Branch")
-    parser.add_argument('-s',dest="state")
+    parser.add_argument('-b',dest="baseline",default ="REPT_I02.07.03.49")
+    #parser.add_argument('-b',dest="baseline",default ="REPT_I02.07.06.05")
+    
+    parser.add_argument('-s',dest="state",default="Existing,+New")
     parser.add_argument('-e',dest="email")
-    parser.add_argument('-p',dest="period")
     #the unit is day
     parser.add_argument('-D',dest="pdays",default = 7,type=int)
     parser.add_argument('-m',dest="mode",choices=['audit', 'CI'],required = True)
+    parser.add_argument('-prj',dest="project",default = "REPT_MAIN")
     
     args = parser.parse_args()
 
@@ -349,17 +378,8 @@ def process_argument():
 if __name__ == "__main__":
     
     args = process_argument()
-    if args.period:
-        sys.path.append('/opt/booster_project/script/boosterSocket/')
-        sys.path.append('/opt/booster_project/script/jenkins/')
-        from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
-        dbClient = MongoClient()
-        db = BoosterDB(dbClient, BOOSTER_DB_NAME)
-        args=findBoundaryTag(args,db,CI_KW_JOB_COLL)
-    
+        
     if args.mode == "audit":
-        #sys.path.append('/vagrant/booster_project/script/boosterSocket/')
-        from boosterSocket import BoosterClient,sendEmail,WarnKlocFindResult
         actionOnAuditMode(args)
     elif args.mode == "CI":
         try:

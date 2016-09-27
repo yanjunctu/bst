@@ -128,10 +128,72 @@ class BuildLogReader(object):
 # define class DiffParser 
 #----------------------------------------------------------------------------------------------------------------
 class DiffParser(object):
-    def __init__(self, repo):
+    def __init__(self, repo,getchangType=False,comAndCodeSet = set()):
         self.repo = repo
-
-
+        self.GetchangType = getchangType
+        self.commAndCodeSet = comAndCodeSet
+        self.intersection = set()
+        self.oldstr_pattern = re.compile(r'(?P<old_string>\[-[^-\]]*-\])')
+        self.commChange = 0
+        self.codeChange = 0
+        self.sourceCount = 0
+        
+    def identifyChangeType(self,line):
+        #eg:define [-ONE_DIVIDEDBY_TWENTY-]{+ONE_DIVIDEDBY_TWENTY_test+} CF(0.05) [-/*1/20*/-]{+/*1/20  test*/+}
+        #[-.*-] is old string {+.*+} is new(change) string
+        #remove the old string then get :define {+ONE_DIVIDEDBY_TWENTY_test+} {+/*1/20  test*/+}
+        tempmatches = [m for m in self.oldstr_pattern.finditer(line)]
+        for tempmatch in tempmatches:
+            try:
+                old_string = tempmatch.groupdict()['old_string']
+                line = line.replace(old_string,'')
+            except Exception, e:
+                continue
+        #the comment and code may have below arrangement modes
+        # code /* comment */
+        # code /* comment 
+        # /* comment */ code
+        #  comment */ code
+        # code //comment
+        self.intersection.discard(self.sourceCount)
+        self.commAndCodeSet.discard(self.sourceCount)
+        line = line.replace(' ','')
+        #find the comment range
+        commstart = line.find('//')
+        if commstart == -1:
+            commstart = line.find('/*')
+            if commstart == -1:
+                commstart =1
+            commend = line.find('*/')
+            if commend == -1:
+                commend = len(line)
+        else:
+            commend = len(line)
+        
+        #allocate the change range and compare to comment range
+        startstr='{+'
+        endstr ='+}'
+        chstart = line.find(startstr)
+        chend = line.find(endstr,chstart)
+        commChange =0
+        codeChange =0
+        while -1 != chstart:
+            chstart = chstart+2
+            chend = chend-2
+            if commstart <= chstart and commend >= chend:
+                commChange = 1
+            elif commstart > chend or commend < chstart:
+                codeChange =1
+            else:
+                commChange =1
+                codeChange =1
+                                
+            chstart = line.find(startstr,chend+2)
+            chend = line.find(endstr,chstart)
+    
+        self.commChange += commChange
+        self.codeChange += codeChange
+        
     def parse_section(self, section):
         match = re.search(r'^diff --git a(.*) b/', section)
 
@@ -148,6 +210,8 @@ class DiffParser(object):
                 match = re.search(r'^@@ -(.*) \+(.*) @@', line)
 
                 if not match:
+                    if self.GetchangType and self.intersection:
+                        self.identifyChangeType(line)
                     continue
 
                 change_a = match.group(1).split(',')
@@ -161,7 +225,13 @@ class DiffParser(object):
                 else:
                     last = int(change_b[1])
                 changes['modifysections'].append({'start':start, 'last':last})
-
+                if self.GetchangType :
+                    if not self.commAndCodeSet:
+                        break
+                    self.intersection = self.commAndCodeSet & set(range(start,start+last))
+                    if self.intersection:
+                        self.sourceCount = start
+                    
         return (filename, changes) 
 
 
@@ -176,6 +246,9 @@ class DiffParser(object):
         next_start = diff.find(substr, start+len(substr))
         while -1 != start:
             file_changes = self.parse_section(diff[start:next_start])
+            if self.GetchangType :
+                if not self.commAndCodeSet:
+                    break
             if file_changes:
                 all_changes[file_changes[0]] = file_changes[1]
 
@@ -185,10 +258,10 @@ class DiffParser(object):
         return all_changes
 
 
-    def get_changes(self, commit):
+    def get_changes(self, commit,specifiedFile=''):
         cwd = os.getcwd()
         
-        diff_cmd ='git diff --unified=0 '+commit
+        diff_cmd ='git diff --word-diff --unified=0 '+commit + ' ' +specifiedFile
         
         os.chdir(self.repo)
         try:
@@ -199,7 +272,7 @@ class DiffParser(object):
             ret = (False, err.output)
 
         os.chdir(cwd)
-        return ret  
+        return ret 
 #---------------------------------------------------------------------------------------------------------------
 # class DiffParser end
 #----------------------------------------------------------------------------------------------------------------
@@ -258,6 +331,7 @@ def process_argument():
     parser.add_argument('-D',dest="pdays",default = 7,type=int)
     #whether need git blame
     parser.add_argument('-a',dest="audit",default = "N")
+    parser.add_argument('-prj',dest="project",default = "REPT_MAIN")
     
     args = parser.parse_args()
     #the drive is the dir for period mode
@@ -283,13 +357,13 @@ def process_argument():
 
 def parseLatestCITag(mergedTags):
 
-    tagString = 'REPT_I02.07' 
+    tagString = 'REPT_I16'
     storeLagest = 0;
     storeTag = '';
     for line in mergedTags.splitlines():
         line = line.strip()
         if line.startswith(tagString):
-            # A typical tag name is 'REPT_Emerald_I02.07.01.90'
+            # A typical tag name is like 'REPT_I16.04.01.07'
             # Below code is go to get the biggest one, it will extract the last two number 01 and 90 to compare
             splitArr = line.split('.')
             lastIndex = len(splitArr)-1;
@@ -475,8 +549,8 @@ def print_log(changes,warnings,new_warnings,logfile,drive):
             print>>fp, new_warnings[(file_name, line)]
 
             
-def actionOnNewWarning(tag,name,mail,file):
-    wkresult=WarnKlocCheckResult(releaseTag=tag,engineerName=name,engineerMail=mail,buildWarningCnt=len(ALL_NEW_WARNINGS),klocworkCnt=0);
+def actionOnNewWarning(prj,tag,name,mail,file):
+    wkresult=WarnKlocCheckResult(project=prj,releaseTag=tag,engineerName=name,engineerMail=mail,buildWarningCnt=len(ALL_NEW_WARNINGS),klocworkCnt=0);
     interface = BoosterClient();
     ret = interface.send(wkresult);
     if ret:
@@ -646,5 +720,5 @@ if __name__ == "__main__":
         blameOnNewWarning(args)
     elif args.mode == 'CI' and len(ALL_NEW_WARNINGS)>0:
         sys.stdout = stdout #recover sys.stdout      
-        actionOnNewWarning(args.releaseTag,args.CIUserName,args.CIUserEmail,stdOutfile)
+        actionOnNewWarning(args.project,args.releaseTag,args.CIUserName,args.CIUserEmail,stdOutfile)
         

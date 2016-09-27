@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REPO_URL=git@gitmirror-cdc.mot-solutions.com:stash/mototrbo_infra_fw
-REPOS="comm.git bahama.git cypher.git"
+REPOS="comm.git"
 
 working_dir=$(pwd)
 record="timestamp: $(date +%s),"
