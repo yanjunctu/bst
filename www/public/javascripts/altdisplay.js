@@ -12,7 +12,10 @@ var alternateDisplay = function() {
     $(iFrames.boards[iFrames.curIndex])[0].style.display = "none"
     // reload the frame
     sel = iFrames.boards[iFrames.curIndex]+" iframe";
-    $(sel)[0].src=$(sel)[0].src
+    
+    if(iFrames.boards[iFrames.curIndex] == "#metric" ){
+      $(sel)[0].src=$(sel)[0].src  
+    }
     // increase index number
     iFrames.curIndex = (iFrames.curIndex+1)%iFrames.boards.length;
     // show next frame
