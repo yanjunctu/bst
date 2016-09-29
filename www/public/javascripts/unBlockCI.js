@@ -7,7 +7,7 @@ var main = function()
     
         var JenkinsCI = $("#unblock_form input[name='jenkinsCI']:checked").val();
         var boosterDisplay = $("#unblock_form input[name='boosterdisplay']:checked").val();
-        var project = $('input[name=projectChooseRadio]:checked').val()
+        var project = $('input[name=projectChooseRadio_ub]:checked').val()
 
         var password = $("#unblock_form input[id='inputPassword']").val();
         var msg = ''

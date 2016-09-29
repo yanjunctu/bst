@@ -410,7 +410,7 @@ var ciUnblock = function(projName,jenkinsUnlock,boosterUnlock){
     }
     if(boosterUnlock == "TRUE"){
         if(CISTATUS[projName].ciBlockInfo.result == "FAILURE"){
-            var subject = '[Notice!] CI is unblocked'
+            var subject = '[Notice!] '+projName+' CI is unblocked'
             var msg ="You can submit your CI now"
             var args={'msg':msg,'subject':subject,"email":"rept-ci@googlegroups.com"}
             email.send(args)
