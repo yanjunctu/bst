@@ -143,7 +143,7 @@ def actionOnAuditMode(args):
     dbClient = MongoClient()
     db = dbClient[BOOSTER_DB_NAME]
     #get the newest klocwork 
-    docs = db[CI_KW_COLL_NAME].find().sort("date",-1)
+    docs = db[CI_KW_COLL_NAME].find({"PROJECT_NAME":args.project}).sort("buildNumber",-1)
 
     newestTag = docs[0]['releaseTag']
     newestbuild = newestTag.replace('.','_')
@@ -159,7 +159,7 @@ def actionOnAuditMode(args):
     oldestDate = docs[0]['date']
 
     #issueDocs = db[CI_KW_COLL_NAME].find({'date':{'$gte':oldestDate},'status':{'$in',['new','audit']}})
-    issueDocs = db[CI_KW_COLL_NAME].find({"PROJECT_NAME":args.project},{'date':{'$gte':oldestDate},'$or':[{'status':'existing'},{'status':'audit'}]})
+    issueDocs = db[CI_KW_COLL_NAME].find({'$and':[{"PROJECT_NAME":args.project},{'date':{'$gte':oldestDate},'$or':[{'status':'existing'},{'status':'audit'}]}]})
     ######
     #3.get the intersection between step1 and step2
     ######
@@ -250,8 +250,8 @@ def send_email(auditInfo):
             for mail in managerEmail:
                 emailAdr.append(mail)
     
-                              
-        emailAdr.append(engineerName + "@motorolasolutions.com")
+        engineerNameEmail="{}@motorolasolutions.com".format(engineerName)                     
+        emailAdr.append(engineerNameEmail)
   
         sendEmail(engineerName,emailAdr,stdOutfile.getvalue(),mailSubject);
         sys.stdout = stdout
