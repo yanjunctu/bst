@@ -1,4 +1,4 @@
-PROJECT = "REPT2.7"
+var PROJECT = "REPT2.7"
  var fetchBuildFInfo = function(){
     //$tblBody = $("#emerTbl");
     var $tblHead = $("#infoHead");
@@ -69,7 +69,9 @@ PROJECT = "REPT2.7"
 }
 
 
-var main = function(){
+var drawDashBoard = function(){
+
+    PROJECT = $('input[name=projectChooseRadio]:checked').val()
 
     var layout = {
         xaxis: {
@@ -84,8 +86,7 @@ var main = function(){
   $.get("/jenkins/getTheWholeCI/"+PROJECT,function (result) {
 
     var plotHandler = document.getElementById('theWholeCI');
-    
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -95,7 +96,7 @@ var main = function(){
 
     var plotHandler = document.getElementById('onTargetbuild');
     
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -104,7 +105,7 @@ var main = function(){
   $.get("/jenkins/getOnTargetTest/"+PROJECT,function (result) {
 
     var plotHandler = document.getElementById('onTargetTest');
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -116,7 +117,7 @@ var main = function(){
 
     var plotHandler = document.getElementById('offTargetbuild');
     
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -126,7 +127,7 @@ var main = function(){
 
     var plotHandler = document.getElementById('offTargetTest');
     
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -142,7 +143,7 @@ var main = function(){
         margin: {
         t: 0},
     };
-        Plotly.plot( plotHandler, [{
+        Plotly.newPlot( plotHandler, [{
         x: result.filename,
         y: result.num }], layout)
     
@@ -192,9 +193,9 @@ var main = function(){
     var repoDataCheckout = [trace2];
     var branchData = [trace3];
     
-    Plotly.plot( plotHandlerRepoOriginal, repoDataOriginal, layoutRepo);
-    Plotly.plot( plotHandlerRepoCheckout, repoDataCheckout, layoutRepo);
-    Plotly.plot( plotHandlerBranch, branchData, layoutBranch);    
+    Plotly.newPlot( plotHandlerRepoOriginal, repoDataOriginal, layoutRepo);
+    Plotly.newPlot( plotHandlerRepoCheckout, repoDataCheckout, layoutRepo);
+    Plotly.newPlot( plotHandlerBranch, branchData, layoutBranch);
 
     // draw pie for repos size before checkout
     var MaxSize = 2048 //2G so far
@@ -253,6 +254,16 @@ var main = function(){
 
   /* Current Plotly.js version */
   console.log( Plotly.BUILD );
+}
+
+var main = function(){
+
+    $('input[type=radio][name=projectChooseRadio]').change(function() {
+        drawDashBoard()
+    });
+
+    drawDashBoard()
+
 }
 
 $(document).ready(main)
