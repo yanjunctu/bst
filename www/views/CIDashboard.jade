@@ -15,31 +15,34 @@ block content
                         th(class="text-center text-info bg-info") build Info                            
                         td(class="currentSubmitBranch text-center") 0
                         td(class="currentSubmitTime text-center") 0
-                        td(class="currentSubmitTime text-center") 0						
-    h4 [1]-The whole CI duration:
+                        td(class="currentSubmitTime text-center") 0
+    - var i=0
+    h4 [#{++i}]-Summary CI By Day:
+    div(id="CISummaryPerDay",style="width:600px;height:250px;")
+    h4 [#{++i}]-The whole CI duration:
     div(id="theWholeCI",style="width:600px;height:250px;")
-    h4 [2]-On Target Build duration:
+    h4 [#{++i}]-On Target Build duration:
     div(id="onTargetbuild",style="width:600px;height:250px;")
-    h4 [3]-On Target Test duration:  
+    h4 [#{++i}]-On Target Test duration:
     div(id="onTargetTest",style="width:600px;height:250px;")  
-    h4 [4]-Off Target Build duration:
+    h4 [#{++i}]-Off Target Build duration:
     div(id="offTargetbuild",style="width:600px;height:250px;")
-    h4 [5]-Off Target Test duration:  
+    h4 [#{++i}]-Off Target Test duration:
     div(id="offTargetTest",style="width:600px;height:250px;") 
-    h4 [6]-test case number:  
+    h4 [#{++i}]-test case number:
     div(id="testCaseNum",style="width:600px;height:250px;")
-    h4 [7]-Original repo size:  
+    h4 [#{++i}]-Original repo size:
     div(id="repoSizeOriginal",style="width:600px;height:250px;")
-    h4 [8]-Checkouted repo size:  
+    h4 [#{++i}]-Checkouted repo size:
     div(id="repoSizeCheckout",style="width:600px;height:250px;")
-    h4 [9]-Branch number:  
+    h4 [#{++i}]-Branch number:
     div(id="branchNumber",style="width:600px;height:250px;")
   
-    h4 [10]-Original repo size usage:  
+    h4 [#{++i}]-Original repo size usage:
     div( id="originRepoSizePlot",style="width:600px;height:400px;") 
-    h4 [11]-Checkouted repo size usage:  
+    h4 [#{++i}]-Checkouted repo size usage:
     div( id="userRepoSizePlot",style="width:600px;height:400px;")      
-    h4 [12]-Repo branch number usage:  
+    h4 [#{++i}]-Repo branch number usage:
     div( id="repoBrhCntPlot",style="width:600px;height:400px;")       
     
 block userdefinejs

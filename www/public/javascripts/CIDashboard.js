@@ -1,4 +1,5 @@
-PROJECT = "REPT2.7"
+var PROJECT = "REPT2.7"
+
  var fetchBuildFInfo = function(){
     //$tblBody = $("#emerTbl");
     var $tblHead = $("#infoHead");
@@ -68,8 +69,43 @@ PROJECT = "REPT2.7"
     })
 }
 
+/*This function is used to translate the received CI history result to
+  format what we needed to draw the diagram show how many CI each day,
+  and how many success CI each day*/
+var summaryCIHistory = function(result){
 
-var main = function(){
+  var summaryJson = {}
+  var returnJson = {"days":[],"totalCIs":[],"successCIs":[]}
+
+  result.forEach(function(eachHistory){
+      var date = new Date(eachHistory.startTime)
+      var ds = date.getFullYear() + '-'+date.getMonth()+'-'+date.getDate()
+
+      if (!summaryJson.hasOwnProperty(ds)){
+        summaryJson[ds] = {"totalCI":0,"successCI":0}
+      }
+
+      summaryJson[ds].totalCI++
+
+      if(eachHistory.buildResult==="SUCCESS"){
+        summaryJson[ds].successCI++
+      }
+  })
+
+  for(let key in summaryJson){
+    returnJson.days.push(key)
+    returnJson.totalCIs.push(summaryJson[key].totalCI)
+    returnJson.successCIs.push(summaryJson[key].successCI)
+  }
+
+  return returnJson
+
+}
+
+
+var drawDashBoard = function(){
+
+    PROJECT = $('input[name=projectChooseRadio]:checked').val()
 
     var layout = {
         xaxis: {
@@ -80,12 +116,48 @@ var main = function(){
         t: 0},
     };
     fetchBuildFInfo();
-    
+
+  /*This get is used to show the total and successful CI times per day,
+    it reuse the old get method /jenkins/getCIHistory/, and parse the
+    result and generate what we needed by function summaryCIHistory()*/
+  $.get("/jenkins/getCIHistory/"+PROJECT,function (result) {
+    var parsedResult = summaryCIHistory(result)
+
+    var traceTotalCI = {
+      x: parsedResult.days,
+      y: parsedResult.totalCIs,
+      name: 'total CI times',
+      type: 'scatter'
+    };
+
+    var traceSuccessCI = {
+      x: parsedResult.days,
+      y: parsedResult.successCIs,
+      name: 'success CI times',
+      type: 'scatter'
+    };
+
+    var data = [traceTotalCI, traceSuccessCI];
+
+    var layout = {
+        xaxis: {
+        title: 'day'},
+        yaxis: {
+        title: 'times'},
+        margin: {
+        t: 0},
+    };
+
+    var plotHandler = document.getElementById('CISummaryPerDay');
+
+    Plotly.newPlot( plotHandler, data,layout)
+
+  })
+
   $.get("/jenkins/getTheWholeCI/"+PROJECT,function (result) {
 
     var plotHandler = document.getElementById('theWholeCI');
-    
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -95,7 +167,7 @@ var main = function(){
 
     var plotHandler = document.getElementById('onTargetbuild');
     
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -104,7 +176,7 @@ var main = function(){
   $.get("/jenkins/getOnTargetTest/"+PROJECT,function (result) {
 
     var plotHandler = document.getElementById('onTargetTest');
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -116,7 +188,7 @@ var main = function(){
 
     var plotHandler = document.getElementById('offTargetbuild');
     
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -126,7 +198,7 @@ var main = function(){
 
     var plotHandler = document.getElementById('offTargetTest');
     
-    Plotly.plot( plotHandler, [{
+    Plotly.newPlot( plotHandler, [{
         x: result.id,
         y: result.duration }], layout)
 
@@ -142,7 +214,7 @@ var main = function(){
         margin: {
         t: 0},
     };
-        Plotly.plot( plotHandler, [{
+        Plotly.newPlot( plotHandler, [{
         x: result.filename,
         y: result.num }], layout)
     
@@ -192,9 +264,9 @@ var main = function(){
     var repoDataCheckout = [trace2];
     var branchData = [trace3];
     
-    Plotly.plot( plotHandlerRepoOriginal, repoDataOriginal, layoutRepo);
-    Plotly.plot( plotHandlerRepoCheckout, repoDataCheckout, layoutRepo);
-    Plotly.plot( plotHandlerBranch, branchData, layoutBranch);    
+    Plotly.newPlot( plotHandlerRepoOriginal, repoDataOriginal, layoutRepo);
+    Plotly.newPlot( plotHandlerRepoCheckout, repoDataCheckout, layoutRepo);
+    Plotly.newPlot( plotHandlerBranch, branchData, layoutBranch);
 
     // draw pie for repos size before checkout
     var MaxSize = 2048 //2G so far
@@ -253,6 +325,16 @@ var main = function(){
 
   /* Current Plotly.js version */
   console.log( Plotly.BUILD );
+}
+
+var main = function(){
+
+    $('input[type=radio][name=projectChooseRadio]').change(function() {
+        drawDashBoard()
+    });
+
+    drawDashBoard()
+
 }
 
 $(document).ready(main)
