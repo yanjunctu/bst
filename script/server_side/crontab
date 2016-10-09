@@ -16,7 +16,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 */10 *  * * *   root    python /opt/booster_project/script/jenkins/parseJenkinsBuildHistory.py
 */5 *   * * *   root    python /opt/booster_project/script/sitemonitor/sitemonitor.py -u booster
 55 */1  * * *   root    python /opt/booster_project/script/klocwork/webcheck/klockwork_web_check.py -m CI 
-0  23   * * *   root    python /opt/booster_project/script/klocwork/webcheck/klockwork_web_check.py -m audit -prj REPT2.7 
+0  23   * * *   root    python /opt/booster_project/script/klocwork/webcheck/klockwork_web_check.py -m audit -prj REPT_MAIN 
 30 1    * * 7   root    python /opt/booster_project/script/warning/findNewWarnings.py -m period -a Y -d /opt/bitbucket_repo/comm/ -e rept-ci@googlegroups.com >/opt/find.log
 0  6    * * *   root    python /opt/booster_project/script/server_side/booster_backup.py -f /opt/booster_project/script/server_side/settings.yaml /backup
 */2 *   * * *   root    python /home/booster-admin/cronMon/cronMon.py

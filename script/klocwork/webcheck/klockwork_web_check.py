@@ -222,7 +222,7 @@ def actionOnIntersection(existIssueID,issueDocs,db):
                     auditIssue = list(set(auditIssue)|set(unfixIssue))
             
             fixedIssue = list(set(fixedIssue)|set(doc["fixedIDs"]))
-           
+            
             db[CI_KW_COLL_NAME].update_one({"releaseTag":doc['releaseTag']},{"$set":{"status":state,"issueIDs":unfixIssue,"fixedIDs":fixedIssue,"auditIDs":auditIssue}})
                           
     return auditInfo
@@ -287,7 +287,7 @@ def actionOnCIMode(args):
     buildList={}
     for project in PROJECT:
         buildList[project] = fetchBuildListFromKlocworkWeb(project)
-    
+
     firstBuildNum = jobInfo['firstBuild']['number'] if 'firstBuild' in jobInfo else 0
     lastBuildNum = jobInfo['lastCompletedBuild']['number'] if 'lastCompletedBuild' in jobInfo else 0
     lastBuildSaved = db.getLastBuildInfo(CI_KW_COLL_NAME,"buildNumber")
@@ -302,7 +302,7 @@ def actionOnCIMode(args):
             releaseTag=getParameterValue(buildInfo,'NEW_BASELINE')
             projectName =getParameterValue(buildInfo,'PROJECT_NAME')
             
-            if re.match(r'REPT_[DI]02.*', releaseTag):
+            if re.match(r'REPT_[DI].*', releaseTag):
                 result = buildInfo['result']
                 #the klowwork job in jenkins do not content the submitter info,need get the submitter info from db
                 
