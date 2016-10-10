@@ -6,7 +6,7 @@ var passWord = require('../models/password.js');
 
 var KLOCWORKINFO = []
 
-const KW_INTERVAL = 60000*20; // 20 minutes
+//const KW_INTERVAL = 60000*20; // 20 minutes
 const CI_KLOCWORK_COLL_NAME = "klocwork";
 var CILastKlocworkBuildID=374;
 //var CILastKlocworkBuildID=0;
@@ -48,10 +48,11 @@ var updateKWInfo = function(){
     }).run();
 }
 
-updateKWInfo();
-setInterval(function() {
-    updateKWInfo();
-}, KW_INTERVAL);
+//updateKWInfo();
+//setInterval(function() {
+    //CILastKlocworkBuildID=374;
+    //updateKWInfo();
+//}, KW_INTERVAL);
 
 
 var updateRecord = function(kwRecord){
@@ -90,7 +91,9 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/getInfo', function(req, res, next){
-    updateKWInfo();
+    KLOCWORKINFO =[]
+    CILastKlocworkBuildID=374;
+    updateKWInfo()
     return res.json(KLOCWORKINFO);
 })
 router.post('/cancelRecorde', function(req, res, next){
