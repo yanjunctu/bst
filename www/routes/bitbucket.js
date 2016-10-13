@@ -28,11 +28,12 @@ var getDurationString = function(delta){
 */
 var getPRDuration = function(id,callback){
 
-    bitbucket.getPRActivity(BITBUCKET_PROJECT,BITBUCKET_REPO,id,function(err,resp,activity){
+    bitbucket.getPRActivity(BITBUCKET_PROJECT,BITBUCKET_REPO,id,function(err,res,activity){
 
-      if ( err ) {
+      if ( err || (res.statusCode < 200 || res.statusCode > 399) ) {
           // handle the error safely
           console.log('err', err)
+          callback(err,null)
           return
       }
 
@@ -90,17 +91,17 @@ var handleGetDuration = function(PRs, handleGetDurationCallback){
 router.get('/', function(req, res, next){
 
   // Step 1: get all the Merged PRs
-  bitbucket.getPR(BITBUCKET_PROJECT,BITBUCKET_REPO,'MERGED',function(err,resp,body){
+  bitbucket.getPR(BITBUCKET_PROJECT,BITBUCKET_REPO,'MERGED',function(bitbucketErr,bitbucketRes,bitbucketBody){
 
-    if ( err ) {
+    if ( bitbucketErr || (bitbucketRes.statusCode < 200 || bitbucketRes.statusCode > 399) ) {
         // handle the error safely
-        console.log('err', err)
-        return res.json({'err':err})
+        console.log('err', bitbucketErr)
+        return res.json({'err':bitbucketErr})
     }
 
     // step 2: After get all the merged PRs, go through PRs one by one,
     // to get their durations
-    handleGetDuration(JSON.parse(body),function(resultsFromPRs){
+    handleGetDuration(JSON.parse(bitbucketBody),function(resultsFromPRs){
 
         // step 3: After all PRs' duration get back
         var totalDuration = 0

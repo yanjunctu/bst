@@ -10,14 +10,14 @@ var request = require('request');
 const BITBUCKET_HOST = 'https://bitbucket.mot-solutions.com'
 
 const USER = 'amb4116'
-const passwd = 'configQ2'
+const passwd = 'configQ2@'
 
 var getPR = function(project,repo,state,handlePR){
 
      var query = '?state='+state+'&limit=500'
      var path = '/rest/api/1.0/projects/'+project+'/repos/'+repo+'/pull-requests'
      var url = BITBUCKET_HOST+path+query
-
+      console.log(url)
      request.get({rejectUnauthorized: false,url: url,'auth': {
                                                          'user': USER,
                                                          'pass': passwd,
@@ -32,7 +32,6 @@ var getPRActivity = function(project,repo,PRId,handlePRActivity){
      var path = '/rest/api/1.0/projects/'+project+'/repos/'+repo+'/pull-requests/'+PRId+'/activities'
      var query = '?limit=500'
      var url = BITBUCKET_HOST+path+query
-     console.log(url)
      request.get({rejectUnauthorized: false,url: url,'auth': {
                                                          'user': USER,
                                                          'pass': passwd,
