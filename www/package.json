@@ -6,6 +6,7 @@
     "start": "pm2 start pm2_start.json"
   },
   "dependencies": {
+    "async": "^2.1.1",
     "body-parser": "~1.13.2",
     "cookie-parser": "~1.3.5",
     "debug": "~2.2.0",
