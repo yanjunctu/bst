@@ -628,6 +628,24 @@ def getBuildLogFromConOut(jenkins,db,tag,fdir):
         logfiles.append(logfile)
         
     return logfiles
+
+def findBoundaryTag(args,db,collname):
+    
+    oldestTimeStamp =math.floor(time.time()*1000-(int(args.pdays) * 24 * 60 * 60*1000));
+    obj = {"name": "PROJECT_NAME", "value": "REPT_MAIN"};
+
+    condition ={'timestamp':{"$gte":oldestTimeStamp},'result':'SUCCESS',"actions.parameters": {'$in': [obj]}}
+    sortType=('number',-1)
+    docs = db.findInfo(collname,condition,sortType)
+
+    #newer Tag
+    args.releaseTag = getParameterValue(docs[0],'NEW_BASELINE')
+    print args.releaseTag
+    #older Tag
+    args.ci_Branch = getParameterValue(docs[len(docs)-1],'NEW_BASELINE')
+    print args.ci_Branch
+    
+    return args
       
 if __name__ == "__main__":
 
@@ -644,7 +662,7 @@ if __name__ == "__main__":
         sys.path.append('/opt/booster_project/script/klocwork/webcheck/')
         from sendEmail import sendEmail
         from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
-        from klockwork_web_check import findBoundaryTag,getParameterValue
+        from klockwork_web_check import getParameterValue
         dbClient = MongoClient()
         db = BoosterDB(dbClient, BOOSTER_DB_NAME)
         args = findBoundaryTag(args,db,Release_COLL)
