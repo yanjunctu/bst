@@ -72,7 +72,7 @@ var handleGetDuration = function(PRs, handleGetDurationCallback){
   // Generate an array fill with function definition.
   // as an input for async to do parallel running
   // The only difference for the functions is the PR id of getPRDuration function
-  PRs.values.forEach(function(PR){
+  PRs.forEach(function(PR){
     functionArray.push(function(callback){
 
                                    getPRDuration(PR.id,callback)
@@ -88,20 +88,68 @@ var handleGetDuration = function(PRs, handleGetDurationCallback){
 
 }
 
+var fetchAllMergePRs = function(fetchAllMergePRsCallBack){
+
+var dataFromEachItr = null;
+var startOffset = 0
+var wholeData = []
+
+async.doWhilst(
+  function(callback){
+       bitbucket.getPR(BITBUCKET_PROJECT,BITBUCKET_REPO,'MERGED',startOffset,function(bitbucketErr,bitbucketRes,bitbucketBody){
+
+            if ( bitbucketErr || (bitbucketRes.statusCode < 200 || bitbucketRes.statusCode > 399) ) {
+                // handle the error safely
+                console.log('err', bitbucketErr)
+                dataFromEachItr = null
+                callback(bitbucketErr,null)
+            }else{
+              dataFromEachItr = bitbucketBody
+              callback(null,bitbucketBody)
+            }
+        }
+        )
+  },
+
+  function(){
+      // If get a page last time successfully, check if it is last page, if so, stop the loop
+      if(dataFromEachItr){
+        var onePage = JSON.parse(dataFromEachItr)
+        startOffset = onePage.nextPageStart //update the startOffset used when get next page
+        wholeData.push(onePage)
+        return !onePage.isLastPage
+      }else{
+        // if not get an valid page last time, also stop the loop
+        return false
+      }
+
+  },
+
+  function(err,page){
+    var returnPRArray = []
+
+    wholeData.forEach(function(onePage){
+      onePage.values.forEach(function(value){
+        returnPRArray.push(value)
+      })
+    })
+    fetchAllMergePRsCallBack(err,returnPRArray)
+    }
+  )
+
+}
+
 router.get('/', function(req, res, next){
 
-  // Step 1: get all the Merged PRs
-  bitbucket.getPR(BITBUCKET_PROJECT,BITBUCKET_REPO,'MERGED',function(bitbucketErr,bitbucketRes,bitbucketBody){
+  fetchAllMergePRs(function(err,fetchedData){
 
-    if ( bitbucketErr || (bitbucketRes.statusCode < 200 || bitbucketRes.statusCode > 399) ) {
-        // handle the error safely
-        console.log('err', bitbucketErr)
-        return res.json({'err':bitbucketErr})
+    if(err){
+      return res.json({"err":err})
     }
 
     // step 2: After get all the merged PRs, go through PRs one by one,
     // to get their durations
-    handleGetDuration(JSON.parse(bitbucketBody),function(resultsFromPRs){
+    handleGetDuration(fetchedData,function(resultsFromPRs){
 
         // step 3: After all PRs' duration get back
         var totalDuration = 0
@@ -122,7 +170,6 @@ router.get('/', function(req, res, next){
         // return the json result to client
         return res.json(retJson)
     })
-
   })
 })
 
