@@ -16,7 +16,7 @@ function dataConvert(timestamp)
 	var formattedDate = ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear() + ' ' + ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2);
 	return formattedDate;
 }
-var updateKWInfo = function(){
+var updateKWInfo = function(callback){
 
     fiber(function() {
         var server = new Server('127.0.0.1');
@@ -45,6 +45,7 @@ var updateKWInfo = function(){
             }
         }); 
         server.close();
+        callback(KLOCWORKINFO);
     }).run();
 }
 
@@ -79,7 +80,7 @@ var updateRecord = function(kwRecord){
         }
         KLOCWORKINFO =[]
         CILastKlocworkBuildID=374;
-        updateKWInfo()
+        //updateKWInfo()
         server.close();
     }).run();
     return "SUCCESS"
@@ -93,8 +94,9 @@ router.get('/', function(req, res, next) {
 router.get('/getInfo', function(req, res, next){
     KLOCWORKINFO =[]
     CILastKlocworkBuildID=374;
-    updateKWInfo()
-    return res.json(KLOCWORKINFO);
+    updateKWInfo(function(data){
+        return res.json(data);
+    })
 })
 router.post('/cancelRecorde', function(req, res, next){
 
