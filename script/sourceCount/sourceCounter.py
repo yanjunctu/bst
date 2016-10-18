@@ -1,11 +1,16 @@
 #-*- coding:utf-8 -*-
 #@author qpcb36-rurong.huang
 #analyze the source file (.c,.cpp,.h...), count the code lines,commnets lines,blank lines
-
+import argparse
 import os,sys,re,threading;
 import subprocess
 from sys import path
 import StringIO
+import httplib
+from base64 import b64encode
+import json
+
+
 
 cwd = os.path.dirname(__file__)
 SCRIPT_DIR='/../../../..\\cm\\runtime\\python27\\Lib\\site-packages'
@@ -17,16 +22,48 @@ SCRIPT_DIR = '/..\\warning'
 script_from_dir = os.path.abspath(cwd+SCRIPT_DIR)
 path.append(script_from_dir)
 from findNewWarnings import DiffParser
-from findNewWarnings import parseLatestCITag
+
 
 SOCKET_DIR = '/..\\boosterSocket'
 script_from_dir = os.path.abspath(cwd+SOCKET_DIR)
 path.append(script_from_dir)
-from sendEmail import sendEmail
+from boosterSocket import sendEmail
 
 THRESHOLD = 30
 
 EXCLUDE_FILE = ["\\win32_stubs\\","\\win32_common_includes\\","\\Unit_Tests\\","\\Win32Runner\\","\\CypherVersionNumDefine.h","\\unit_test\\"]
+
+#-----------bitbucket--------
+
+BITBUCKET_PW="configQ2@"
+BITBUCKET_UN = "amb4116"
+BITBUCKET_URL = "bitbucket.mot-solutions.com";
+
+#---------------------------------------------------------------------------------------------------------------
+# define class Bitbucket rest api 
+#----------------------------------------------------------------------------------------------------------------
+class BitbucketREST(object):
+    def __init__(self, url, username=None, password=None):
+        self.url = url
+        self.user = username
+        self.password = password
+
+    def postComment(self,proj,repo,PRId,text):
+
+        path = '/rest/api/1.0/projects/{}/repos/{}/pull-requests/{}/comments'.format(proj,repo,PRId);
+        userAndPass = "%s:%s" % (self.user,self.password)
+        userAndPass = b64encode(userAndPass).decode("ascii")
+      
+        payload = json.dumps({'text': text})
+        headers = { 'Authorization' : 'Basic %s' %  userAndPass,'Content-type': 'application/json'}
+
+
+        conn = httplib.HTTPConnection(self.url)
+        conn.request("POST", path, payload, headers)
+        response = conn.getresponse()
+        conn.close() 
+        #print response.status, response.reason
+
 
 #---------------------------------------------------------------------------------------------------------------
 # define class sourceCounter 
@@ -43,7 +80,7 @@ class sourceCounter(object):
         iChar, isLineComment = 0, False
         line = line + '\n'
         while iChar < lineLen:
-            if line[iChar] == ' ' or line[iChar] == '\t':   #blank
+            if line[iChar] == ' ' or line[iChar] == '\t' or line[iChar] == '{' or line[iChar] == '}':   #blank
                 iChar += 1; continue
             elif line[iChar] == '/' and line[iChar+1] == '/': #line comment
                 isLineComment = True
@@ -180,64 +217,82 @@ def count_change_lines(changes,baseOnTag):
                         
     return sumCountDict
 
+def process_argument():
+    parser = argparse.ArgumentParser(description="description:comment ratio calc", epilog=" %(prog)s description end")
+    parser.add_argument('-t',dest="toCommit",default = "main")
+    parser.add_argument('-f',dest="fromCommit")
+    parser.add_argument('-p',dest="proj")
+    parser.add_argument('-id',dest="prID")
+    parser.add_argument('-r',dest="repo")
+    parser.add_argument('-pc',dest="postComment",default = "false")
+    parser.add_argument('-s',dest="submitter",default = "boosterAngelTeam")
+
+    args = parser.parse_args()
+    return args
+
 if __name__ =='__main__':
     
-    submitter = "boosterAngelTeam"
-
-    #submitter = ""
-    baseline = ""
-    if len(sys.argv)== 2:
-        baseline = sys.argv[1]
-    elif len(sys.argv)== 3:
-        baseline = sys.argv[1]
-        submitter = sys.argv[2]
-    elif len(sys.argv) == 4:
-        baseline = sys.argv[1]
-        submitter = sys.argv[2]
-        tag = sys.argv[3]
+    args = process_argument()
     
-    # To get the latest Tag engineer's branch based on
-    mergedTags = subprocess.check_output('git tag --merged', stderr=subprocess.STDOUT)
-    baseOnTag = parseLatestCITag(mergedTags)
+    #get the base Tag
+  
+    getCmd = 'git merge-base {} {}'.format(args.fromCommit,args.toCommit)
+    baseOnTag = subprocess.check_output(getCmd.split(), stderr=subprocess.STDOUT)
     
     #get the changes info
     cwd = os.path.dirname(__file__)
     repoDir=os.path.abspath(cwd+'/../../../..')
     diff_parser = DiffParser(repoDir)
-    status,changes = diff_parser.get_changes(baseline)
+    status,changes = diff_parser.get_changes(baseOnTag)
     
     #go through the changed files to get the changed code lines and changed comments lines
-
-    sumCountDict=count_change_lines(changes,baseline)
+    sumCountDict=count_change_lines(changes,baseOnTag)
     
-    if submitter:
+    if args.submitter or args.postComment:
         stdout = sys.stdout
         sys.stdout = stdOutfile = StringIO.StringIO()
-        UserEmail = submitter +"@motorolasolutions.com"
+        UserEmail = args.submitter +"@motorolasolutions.com"
         
     if sumCountDict['code_total'] ==0 and sumCountDict['comments_total']==0:
         comment_rate ="infinity,no code line changed"
     else:
         comment_rate = sumCountDict['comments_total']*100/sumCountDict['code_total']
-    print '''
-************************************************************************************************
+        
+    #if comment_rate >= THRESHOLD or sumCountDict['code_total'] < 3:
+        #mailSubject = '[congratulation!] the comments rate from your submitted code is {}% ,code changed lines :{}'.format(comment_rate,sumCountDict['code_total']) 
+    if comment_rate < THRESHOLD and sumCountDict['code_total'] > 3:
+        stdout = sys.stdout
+        sys.stdout = stdOutfile = StringIO.StringIO()
+        if args.postComment != "false":
+            print '''
+## the comments rate(comments/code) of your PR as below:
+|             | rate    |
+| ------------|---------|
+| YOUR   PR   | {}%     |
+| expectation | {}%     |
+            '''.format(comment_rate,THRESHOLD)
+            sys.stdout = stdout
+            bitBucketApi = BitbucketREST(BITBUCKET_URL,BITBUCKET_UN,BITBUCKET_PW)
+            bitBucketApi.postComment(args.proj,args.repo,args.prID,stdOutfile.getvalue())
+        elif atgs.submitter:
+            UserEmail = args.submitter +"@motorolasolutions.com"
+            mailSubject = '[Notice!] the comments rate from your submitted code is {}% which is below the threshold {}%'.format(comment_rate,THRESHOLD) 
+           
+            print '''
+***************************************************
 code               changed lines: {}
 comments       changed lines: {}
 comments rate(comments/code): {}% (threshhold:{}%)
-************************************************************************************************
+******************************************************
     '''.format(sumCountDict['code_total'],sumCountDict['comments_total'],comment_rate,THRESHOLD)
-    for key in sumCountDict['detail']:
-        record = sumCountDict['detail'][key]
-        print '''
+            for key in sumCountDict['detail']:
+                record = sumCountDict['detail'][key]
+                print '''
 {} : code changed lines: {} comments changed lines: {}
 ----------------------------------------------------------------------------------------------------
         '''.format(key,record['code'],record['comments']) 
-    if submitter:
-        if comment_rate >= THRESHOLD or sumCountDict['code_total'] ==0:
-            mailSubject = '[congratulation!] the comments rate from your submitted code is {}% '.format(comment_rate) 
-        else:
-            mailSubject = '[Notice!] the comments rate from your submitted code is {}% which is below the threshold {}%'.format(comment_rate,THRESHOLD)   
-        sendEmail(submitter,UserEmail,stdOutfile.getvalue(),mailSubject);
+            sys.stdout = stdout
+            sendEmail(args.submitter,UserEmail,stdOutfile.getvalue(),mailSubject);
     #print sumCountDict
                             
 

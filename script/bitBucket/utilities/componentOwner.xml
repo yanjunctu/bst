@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<root>
+<!--  bahama --> 
+<component name="bahama/test" owner="A22562" />
+<component name="bahama/code/dsp/lineup" owner="A22562" />
+<component name="bahama/code/dsp" owner="a20091" />
+<component name="bahama/code/source_files/RDAC" owner="jdf638" /> 
+<component name="bahama/code/source_files/HALi" owner="nvgf73" />
+<component name="bahama/code/source_files/Initializer/DSPInitializer" owner="A22562" />
+<component name="bahama/code/source_files/LowLevel/PttPollingThread/PttPollingThread.cpp" owner="jdf638" />  
+<component name="bahama/code/source_files/LowLevel/FailSafe" owner="XMTV74" />
+<component name="bahama/code/source_files/ModemRepeater/HardwareManager" owner="nvgf73" />
+<component name="bahama/code/source_files/ModemRepeater/Transceiver" owner="nvgf73" /> 
+
+<!--  bahama release -->   
+<component name="bahama_release/bootscript" owner="XMTV74" />
+<!--  pcr_srp test -->
+<component name="pcr_srp/test/phyrCe_win32" owner="CWTK73" />
+<!--  pcr_srp Repeater_Common -->
+<component name="pcr_srp/code/Repeater_Common/NCS" owner="A4744C" /> 
+<component name="pcr_srp/code/Repeater_Common/RDAC" owner="jdf638" />
+<component name="pcr_srp/code/Repeater_Common/Utility" owner="crv346" />
+<component name="pcr_srp/code/Repeater_Common/WLVD_Common" owner="txjb86,JDKW48" /> 
+<component name="pcr_srp/code/Repeater_Common/CommonHostInit" owner="MNK386,a20091" />
+<component name="pcr_srp/code/Repeater_Common/CypherHardwareManager" owner="nvgf73" /> 
+<component name="pcr_srp/code/Repeater_Common/CypherLowLevel/CypherIOAdaptor" owner="jdf638" /> 
+<component name="pcr_srp/code/Repeater_Common/Bandit/BanditInitialization/DSP_initialziation" owner="a20091" /> 
+<!--  pcr_srp Cypher -->
+<component name="pcr_srp/code/Cypher/P2P/Authentication_Management" owner="MRWQ78" />     
+<component name="pcr_srp/code/Cypher/P2P/Link_Establishment_Management" owner="MRWQ78" />
+<component name="pcr_srp/code/Cypher/CallProcessing/Analog" owner="JDKW48" />     
+<component name="pcr_srp/code/Cypher/CallProcessing/Common" owner="JDKW48" />
+<component name="pcr_srp/code/Cypher/CallProcessing/F2" owner="JDKW48" />  
+<!--  pcr_srp phyrCe -->
+<component name="pcr_srp/code/phyrCe/Unit_Tests/CppUTest" owner="CWTK73" />
+<component name="pcr_srp/code/phyrCe/Code/DPP" owner="GBVK47" />
+<component name="pcr_srp/code/phyrCe/Code/Trunking_Manager" owner="XVPQ68" />     
+<component name="pcr_srp/code/phyrCe/Code/PH_CypherRFModem" owner="XVPQ68" />         
+<component name="pcr_srp/code/phyrCe/Code/PH_CallProcessing" owner="JDKW48" />   
+<component name="pcr_srp/code/phyrCe/Code/PH_Mediator" owner="A5421C" /> 
+<component name="pcr_srp/code/phyrCe/Code/PH_Wireline" owner="JDKW48" /> 
+<component name="pcr_srp/code/phyrCe/Code/Emerald/TCM" owner="CWTK73" />     
+<component name="pcr_srp/code/phyrCe/Code/Emerald/CCM" owner="jwq647" />  
+<component name="pcr_srp/code/phyrCe/Code/Emerald/MediatorClients" owner="a5421c" />     
+<component name="pcr_srp/code/phyrCe/Code/P2P/Repeater_Call_Monitoring" owner="JDKW48" /> 
+<component name="pcr_srp/code/phyrCe/Code/P2P/IP_Interface_Management" owner="JDKW48" /> 
+<component name="pcr_srp/code/phyrCe/Code/P2P/Protocol_Arbitrator" owner="JDKW48,MRWQ78" />     
+<component name="pcr_srp/code/phyrCe/Code/P2P/Link_Establishment_Management" owner="MRWQ78" /> 
+<!--  ltd -->  
+<component name="ltd/code/matrix/common/source/low_level" owner="a20091" />
+    
+
+</root>
+
