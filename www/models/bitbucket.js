@@ -14,7 +14,7 @@ const passwd = 'configQ2@'
 
 var getPR = function(project,repo,state,startOffset,handlePR){
 
-     var query = '?state='+state+'?start='+startOffset+'&limit=500'
+     var query = '?state='+state+'&start='+startOffset+'&limit=500'+'&order=OLDEST'
      var path = '/rest/api/1.0/projects/'+project+'/repos/'+repo+'/pull-requests'
      var url = BITBUCKET_HOST+path+query
       console.log(url)

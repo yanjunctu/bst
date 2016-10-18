@@ -27,7 +27,8 @@ var getDurationString = function(delta){
   to get the create and merge date
 */
 var getPRDuration = function(id,callback){
-
+    /*Get one PR's activity not consider the case of page overflow, as we set the limit to 500
+      This value is enough for very PR*/
     bitbucket.getPRActivity(BITBUCKET_PROJECT,BITBUCKET_REPO,id,function(err,res,activity){
 
       if ( err || (res.statusCode < 200 || res.statusCode > 399) ) {
@@ -44,7 +45,6 @@ var getPRDuration = function(id,callback){
       retObj['id'] = id
 
       activity.values.forEach(function(act){
-        console.log(act.action)
         if(act.action == 'MERGED'){
           retObj['mergeDate'] = act.createdDate
         }else if(act.action == 'OPENED'){
@@ -94,10 +94,16 @@ var dataFromEachItr = null;
 var startOffset = 0
 var wholeData = []
 
+/*Async.DoWhilst simulate do{}while(condition) in nodejs.
+  argv1: what are you doing each loop
+  argv2: check if loop continue
+  argv3: if loop not continue, run this function to end loop
+
+  description: As the data may overflow one page, so we need to call getPR until all record return back
+  in each time call getPR, pass different 'startOffset' */
 async.doWhilst(
   function(callback){
        bitbucket.getPR(BITBUCKET_PROJECT,BITBUCKET_REPO,'MERGED',startOffset,function(bitbucketErr,bitbucketRes,bitbucketBody){
-
             if ( bitbucketErr || (bitbucketRes.statusCode < 200 || bitbucketRes.statusCode > 399) ) {
                 // handle the error safely
                 console.log('err', bitbucketErr)
@@ -110,24 +116,29 @@ async.doWhilst(
         }
         )
   },
-
+  /*
+  Below function is used to check if loop continue, by check the isLastPage of the return object.
+  Or to check if have valid package got, othewise return false to end the loop
+  */
   function(){
-      // If get a page last time successfully, check if it is last page, if so, stop the loop
       if(dataFromEachItr){
         var onePage = JSON.parse(dataFromEachItr)
         startOffset = onePage.nextPageStart //update the startOffset used when get next page
         wholeData.push(onePage)
         return !onePage.isLastPage
       }else{
-        // if not get an valid page last time, also stop the loop
         return false
       }
 
   },
+  /*
+  when loop decide to end, call this function to return the got data.
 
+  */
   function(err,page){
     var returnPRArray = []
-
+    // Each iteration the got data is saved in wholeData array, go through it, fetch all items in
+    // its values attribute to a big array and return it
     wholeData.forEach(function(onePage){
       onePage.values.forEach(function(value){
         returnPRArray.push(value)
