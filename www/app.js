@@ -12,6 +12,7 @@ var jenkins = require('./routes/jenkins')
 var serverInfo = require('./routes/serverInfo')
 var repoInfo = require('./routes/reposizeinfo')
 var klocwork = require('./routes/klocwork')
+var bitbucket = require('./routes/bitbucket')
 
 var app = express();
 
@@ -34,6 +35,7 @@ app.use('/jenkins',jenkins);
 app.use('/serverInfo',serverInfo)
 app.use('/reposizeinfo',repoInfo)
 app.use('/klocwork',klocwork);
+app.use('/bitbucket',bitbucket)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

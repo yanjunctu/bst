@@ -322,9 +322,69 @@ var drawDashBoard = function(){
 
     Plotly.newPlot('repoBrhCntPlot', data, layout);
     })
+}
 
-  /* Current Plotly.js version */
-  console.log( Plotly.BUILD );
+/*durationString is format: '5hours 58minutes'
+  return int in hours unit*/
+var convertToHours = function(durationString){
+  var h,m;
+
+  var split = durationString.split(/\s+/)//split with space, use re to handle in case have more than one space
+
+  h = split[0]
+  m = split[1]
+  // remove hours and minutes
+  h = h.replace('hours','')
+  m = m.replace('minutes','')
+  // convert to int
+  h = parseInt(h)
+  m = parseInt(m)
+
+  return (h+m/60).toFixed(2);// keep 2 decimal
+}
+
+var commonDashBoard = function(){
+
+  $.get("/bitbucket",function (result) {
+
+    var x = [], y = [];
+
+    result.detail.forEach(function(onePR){
+
+      var duration = convertToHours(onePR.duration)
+
+       //unit is hours, filter out items duration > 100 hours
+      if(duration< 100.0){
+          x.push(onePR.id)
+          y.push(duration)
+      }
+
+    })
+
+    var PRDurations = {
+      x: x,
+      y: y,
+      name: 'PR durations',
+      type: 'scatter'
+    };
+
+
+    var data = [PRDurations];
+
+    var layout = {
+        xaxis: {
+        title: 'PR id'},
+        yaxis: {
+        title: 'hours'},
+        margin: {
+        t: 0},
+    };
+
+    var plotHandler = document.getElementById('PRDurationSummary');
+
+    Plotly.newPlot( plotHandler, data,layout)
+
+  })
 }
 
 var main = function(){
@@ -332,8 +392,8 @@ var main = function(){
     $('input[type=radio][name=projectChooseRadio]').change(function() {
         drawDashBoard()
     });
-
-    drawDashBoard()
+    commonDashBoard() // draw diagram same with 2.7 and main branch
+    drawDashBoard()  // draw diagram different with 2.7 and main branch
 
 }
 
