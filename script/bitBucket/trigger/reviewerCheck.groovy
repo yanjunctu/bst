@@ -192,7 +192,7 @@ class reviewerChecker{
        ********/
 
         //def mapfile = "C:/Users/QPCB36/Desktop/JIRA/utilities/componentOwner.xml";
-        def mapfile = "${missedReviwer}/script/bitBucket/utilities/componentOwner.xml"
+        def mapfile = "${boosterRepo}/script/bitBucket/utilities/componentOwner.xml"
         def cpManager = new componentOwnerManager(mapfile)
         def chgCPowner = cpManager.getChgCPowner(changes)
         
