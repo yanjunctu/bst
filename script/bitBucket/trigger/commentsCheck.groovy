@@ -23,7 +23,7 @@ class commentsChecker{
         String localRepo = System.getenv("localRepo")
         String boosterRepo = System.getenv("boosterRepo")
         
-        def commentsCountCmd = "${boosterRepo}/script/bitBucket/utilities/sourceCheck.bat ${boosterRepo} ${localRepo} ${fromCommit} ${toCommit} ${proj} ${PRId} ${repo}"
+        def commentsCountCmd = "${boosterRepo}/script/bitBucket/utilities/sourceCheck.bat ${localRepo} ${fromCommit} ${toCommit} ${proj} ${PRId} ${repo}"
         
         println "${commentsCountCmd}"
         
