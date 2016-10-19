@@ -46,6 +46,7 @@
 <component name="pcr_srp/code/phyrCe/Code/P2P/IP_Interface_Management" owner="JDKW48" /> 
 <component name="pcr_srp/code/phyrCe/Code/P2P/Protocol_Arbitrator" owner="JDKW48,MRWQ78" />     
 <component name="pcr_srp/code/phyrCe/Code/P2P/Link_Establishment_Management" owner="MRWQ78" /> 
+<component name="pcr_srp/code/phyrCe/Code/DigitalBackhaul" owner="jdkw48" />
 <!--  ltd -->  
 <component name="ltd/code/matrix/common/source/low_level" owner="a20091" />
 <component name="ltd/tools/booster" owner="jhv384" />
