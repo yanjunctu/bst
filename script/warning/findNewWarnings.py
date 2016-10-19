@@ -277,7 +277,7 @@ class DiffParser(object):
 # class DiffParser end
 #----------------------------------------------------------------------------------------------------------------
 
-def get_new_warnings(buildLog,changes,isBahamaArm):
+def get_new_warnings(buildLog,changes,isBahamaArm,mode):
     
     build_log_reader = BuildLogReader(isBahamaArm)
     warnings ={}
@@ -302,19 +302,50 @@ def get_new_warnings(buildLog,changes,isBahamaArm):
         warnings=dict(warnings, **warning_temp)
 
     new_warnings = OrderedDict()
-    for file_name  in changes:
+    if mode == 'period':
         for warning in warnings:
             w_file_name,w_line = warning
             warning_content = warnings[warning]
-            if (file_name in w_file_name):
-                modifysections = changes[file_name]['modifysections']
-                for i in range(len(modifysections)):
-                    start = modifysections[i]['start']
-                    end = start+modifysections[i]['last']
-                    linetemp = range(start,end)
-                    if w_line in range(start, end):
+            blame_cmd ='git blame -e -L {start},{end} {filename} '.format(start=w_line,end=w_line,filename=(args.drive+w_file_name))
+            try:
+                blame_output = subprocess.check_output(blame_cmd, stderr=subprocess.STDOUT,shell=True)
+            except subprocess.CalledProcessError as err:
+                print err
+                continue;
+            #get email,blame_output kind like:df584209 (<rurong.huang@motorolasolutions.com> 2016-06-12 15:58:32 +0800 585)
+            print blame_output
+            match =  re.search('\s\(<(.+)>\s(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}).+\)', blame_output)
+            if not match:
+                print "not match"
+                continue
+            emailAddr = match.group(1)
+            introduceTime=datetime.datetime.strptime(match.group(2),'%Y-%m-%d %H:%M:%S')
+            baseTime = datetime.datetime.strptime('2016-06-12 15:58:32','%Y-%m-%d %H:%M:%S')
+            if (introduceTime-baseTime).days < 0:
+                continue;
+            new_warnings[(w_file_name, w_line)] = warning_content
+            ALL_NEW_WARNINGS[(w_file_name, w_line)] = warning_content
+            
+            print introduceTime
+            print emailAddr
+    else:
+        for file_name  in changes:
+            for warning in warnings:
+                w_file_name,w_line = warning
+                warning_content = warnings[warning]
+                if (file_name in w_file_name):
+                    if changes[file_name]['newfile'] == True :
                         new_warnings[(w_file_name, w_line)] = warning_content
                         ALL_NEW_WARNINGS[(w_file_name, w_line)] = warning_content
+                    else:
+                        modifysections = changes[file_name]['modifysections']
+                        for i in range(len(modifysections)):
+                            start = modifysections[i]['start']
+                            end = start+modifysections[i]['last']
+                            linetemp = range(start,end)
+                            if w_line in range(start, end):
+                                new_warnings[(w_file_name, w_line)] = warning_content
+                                ALL_NEW_WARNINGS[(w_file_name, w_line)] = warning_content
     return (warnings,new_warnings)
 
 def process_argument():
@@ -449,7 +480,8 @@ def pre_check(args):
             except:
                 print('failed to get remote branches, make sure you are in the correct repo directory')
                 sys.exit()
-            pattern =  r' *(.*)/(REPT_2\.7_INT)\n';
+            #pattern =  r' *(.*)/(REPT_2\.7_INT)\n';
+            pattern =  r' *(.*)/(main)\n';
             match = re.search(pattern, remote_branches) 
             if match:
                 args.ci_Branch = match.group(0).strip()
@@ -625,58 +657,64 @@ def getBuildLogFromConOut(jenkins,db,tag,fdir):
         f = open(logfile,'w')
         f.write(buildLog)
         f.close()
+        print logfile
         logfiles.append(logfile)
         
     return logfiles
-
-def findBoundaryTag(args,db,collname):
+def findNewestTag(args,db,collname):
     
-    oldestTimeStamp =math.floor(time.time()*1000-(int(args.pdays) * 24 * 60 * 60*1000));
     obj = {"name": "PROJECT_NAME", "value": "REPT_MAIN"};
-
-    condition ={'timestamp':{"$gte":oldestTimeStamp},'result':'SUCCESS',"actions.parameters": {'$in': [obj]}}
+    condition ={'result':'SUCCESS',"actions.parameters": {'$in': [obj]}}
     sortType=('number',-1)
     docs = db.findInfo(collname,condition,sortType)
 
-    #newer Tag
+    #newest Tag
     args.releaseTag = getParameterValue(docs[0],'NEW_BASELINE')
     print args.releaseTag
-    #older Tag
-    args.ci_Branch = getParameterValue(docs[len(docs)-1],'NEW_BASELINE')
-    print args.ci_Branch
-    
+
     return args
-      
+
+def actionOnDailyMode(args):
+    os.chdir(args.drive)
+    dbClient = MongoClient()
+    db = BoosterDB(dbClient, BOOSTER_DB_NAME)
+    args = findNewestTag(args,db,Release_COLL)
+    #checkout to the latest tag,bcz git blame need it
+    subprocess.check_output('git checkout {}'.format(args.releaseTag), stderr=subprocess.STDOUT,shell=True)
+    
+    
 if __name__ == "__main__":
 
     tStart = datetime.datetime.now()
     args = process_argument()
     args = pre_check(args)
-    
+    changes = []
+
     #1.get change file and change line number
-    if args.mode == 'period': 
+    if args.mode == 'period':
         os.chdir(args.drive)
-        #period mode need get the boundary tag according to pdays
-        sys.path.append('/opt/booster_project/script/boosterSocket/')
-        sys.path.append('/opt/booster_project/script/jenkins/')
-        sys.path.append('/opt/booster_project/script/klocwork/webcheck/')
+        sys.path.append('/mnt/gitlabbackup/booster_project/script/boosterSocket/')
+        sys.path.append('/mnt/gitlabbackup/booster_project/script/jenkins/')
+        sys.path.append('/mnt/gitlabbackup/booster_project/script/klocwork/webcheck/')
         from sendEmail import sendEmail
         from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
         from klockwork_web_check import getParameterValue
         dbClient = MongoClient()
         db = BoosterDB(dbClient, BOOSTER_DB_NAME)
-        args = findBoundaryTag(args,db,Release_COLL)
+        args = findNewestTag(args,db,Release_COLL)
         #checkout to the latest tag,bcz git blame need it
-        
-        subprocess.check_output('git checkout {}'.format(args.releaseTag), stderr=subprocess.STDOUT,shell=True)
+        checkoutCmd = 'git checkout {}'.format(args.releaseTag)
+        print checkoutCmd
+        #subprocess.check_output(checkoutCmd.split(), stderr=subprocess.STDOUT)
+        print "git checkout"
+    else:
 
-
-    diff_parser = DiffParser(args.drive)
-    status,changes = diff_parser.get_changes(args.ci_Branch)
+        diff_parser = DiffParser(args.drive)
+        status,changes = diff_parser.get_changes(args.ci_Branch)
     
-    if not status:
-        print 'failed to get new warnings for branch: '+args.ci_Branch
-        sys.exit()
+        if not status:
+            print 'failed to get new warnings for branch: '+args.ci_Branch
+            sys.exit()
         
     #2.get the build log       
     if args.mode == 'period':
@@ -722,7 +760,7 @@ if __name__ == "__main__":
         if basename != 'default.xml':
             if basename in BAHAMA_ARM_LOG:
                 isBahamaArm=True
-            (warnings,new_warnings)=get_new_warnings(logfile,changes,isBahamaArm)
+            (warnings,new_warnings)=get_new_warnings(logfile,changes,isBahamaArm,args.mode)
             print_log(changes,warnings,new_warnings,logfile,args.drive)
 
     tEnd = datetime.datetime.now()
