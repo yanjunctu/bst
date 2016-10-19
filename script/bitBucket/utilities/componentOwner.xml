@@ -3,7 +3,8 @@
 <!--  bahama --> 
 <component name="bahama/test" owner="A22562" />
 <component name="bahama/code/dsp/lineup" owner="A22562" />
-<component name="bahama/code/dsp" owner="a20091" />
+<component name="bahama/code/dsp" owner="a20091" />    
+<component name="bahama/code/source_files/DspArmInterfaces" owner="A22562" />    
 <component name="bahama/code/source_files/RDAC" owner="jdf638" /> 
 <component name="bahama/code/source_files/HALi" owner="nvgf73" />
 <component name="bahama/code/source_files/Initializer/DSPInitializer" owner="A22562" />
@@ -11,7 +12,13 @@
 <component name="bahama/code/source_files/LowLevel/FailSafe" owner="XMTV74" />
 <component name="bahama/code/source_files/ModemRepeater/HardwareManager" owner="nvgf73" />
 <component name="bahama/code/source_files/ModemRepeater/Transceiver" owner="nvgf73" /> 
-
+<component name="bahama/code/source_files/ModemRepeater/AudioManager" owner="A22562" />
+<component name="bahama/code/source_files/ModemRepeater/AudioManagerThread" owner="A22562" />  
+<component name="bahama/code/source_files/ModemRepeater/DspModemLog" owner="A22562" />    
+<component name="bahama/code/source_files/ModemRepeater/GcpTranslator" owner="A22562" />    
+<component name="bahama/code/source_files/ModemRepeater/ModemManager" owner="A22562" />    
+<component name="bahama/code/source_files/ModemRepeater/ModemManagerThread" owner="A22562" />    
+<component name="bahama/code/source_files/ModemRepeater/SlotArbitrator" owner="A22562" />
 <!--  bahama release -->   
 <component name="bahama_release/bootscript" owner="XMTV74" />
 <!--  pcr_srp test -->
