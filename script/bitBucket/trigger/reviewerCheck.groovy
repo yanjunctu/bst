@@ -119,7 +119,7 @@ class componentOwnerManager{
         
         def owner =[]
         
-        if (path.endsWith(".mk") || path.endsWith("Makefile")){
+        if (path.endsWith(".mk") || path.endsWith("Makefile") || path.endsWith("makefile")){
             //make file owner barry and essen
             owner =['pnw867','a4741c']
         }

@@ -13,18 +13,18 @@ import json
 
 
 cwd = os.path.dirname(__file__)
-SCRIPT_DIR='/../../../..\\cm\\runtime\\python27\\Lib\\site-packages'
+SCRIPT_DIR='/../../../../cm/runtime/python27/Lib/site-packages'
 repo_runtime_dir=os.path.abspath(cwd+SCRIPT_DIR)
 path.insert(0, repo_runtime_dir) 
 
 
-SCRIPT_DIR = '/..\\warning'
+SCRIPT_DIR = '/../warning'
 script_from_dir = os.path.abspath(cwd+SCRIPT_DIR)
 path.append(script_from_dir)
 from findNewWarnings import DiffParser
 
 
-SOCKET_DIR = '/..\\boosterSocket'
+SOCKET_DIR = '/../boosterSocket'
 script_from_dir = os.path.abspath(cwd+SOCKET_DIR)
 path.append(script_from_dir)
 from boosterSocket import sendEmail
