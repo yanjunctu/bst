@@ -148,7 +148,7 @@ class componentOwnerManager{
         chgCPowner = chgCPowner.unique()
         if (chgCPowner == []){
             // if not matched owner in map add s.s.he,and micheal jin as reviewer
-            chgCPowner =["a1692z","a20091"]
+            chgCPowner =["qpcb36"]
         }
         return chgCPowner
     }
