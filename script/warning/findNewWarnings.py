@@ -48,7 +48,9 @@ you should fix the build warning in time,otherwise CI system will tag it as audi
 
 ALL_NEW_WARNINGS= OrderedDict()
 unResolveList= OrderedDict()
+SUBMODUL=['bahama_codeplug','bahama_platform','gcp_ssp','pcr_csa']
 
+managerEmail=["anlon.lee@motorolasolutions.com","xiao-fan.zhang@motorolasolutions.com","mengge.duan@motorolasolutions.com"]
 BAHAMADIR='\\bahama\\code'
 CYPHERDIR='\\pcr_srp\\code'
 LOG_DIR='\\temp_log\\'
@@ -355,10 +357,10 @@ def process_argument():
     #the drive is the dir for period mode
     if args.mode != 'period':
        try:
-            args.drive = args.drive.strip().rstrip(':')[0] + ':'
+            args.drive = args.drive.strip().rstrip('/')[0]
        except:
             args.drive = os.getcwd()	
-            args.drive = args.drive.strip().rstrip(':')[0] + ':'
+            args.drive = args.drive.strip().rstrip('/')[0]
     
 		
     # Only desktop mode require user pass a log file, CI and preCI mode will parse the log a hardcode path
@@ -577,12 +579,16 @@ def actionOnNewWarning(prj,tag,name,mail,file):
         #print "[recv from server]: "+interface.recv();
         sendEmail(name,mail,file.getvalue(),CIMailSubject); 
         
-def blameOnWarnings(args,warnings):
+def blameOnWarnings(drive,warnings):
 
     for warning in warnings:
         w_file_name,w_line = warning
+        sub = w_file_name.split('/')[1]
+        if sub in SUBMODUL:
+            continue;
         warning_content = warnings[warning]
-        blame_cmd ='git blame -e -L {start},{end} {filename} '.format(start=w_line,end=w_line,filename=(args.drive+w_file_name))
+        print w_file_name
+        blame_cmd ='git blame -e -L {start},{end} {filename} '.format(start=w_line,end=w_line,filename=(drive+w_file_name))
         try:
             blame_output = subprocess.check_output(blame_cmd, stderr=subprocess.STDOUT,shell=True)
         except subprocess.CalledProcessError as err:
@@ -599,8 +605,8 @@ def blameOnWarnings(args,warnings):
         baseTime = datetime.datetime.strptime('2016-06-12 15:58:32','%Y-%m-%d %H:%M:%S')
         if (introduceTime-baseTime).days < 0:
             continue;
-
-       if unResolveList.has_key(emailAddr):
+        
+        if unResolveList.has_key(emailAddr):
             unResolveList[emailAddr]['number']=unResolveList[emailAddr]['number']+1;
             unResolveList[emailAddr]['warning'][w_file_name,w_line,introduceTime]=warning_content
         else :
@@ -645,15 +651,17 @@ def findNewestTag(args,db,collname):
 
     return args
 
-def actionOnDailyMode():
-    
+def actionOnDailyMode(args):
+    #get all the build warning from cars build job console output
+    #use get blame to get the warning introduce time
+    #audit if the introduce time > 30 days  
     dbClient = MongoClient()
     db = BoosterDB(dbClient, BOOSTER_DB_NAME)
     args = findNewestTag(args,db,Release_COLL)
     #checkout to the latest tag,bcz git blame need it
     checkoutCmd = 'git checkout {}'.format(args.releaseTag)
     print checkoutCmd
-    subprocess.check_output(checkoutCmd.split(), stderr=subprocess.STDOUT)
+    #subprocess.check_output(checkoutCmd.split(), stderr=subprocess.STDOUT)
     jenkins = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
     logfiles = getBuildLogFromConOut(jenkins,db,args.releaseTag,args.drive)
     for logfile in logfiles:
@@ -662,14 +670,14 @@ def actionOnDailyMode():
         if basename in BAHAMA_ARM_LOG:
             isBahamaArm=True
         warnings=get_all_warnings(logfile,isBahamaArm)
-        blameOnWarnings(warnings)
-        
+        blameOnWarnings(args.drive,warnings)
+    print 'send email' 
     send_email()
     
 
 def send_email():
     
-        
+    nowTime= datetime.datetime.now() 
     for engineerEAdr in unResolveList.keys():
         stdout = sys.stdout
         sys.stdout = stdOutfile = StringIO.StringIO()
@@ -679,27 +687,21 @@ def send_email():
         issueCnt = unResolveList[engineerEAdr]['number']
         mailSubject = "{} you have total {} build warning unfixed".format(engineerEAdr.split("@")[0],issueCnt)
         print DailyWords
-                              
-        for (file_name, line,intrTime) in unResolveList[engineerEAdr]['warning']:
-            
-             unResolveList[emailAddr]['number']=unResolveList[emailAddr]['number']+1;
-            unResolveList[emailAddr]['warning'][w_file_name,w_line,introduceTime]=warning_content
-            
-            existdays =  issueDetail["existTime"]/(24*60*60*1000)           
-            print "\n {}: unfixed issue:{},   Exist : {}, days".format(issueDetail['releaseTag'],issueDetail["issueID"],round(existdays))
-                            
-            if issueDetail["existTime"] > AUDIT_TIME:
-                print "those issue exceed the time limit {}，and already be node down".format(AUDIT_TIME/24/60/60/1000)
+        warnings =  unResolveList[engineerEAdr]['warning']                  
+        for (file_name, line,intrTime) in warnings:
+            existdays =  (nowTime-intrTime).days  
+            if existdays > AUDIT_TIME:
+                print "The warning exceed the time limit {}，and already be node down".format(AUDIT_TIME)
                 audit = True
+            print "\n {},{} Exist : {}, days".format(file_name,line,existdays)
+            print file_name, line
+            print warnings[file_name, line,intrTime]
 
         if audit:
             for mail in managerEmail:
-                emailAdr.append(mail)
-    
-        engineerNameEmail="{}@motorolasolutions.com".format(engineerName)                     
-        emailAdr.append(engineerNameEmail)
-  
-        sendEmail(engineerName,emailAdr,stdOutfile.getvalue(),mailSubject);
+                emailAdr.append(mail)                  
+        emailAdr.append(engineerEAdr)
+        sendEmail(engineerEAdr,emailAdr,stdOutfile.getvalue(),mailSubject);
         sys.stdout = stdout
     
     
@@ -721,6 +723,7 @@ if __name__ == "__main__":
         from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
         from klockwork_web_check import getParameterValue
         actionOnDailyMode(args)
+        print "daily check done!!"
     else:
         #1.get change file and change line number
         diff_parser = DiffParser(args.drive)
