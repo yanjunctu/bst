@@ -630,7 +630,7 @@ def getBuildLogFromConOut(jenkins,db,tag,fdir):
         #only use the latest one,bcz may build pass but not release
         buildLog = jenkins.getConsoleOutput(jobname, docs[0]['number'])
         #save the buildLog to file
-        logfile = str(fdir)+'temp_log/'+job['annofile'];
+        logfile = str(fdir)+'/temp_log/'+job['annofile'];
         f = open(logfile,'w')
         f.write(buildLog)
         f.close()
