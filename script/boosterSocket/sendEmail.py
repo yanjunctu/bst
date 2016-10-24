@@ -21,8 +21,8 @@ def sendEmail(name,mail,text,title):
         mailAdr.append(adr)
 
     try:
-        #server.sendmail('booster@motorolasolutions.com', mailAdr, msg.as_string())
-        server.sendmail('booster@motorolasolutions.com', ['qpcb36@motorolasolutions.com'], msg.as_string())
+        server.sendmail('booster@motorolasolutions.com', mailAdr, msg.as_string())
+        #server.sendmail('booster@motorolasolutions.com', ['qpcb36@motorolasolutions.com'], msg.as_string())
     finally:
         server.quit()
 

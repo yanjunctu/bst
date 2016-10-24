@@ -602,7 +602,7 @@ def blameOnWarnings(drive,warnings):
             continue
         emailAddr = match.group(1)
         introduceTime=datetime.datetime.strptime(match.group(2),'%Y-%m-%d %H:%M:%S')
-        baseTime = datetime.datetime.strptime('2016-06-12 15:58:32','%Y-%m-%d %H:%M:%S')
+        baseTime = datetime.datetime.strptime('2016-10-24 12:11:15','%Y-%m-%d %H:%M:%S')
         if (introduceTime-baseTime).days < 0:
             continue;
         
@@ -647,7 +647,7 @@ def findNewestTag(args,db,collname):
 
     #newest Tag
     args.releaseTag = getParameterValue(docs[0],'NEW_BASELINE')
-    print 'the newest tag is : '.format(args.releaseTag)
+    print 'the newest tag is :{} '.format(args.releaseTag)
 
     return args
 
@@ -693,8 +693,9 @@ def send_email():
             if existdays > AUDIT_TIME:
                 print "The warning exceed the time limit {}，and already be node down".format(AUDIT_TIME)
                 audit = True
-            print "\n {},{} Exist : {}, days".format(file_name,line,existdays)
-            print file_name, line
+            #print "\n {},{} Exist : {}, days".format(file_name,line,existdays)
+            print "\n Exist : {}, days".format(existdays)
+            #print file_name, line
             print warnings[file_name, line,intrTime]
 
         if audit:
