@@ -39,10 +39,18 @@ Please click /checkWarning.bat to do self audit before you submit IR to make sur
 Below is the raw output from the warning check tool, pls refer to it:
 #############################################
 '''
-        
+AUDIT_TIME = 30 #30 days
+DailyWords = '''
+\n############################
+you should fix the build warning in time,otherwise CI system will tag it as audit finding. and the issue allowed exist time is {} days   
+\n############################
+'''.format(AUDIT_TIME)     
 
 ALL_NEW_WARNINGS= OrderedDict()
+unResolveList= OrderedDict()
+SUBMODUL=['bahama_codeplug','bahama_platform','gcp_ssp','pcr_csa']
 
+managerEmail=["anlon.lee@motorolasolutions.com","xiao-fan.zhang@motorolasolutions.com","mengge.duan@motorolasolutions.com"]
 BAHAMADIR='\\bahama\\code'
 CYPHERDIR='\\pcr_srp\\code'
 LOG_DIR='\\temp_log\\'
@@ -78,6 +86,7 @@ JENKINS_TOKEN = '4aff12c2c2c0fba8342186ef0fd9e60c'
 JENKINS_TRIGGER_JOBS = 'PCR-REPT-0-MultiJob';
 BOOSTER_DB_NAME = 'booster'
 Release_COLL='CI-PCR-REPT-Git-Release'
+
 
 #---------------------------------------------------------------------------------------------------------------
 # define class BuildLogReader 
@@ -276,8 +285,7 @@ class DiffParser(object):
 #---------------------------------------------------------------------------------------------------------------
 # class DiffParser end
 #----------------------------------------------------------------------------------------------------------------
-
-def get_new_warnings(buildLog,changes,isBahamaArm):
+def get_all_warnings(buildLog,isBahamaArm):
     
     build_log_reader = BuildLogReader(isBahamaArm)
     warnings ={}
@@ -300,6 +308,14 @@ def get_new_warnings(buildLog,changes,isBahamaArm):
         f.close()
         warning_temp = build_log_reader.get_warnings(logs)
         warnings=dict(warnings, **warning_temp)
+        
+    return warnings
+
+
+
+def get_new_warnings(buildLog,changes,isBahamaArm):
+    
+    warnings = get_all_warnings(buildLog,isBahamaArm)
 
     new_warnings = OrderedDict()
     for file_name  in changes:
@@ -307,14 +323,18 @@ def get_new_warnings(buildLog,changes,isBahamaArm):
             w_file_name,w_line = warning
             warning_content = warnings[warning]
             if (file_name in w_file_name):
-                modifysections = changes[file_name]['modifysections']
-                for i in range(len(modifysections)):
-                    start = modifysections[i]['start']
-                    end = start+modifysections[i]['last']
-                    linetemp = range(start,end)
-                    if w_line in range(start, end):
-                        new_warnings[(w_file_name, w_line)] = warning_content
-                        ALL_NEW_WARNINGS[(w_file_name, w_line)] = warning_content
+                if changes[file_name]['newfile'] == True :
+                    new_warnings[(w_file_name, w_line)] = warning_content
+                    ALL_NEW_WARNINGS[(w_file_name, w_line)] = warning_content
+                else:
+                    modifysections = changes[file_name]['modifysections']
+                    for i in range(len(modifysections)):
+                        start = modifysections[i]['start']
+                        end = start+modifysections[i]['last']
+                        linetemp = range(start,end)
+                        if w_line in range(start, end):
+                            new_warnings[(w_file_name, w_line)] = warning_content
+                            ALL_NEW_WARNINGS[(w_file_name, w_line)] = warning_content
     return (warnings,new_warnings)
 
 def process_argument():
@@ -337,10 +357,10 @@ def process_argument():
     #the drive is the dir for period mode
     if args.mode != 'period':
        try:
-            args.drive = args.drive.strip().rstrip(':')[0] + ':'
+            args.drive = args.drive.strip().rstrip('/')[0]
        except:
             args.drive = os.getcwd()	
-            args.drive = args.drive.strip().rstrip(':')[0] + ':'
+            args.drive = args.drive.strip().rstrip('/')[0]
     
 		
     # Only desktop mode require user pass a log file, CI and preCI mode will parse the log a hardcode path
@@ -449,7 +469,8 @@ def pre_check(args):
             except:
                 print('failed to get remote branches, make sure you are in the correct repo directory')
                 sys.exit()
-            pattern =  r' *(.*)/(REPT_2\.7_INT)\n';
+            #pattern =  r' *(.*)/(REPT_2\.7_INT)\n';
+            pattern =  r' *(.*)/(main)\n';
             match = re.search(pattern, remote_branches) 
             if match:
                 args.ci_Branch = match.group(0).strip()
@@ -558,56 +579,44 @@ def actionOnNewWarning(prj,tag,name,mail,file):
         #print "[recv from server]: "+interface.recv();
         sendEmail(name,mail,file.getvalue(),CIMailSubject); 
         
-def blameOnNewWarning(args):
-    cwd = os.getcwd()
-    unResolveList= OrderedDict()
-    if args.CIUserEmail:
-        from sendEmail import sendEmail
-        stdout = sys.stdout
-        sys.stdout = stdOutfile = StringIO.StringIO()
-    for (file_name,line) in ALL_NEW_WARNINGS.keys():
-        blame_cmd ='git blame -e -L {start},{end} {filename} '.format(start=line,end=line,filename=(args.drive+file_name))
- 
+def blameOnWarnings(drive,warnings):
+
+    for warning in warnings:
+        w_file_name,w_line = warning
+        sub = w_file_name.split('/')[1]
+        if sub in SUBMODUL:
+            continue;
+        warning_content = warnings[warning]
+        print w_file_name
+        blame_cmd ='git blame -e -L {start},{end} {filename} '.format(start=w_line,end=w_line,filename=(drive+w_file_name))
         try:
             blame_output = subprocess.check_output(blame_cmd, stderr=subprocess.STDOUT,shell=True)
         except subprocess.CalledProcessError as err:
             print err
             continue;
         #get email,blame_output kind like:df584209 (<rurong.huang@motorolasolutions.com> 2016-06-12 15:58:32 +0800 585)
-        match = re.match(r'^\w{8}\s\(<(.+)>\s\d{4}-\d{2}-\d{2}\s.+\)', blame_output)
+        print blame_output
+        match =  re.search('\s\(<(.+)>\s(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}).+\)', blame_output)
         if not match:
+            print "not match"
             continue
         emailAddr = match.group(1)
+        introduceTime=datetime.datetime.strptime(match.group(2),'%Y-%m-%d %H:%M:%S')
+        baseTime = datetime.datetime.strptime('2016-10-24 12:11:15','%Y-%m-%d %H:%M:%S')
+        if (introduceTime-baseTime).days < 0:
+            continue;
+        
         if unResolveList.has_key(emailAddr):
             unResolveList[emailAddr]['number']=unResolveList[emailAddr]['number']+1;
-            unResolveList[emailAddr]['warning'][file_name,line]=ALL_NEW_WARNINGS[file_name,line]
+            unResolveList[emailAddr]['warning'][w_file_name,w_line,introduceTime]=warning_content
         else :
             blameInfo = OrderedDict()
             blameInfo['number']=1
             warningDict = OrderedDict() 
-            warningDict[file_name,line]=ALL_NEW_WARNINGS[file_name,line]
+            warningDict[w_file_name,w_line,introduceTime]=warning_content
             blameInfo['warning']=warningDict
-            unResolveList[emailAddr]=blameInfo
-            
-    for userEmail in unResolveList.keys():
-        name = userEmail.split('@')[0]
-        warningCnt = unResolveList[userEmail]['number']
-        unResolveWarning = unResolveList[userEmail]['warning']
-        print '\n\n\n{} total {} build warning unresolved :'.format(name,warningCnt)
-        for (file_name,line) in unResolveWarning.keys():
-            print unResolveWarning[file_name,line]
-                    
-    if args.CIUserEmail:           
-        sys.stdout = stdout
-        if args.releaseTag:
-            mailSubject = '<!!!> The unresolved build warning between : {} and {}'.format(args.ci_Branch,args.releaseTag)
-        else:
-            mailSubject = '[Notice!] The unresolved build warning on : {}'.format(args.ci_Branch)
-        name = args.CIUserEmail.split('@')[0]
-        sendEmail(name,args.CIUserEmail,stdOutfile.getvalue(),mailSubject);
-        
-    os.chdir(cwd)
-    #return unResolveList
+            unResolveList[emailAddr]=blameInfo  
+
 def getBuildLogFromConOut(jenkins,db,tag,fdir):
     logfiles = []
     for job in JENKINS_BUILD_JOBS:
@@ -621,123 +630,161 @@ def getBuildLogFromConOut(jenkins,db,tag,fdir):
         #only use the latest one,bcz may build pass but not release
         buildLog = jenkins.getConsoleOutput(jobname, docs[0]['number'])
         #save the buildLog to file
-        logfile = str(fdir)+'temp_log/'+job['annofile'];
+        logfile = str(fdir)+'/temp_log/'+job['annofile'];
         f = open(logfile,'w')
         f.write(buildLog)
         f.close()
+        print logfile
         logfiles.append(logfile)
         
     return logfiles
-
-def findBoundaryTag(args,db,collname):
+def findNewestTag(args,db,collname):
     
-    oldestTimeStamp =math.floor(time.time()*1000-(int(args.pdays) * 24 * 60 * 60*1000));
     obj = {"name": "PROJECT_NAME", "value": "REPT_MAIN"};
-
-    condition ={'timestamp':{"$gte":oldestTimeStamp},'result':'SUCCESS',"actions.parameters": {'$in': [obj]}}
+    condition ={'result':'SUCCESS',"actions.parameters": {'$in': [obj]}}
     sortType=('number',-1)
     docs = db.findInfo(collname,condition,sortType)
 
-    #newer Tag
+    #newest Tag
     args.releaseTag = getParameterValue(docs[0],'NEW_BASELINE')
-    print args.releaseTag
-    #older Tag
-    args.ci_Branch = getParameterValue(docs[len(docs)-1],'NEW_BASELINE')
-    print args.ci_Branch
-    
+    print 'the newest tag is :{} '.format(args.releaseTag)
+
     return args
-      
+
+def actionOnDailyMode(args):
+    #get all the build warning from cars build job console output
+    #use get blame to get the warning introduce time
+    #audit if the introduce time > 30 days  
+    dbClient = MongoClient()
+    db = BoosterDB(dbClient, BOOSTER_DB_NAME)
+    args = findNewestTag(args,db,Release_COLL)
+    #checkout to the latest tag,bcz git blame need it
+    checkoutCmd = 'git checkout {}'.format(args.releaseTag)
+    print checkoutCmd
+    #subprocess.check_output(checkoutCmd.split(), stderr=subprocess.STDOUT)
+    jenkins = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
+    logfiles = getBuildLogFromConOut(jenkins,db,args.releaseTag,args.drive)
+    for logfile in logfiles:
+        isBahamaArm =False
+        basename = os.path.basename(logfile)
+        if basename in BAHAMA_ARM_LOG:
+            isBahamaArm=True
+        warnings=get_all_warnings(logfile,isBahamaArm)
+        blameOnWarnings(args.drive,warnings)
+    print 'send email' 
+    send_email()
+    
+
+def send_email():
+    
+    nowTime= datetime.datetime.now() 
+    for engineerEAdr in unResolveList.keys():
+        stdout = sys.stdout
+        sys.stdout = stdOutfile = StringIO.StringIO()
+        audit = False
+        emailAdr = []
+            
+        issueCnt = unResolveList[engineerEAdr]['number']
+        mailSubject = "{} you have total {} build warning unfixed".format(engineerEAdr.split("@")[0],issueCnt)
+        print DailyWords
+        warnings =  unResolveList[engineerEAdr]['warning']                  
+        for (file_name, line,intrTime) in warnings:
+            existdays =  (nowTime-intrTime).days  
+            if existdays > AUDIT_TIME:
+                print "The warning exceed the time limit {}，and already be node down".format(AUDIT_TIME)
+                audit = True
+            #print "\n {},{} Exist : {}, days".format(file_name,line,existdays)
+            print "\n Exist : {}, days".format(existdays)
+            #print file_name, line
+            print warnings[file_name, line,intrTime]
+
+        if audit:
+            for mail in managerEmail:
+                emailAdr.append(mail)                  
+        emailAdr.append(engineerEAdr)
+        sendEmail(engineerEAdr,emailAdr,stdOutfile.getvalue(),mailSubject);
+        sys.stdout = stdout
+    
+    
 if __name__ == "__main__":
 
     tStart = datetime.datetime.now()
     args = process_argument()
     args = pre_check(args)
+    changes = []
+
     
-    #1.get change file and change line number
-    if args.mode == 'period': 
+    if args.mode == 'period':
+        print "daily check begin ..."
         os.chdir(args.drive)
-        #period mode need get the boundary tag according to pdays
-        sys.path.append('/opt/booster_project/script/boosterSocket/')
-        sys.path.append('/opt/booster_project/script/jenkins/')
-        sys.path.append('/opt/booster_project/script/klocwork/webcheck/')
+        sys.path.append('/mnt/gitlabbackup/booster_project/script/boosterSocket/')
+        sys.path.append('/mnt/gitlabbackup/booster_project/script/jenkins/')
+        sys.path.append('/mnt/gitlabbackup/booster_project/script/klocwork/webcheck/')
         from sendEmail import sendEmail
         from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
         from klockwork_web_check import getParameterValue
-        dbClient = MongoClient()
-        db = BoosterDB(dbClient, BOOSTER_DB_NAME)
-        args = findBoundaryTag(args,db,Release_COLL)
-        #checkout to the latest tag,bcz git blame need it
+        actionOnDailyMode(args)
+        print "daily check done!!"
+    else:
+        #1.get change file and change line number
+        diff_parser = DiffParser(args.drive)
+        status,changes = diff_parser.get_changes(args.ci_Branch)
+    
+        if not status:
+            print 'failed to get new warnings for branch: '+args.ci_Branch
+            sys.exit()
         
-        subprocess.check_output('git checkout {}'.format(args.releaseTag), stderr=subprocess.STDOUT,shell=True)
-
-
-    diff_parser = DiffParser(args.drive)
-    status,changes = diff_parser.get_changes(args.ci_Branch)
-    
-    if not status:
-        print 'failed to get new warnings for branch: '+args.ci_Branch
-        sys.exit()
+        #2.get the build log       
+        if (args.mode == 'preCI'):
+        #generate the build log if mode is preCI   
+            os.system("cls") # clear screen
+            print WelcomeWords;
         
-    #2.get the build log       
-    if args.mode == 'period':
-    #get the build log from jenkins console output if mode is period
-        jenkins = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
-        logfiles = getBuildLogFromConOut(jenkins,db,args.releaseTag,args.drive)
+            buildLog_generate(args.drive)
+            #find all the buildlog file
+            logfiles =[]
+            for annofileDir in ANNOFILE_DIR:
+                logfiles =logfiles + glob.glob(args.drive+annofileDir+ '*.xml')
     
-    elif (args.mode == 'preCI'):
-    #generate the build log if mode is preCI   
-        os.system("cls") # clear screen
-        print WelcomeWords;
+        elif args.mode == 'desktop':
+        # buildlog is passed from makefile for desktop mode
+            logfiles = args.build_logs
+            print os.linesep;
+    
+        # buildlog is exists in output folder, the only difference with preCI mode is , we have not to trigger the whole build self
+        # and the seconds difference is need exclude the default.xml which is no needed to analysis, but in CI env, there will be have
+        # default.xml generated from win32 build
+        elif args.mode == 'CI':
+            from boosterSocket import WarnKlocCheckResult,BoosterClient
+            from sendEmail import sendEmail
+            logfiles =[]
+            for annofileDir in ANNOFILE_DIR:
+                logfiles =logfiles + [fn for fn in glob.glob(args.drive+annofileDir+ '*.xml') if 'default.xml' not in fn]
+            stdout = sys.stdout
+            sys.stdout = stdOutfile = StringIO.StringIO()
+            print CIMailHeader
+
+    
+        #3.find out the new warnings          
+        for logfile in logfiles:
         
-        buildLog_generate(args.drive)
-        #find all the buildlog file
-        logfiles =[]
-        for annofileDir in ANNOFILE_DIR:
-            logfiles =logfiles + glob.glob(args.drive+annofileDir+ '*.xml')
-    
-    elif args.mode == 'desktop':
-    # buildlog is passed from makefile for desktop mode
-        logfiles = args.build_logs
-        print os.linesep;
-    
-    # buildlog is exists in output folder, the only difference with preCI mode is , we have not to trigger the whole build self
-    # and the seconds difference is need exclude the default.xml which is no needed to analysis, but in CI env, there will be have
-    # default.xml generated from win32 build
-    elif args.mode == 'CI':
-        from boosterSocket import WarnKlocCheckResult,BoosterClient
-        from sendEmail import sendEmail
-        logfiles =[]
-        for annofileDir in ANNOFILE_DIR:
-            logfiles =logfiles + [fn for fn in glob.glob(args.drive+annofileDir+ '*.xml') if 'default.xml' not in fn]
-        stdout = sys.stdout
-        sys.stdout = stdOutfile = StringIO.StringIO()
-        print CIMailHeader
+            isBahamaArm =False
+            basename = os.path.basename(logfile)
+            if basename != 'default.xml':
+                if basename in BAHAMA_ARM_LOG:
+                    isBahamaArm=True
+                (warnings,new_warnings)=get_new_warnings(logfile,changes,isBahamaArm)
+                print_log(changes,warnings,new_warnings,logfile,args.drive)
 
-    
-    #3.find out the new warnings          
-    for logfile in logfiles:
-        
-        isBahamaArm =False
-        basename = os.path.basename(logfile)
-        if basename != 'default.xml':
-            if basename in BAHAMA_ARM_LOG:
-                isBahamaArm=True
-            (warnings,new_warnings)=get_new_warnings(logfile,changes,isBahamaArm)
-            print_log(changes,warnings,new_warnings,logfile,args.drive)
+        tEnd = datetime.datetime.now()
 
-    tEnd = datetime.datetime.now()
-
-    print '\nWarning check is done!'
-    print '\nIntroduced {num} warnings in total'.format(num=len(ALL_NEW_WARNINGS))
-    print '\nMore details please refer to {summarize_log_file}\n'.format(summarize_log_file=args.drive+LOG_DIR+'summarize.log')
-    print 'Warning check totally use {minute} minutes {seconds} seconds\n'.format(minute = int((tEnd-tStart).total_seconds() / 60),seconds = int((tEnd-tStart).total_seconds() % 60))
+        print '\nWarning check is done!'
+        print '\nIntroduced {num} warnings in total'.format(num=len(ALL_NEW_WARNINGS))
+        print '\nMore details please refer to {summarize_log_file}\n'.format(summarize_log_file=args.drive+LOG_DIR+'summarize.log')
+        print 'Warning check totally use {minute} minutes {seconds} seconds\n'.format(minute = int((tEnd-tStart).total_seconds() / 60),seconds = int((tEnd-tStart).total_seconds() % 60))
     
-    #4.other actions on new warnings
-    if (args.audit == 'Y' or args.audit == 'y') and len(ALL_NEW_WARNINGS)>0:
-        if args.mode == 'CI':
-            sys.stdout = stdout #recover sys.stdout
-        blameOnNewWarning(args)
-    elif args.mode == 'CI' and len(ALL_NEW_WARNINGS)>0:
-        sys.stdout = stdout #recover sys.stdout      
-        actionOnNewWarning(args.project,args.releaseTag,args.CIUserName,args.CIUserEmail,stdOutfile)
+        #4.other actions on new warnings
+        if args.mode == 'CI' and len(ALL_NEW_WARNINGS)>0:
+            sys.stdout = stdout #recover sys.stdout      
+            actionOnNewWarning(args.project,args.releaseTag,args.CIUserName,args.CIUserEmail,stdOutfile)
         

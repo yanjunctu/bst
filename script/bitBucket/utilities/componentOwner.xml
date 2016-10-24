@@ -8,6 +8,7 @@
 <component name="bahama/code/source_files/RDAC" owner="jdf638" /> 
 <component name="bahama/code/source_files/HALi" owner="nvgf73" />
 <component name="bahama/code/source_files/Initializer/DSPInitializer" owner="A22562" />
+<component name="bahama/code/source_files/Initializer/HostInitializer" owner="a20091" />
 <component name="bahama/code/source_files/LowLevel/PttPollingThread/PttPollingThread.cpp" owner="jdf638" />  
 <component name="bahama/code/source_files/LowLevel/FailSafe" owner="XMTV73" />
 <component name="bahama/code/source_files/ModemRepeater/HardwareManager" owner="nvgf73" />
