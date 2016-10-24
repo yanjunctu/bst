@@ -347,7 +347,7 @@ var commonDashBoard = function(){
 
   $.get("/bitbucket",function (result) {
 
-    var x = [], y = [];
+    var x = [], y = [],indexValue = 0;
 
     result.detail.forEach(function(onePR){
 
@@ -355,7 +355,7 @@ var commonDashBoard = function(){
 
        //unit is hours, filter out items duration > 100 hours
       if(duration< 100.0){
-          x.push(onePR.id)
+          x.push(indexValue++)
           y.push(duration)
       }
 
@@ -373,7 +373,7 @@ var commonDashBoard = function(){
 
     var layout = {
         xaxis: {
-        title: 'PR id'},
+        title: 'PR'},
         yaxis: {
         title: 'hours'},
         margin: {
