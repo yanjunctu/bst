@@ -661,7 +661,7 @@ def actionOnDailyMode(args):
     #checkout to the latest tag,bcz git blame need it
     checkoutCmd = 'git checkout {}'.format(args.releaseTag)
     print checkoutCmd
-    #subprocess.check_output(checkoutCmd.split(), stderr=subprocess.STDOUT)
+    subprocess.check_output(checkoutCmd.split(), stderr=subprocess.STDOUT)
     jenkins = BoosterJenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_TOKEN)
     logfiles = getBuildLogFromConOut(jenkins,db,args.releaseTag,args.drive)
     for logfile in logfiles:
@@ -679,6 +679,7 @@ def send_email():
     
     nowTime= datetime.datetime.now() 
     for engineerEAdr in unResolveList.keys():
+        print engineerEAdr
         stdout = sys.stdout
         sys.stdout = stdOutfile = StringIO.StringIO()
         audit = False
@@ -717,9 +718,9 @@ if __name__ == "__main__":
     if args.mode == 'period':
         print "daily check begin ..."
         os.chdir(args.drive)
-        sys.path.append('/mnt/gitlabbackup/booster_project/script/boosterSocket/')
-        sys.path.append('/mnt/gitlabbackup/booster_project/script/jenkins/')
-        sys.path.append('/mnt/gitlabbackup/booster_project/script/klocwork/webcheck/')
+        sys.path.append('/opt/booster_project/script/boosterSocket/')
+        sys.path.append('/opt/booster_project/script/jenkins/')
+        sys.path.append('/opt/booster_project/script/klocwork/webcheck/')
         from sendEmail import sendEmail
         from parseJenkinsBuildHistory import BoosterJenkins,BoosterDB
         from klockwork_web_check import getParameterValue
