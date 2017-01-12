@@ -707,7 +707,9 @@ var updateCIHistoryInfo = function() {
         
         for (var key in CI_TRIGGER_JOB){
             var prjName =key
-            var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB[prjName])).find({"number": {$gt: CILastTriggerBuildID[prjName]}}).sort({"number": 1}).toArray();
+            var objPrj = {"name":"PROJECT_NAME","value":prjName}
+            
+            var triggerDocs = db.getCollection(getJobCollName(CI_TRIGGER_JOB[prjName])).find({"number": {$gt: CILastTriggerBuildID[prjName]},"actions.parameters": {$in: [objPrj]}}).sort({"number": 1}).toArray();
             triggerDocs.forEach(function(doc) {
                 refreshCIHistory(db, doc,prjName);
             });
@@ -718,30 +720,33 @@ var updateCIHistoryInfo = function() {
         klocworkDocs.forEach(function(doc) {
             var rlsTag =doc['releaseTag'];
             var prjName = doc['PROJECT_NAME'];
-            for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
-                if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
-                    if (CIHistory[prjName][i]["codeStaticCheck"]) {
-                        CIHistory[prjName][i]["codeStaticCheck"]["klocwork"] = doc['klocworkCnt'];
-                        if (doc["buildNumber"] > CILastKlocworkBuildID) {
-                            CILastKlocworkBuildID = doc["buildNumber"];
+            if (ALL_PRJ.indexOf(prjName) !== -1){
+                for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
+                    if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
+                        if (CIHistory[prjName][i]["codeStaticCheck"]) {
+                            CIHistory[prjName][i]["codeStaticCheck"]["klocwork"] = doc['klocworkCnt'];
+                            if (doc["buildNumber"] > CILastKlocworkBuildID) {
+                                CILastKlocworkBuildID = doc["buildNumber"];
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
             }
         });
         sanityDocs.forEach(function(doc) {
             var rlsTag = findParamValue(doc, "NEW_BASELINE");
             var prjName = findParamValue(doc, "PROJECT_NAME");
-            for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
-                if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
-                    if (!CIHistory[prjName][i]["onTargetSanity"]) {
+            if (ALL_PRJ.indexOf(prjName) !== -1){
+                for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
+                    if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
+                        if (!CIHistory[prjName][i]["onTargetSanity"]) {
                         //datExitCodes value should like ['0','1','2']
                         //it contain all the exit codes return from DAT, including succeeded or failed code
-                        datExitCodes = doc['IDAT_EXIT_CODES']
+                            datExitCodes = doc['IDAT_EXIT_CODES']
                         
                         // assign a default value for on Target result
-                        CIHistory[prjName][i]["onTargetSanity"] = doc["result"];
+                            CIHistory[prjName][i]["onTargetSanity"] = doc["result"];
                         
                         //itr all codes, if have non 0(Success) and non 5(TestCaseFailed) value, means have system err happen, assign 'DAT sys error' string
                         /*below is enum of exitcode
@@ -757,49 +762,54 @@ var updateCIHistoryInfo = function() {
                                     UnknownError = 999
                                 }                        
                         */
-                        if (datExitCodes){
-                          for (var index=0;index<datExitCodes.length;index++)             
-                            if(datExitCodes[index] != '0' && datExitCodes[index] != '5')
-                              CIHistory[prjName][i]["onTargetSanity"] = 'DAT sys error ' + datExitCodes[index]
-                              break                          
-                        }
+                            if (datExitCodes){
+                              for (var index=0;index<datExitCodes.length;index++)             
+                                if(datExitCodes[index] != '0' && datExitCodes[index] != '5')
+                                  CIHistory[prjName][i]["onTargetSanity"] = 'DAT sys error ' + datExitCodes[index]
+                                  break                          
+                            }
     
                         
-                        if (doc["number"] > CILastSanityBuildID) {
-                            CILastSanityBuildID = doc["number"];
+                            if (doc["number"] > CILastSanityBuildID) {
+                                CILastSanityBuildID = doc["number"];
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
             }
         });
         extRegressionDocs.forEach(function(doc) {
             var rlsTag = findParamValue(doc, "NEW_BASELINE");
             var prjName = findParamValue(doc, "PROJECT_NAME");
-            for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
-                if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
-                    if (!CIHistory[prjName][i]["extRegression"]){
-                        CIHistory[prjName][i]["extRegression"] = doc["result"];
-                        if (doc["number"] > CILastExtRegressionBuildID) {
-                            CILastExtRegressionBuildID = doc["number"];
+            if (ALL_PRJ.indexOf(prjName) !== -1){
+                for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
+                    if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
+                        if (!CIHistory[prjName][i]["extRegression"]){
+                            CIHistory[prjName][i]["extRegression"] = doc["result"];
+                            if (doc["number"] > CILastExtRegressionBuildID) {
+                                CILastExtRegressionBuildID = doc["number"];
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
             }
         });
         memoryLeakDocs.forEach(function(doc) {
             var rlsTag = findParamValue(doc, "NEW_BASELINE");
             var prjName = findParamValue(doc, "PROJECT_NAME");
-            for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
-                if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
-                    if (!CIHistory[prjName][i]["memoryLeak"]) {
-                        CIHistory[prjName][i]["memoryLeak"] = doc["result"];
-                        if (doc["number"] > CIMemoryLeakBuildID) {
-                            CIMemoryLeakBuildID = doc["number"];
+            if (ALL_PRJ.indexOf(prjName) !== -1){
+                for (var i = CIHistory[prjName].length-1; i >= 0; --i) {
+                    if (rlsTag && CIHistory[prjName][i]["rlsTag"] == rlsTag) {
+                        if (!CIHistory[prjName][i]["memoryLeak"]) {
+                            CIHistory[prjName][i]["memoryLeak"] = doc["result"];
+                            if (doc["number"] > CIMemoryLeakBuildID) {
+                                CIMemoryLeakBuildID = doc["number"];
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
             }
         }); 
