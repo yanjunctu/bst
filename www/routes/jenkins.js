@@ -447,7 +447,7 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             //get last success tag
             var datColl = db.getCollection(getJobCollName(job));
             var docLastS = datColl.find({"result":"SUCCESS","IDAT_EXIT_CODES":{"$in":[[],["0"],["0","0"]]},"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1).toArray()
-            if (docLast.length!=0){
+            if (docLastS.length!=0){
                 ciBlockInfo.lastSuccessTag = getParameterValue(docLastS[0],"NEW_BASELINE")
         
                 var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
