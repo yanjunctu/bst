@@ -21,7 +21,7 @@ HOST = '10.193.226.186'
 PORT = 8080
 USER = 'huang rurong-QPCB36'
 TOKEN = '3ce1d76aae49dc433da70c546f634b25f8734d9a59490831c41f8b261fe0e57e'
-PROJECT = ['REPT2.7','REPT_MAIN']
+PROJECT = ['REPT2.8','REPT_MAIN']
 #jenkins
 JENKINS_URL = 'https://cars.ap.mot-solutions.com:8080'
 JENKINS_USERNAME = 'jhv384'

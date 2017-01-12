@@ -3,8 +3,8 @@
 
 var INTERVAL = 8000; //8s
 
-var iFrames = {curIndex:0,// in order to show board27 firstly, so set initialize value to 2
-               boards:["#boardMain","#metric"]
+var iFrames = {curIndex:0,// in order to show boardofframp firstly, so set initialize value to 2
+               boards:["#boardofframp","#boardMain"]
               };
 
 var alternateDisplay = function() {

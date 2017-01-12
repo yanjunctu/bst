@@ -377,7 +377,7 @@ def process_argument():
 
 def parseLatestCITag(mergedTags):
 
-    tagString = 'REPT_I16'
+    tagString = 'REPT_I17'
     storeLagest = 0;
     storeTag = '';
     for line in mergedTags.splitlines():

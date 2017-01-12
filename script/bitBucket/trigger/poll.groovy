@@ -77,7 +77,7 @@ class BitbucketREST{
 
 class PRClass{
 
-    static String TARGET_BRANCH_OFFRAMP = 'offramp_R2.7.0'
+    static String TARGET_BRANCH_OFFRAMP = 'offramp_R2.8.0'
     static String TARGET_BRANCH_MAIN = 'main'
     Object m_jsonObject
 
@@ -154,7 +154,7 @@ class JenkinsManager{
     static String JENKINS_USER = "pnw748";
     static String JENKINS_TOKEN = "079ffabb999ca608c05753b7557f442f";
     static String beTriggerJobToken = "Trigger_Token";
-    static String TARGET_BRANCH_OFFRAMP = 'offramp_R2.7.0'
+    static String TARGET_BRANCH_OFFRAMP = 'offramp_R2.8.0'
     static String TARGET_BRANCH_MAIN = 'main'
     static String TRIGGER_JOB_NAME_OFFRAMP = "PCR-REPT-0-Git-Triger";
     static String TRIGGER_JOB_NAME_MAIN = "PCR-REPT-0-Git-Triger-MCL";
