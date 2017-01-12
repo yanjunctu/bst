@@ -447,22 +447,24 @@ var updateOnTargetTestStatus = function(ciBlockInfo,data,job){
             //get last success tag
             var datColl = db.getCollection(getJobCollName(job));
             var docLastS = datColl.find({"result":"SUCCESS","IDAT_EXIT_CODES":{"$in":[[],["0"],["0","0"]]},"actions.parameters": {$in: [objPrj]}}).sort({"number": -1}).limit(1).toArray()
-            ciBlockInfo.lastSuccessTag = getParameterValue(docLastS[0],"NEW_BASELINE")
+            if (docLast.length!=0){
+                ciBlockInfo.lastSuccessTag = getParameterValue(docLastS[0],"NEW_BASELINE")
         
-            var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
-            var objS = {"name": "NEW_BASELINE", "value": ciBlockInfo.lastSuccessTag};
-            var objF = {"name": "NEW_BASELINE", "value": ciBlockInfo.releaseTag};
-            var docS = rlsColl.findOne({"actions.parameters": {$in: [objS]}});
-            var docF = rlsColl.findOne({"actions.parameters": {$in: [objF]}});
-            var docs = rlsColl.find({"number": {$gt: docS["number"],$lte: docF["number"]},"actions.parameters": {$in: [objPrj]}}).toArray();
+                var rlsColl = db.getCollection(getJobCollName(CI_RELEASE_JOB));
+                var objS = {"name": "NEW_BASELINE", "value": ciBlockInfo.lastSuccessTag};
+                var objF = {"name": "NEW_BASELINE", "value": ciBlockInfo.releaseTag};
+                var docS = rlsColl.findOne({"actions.parameters": {$in: [objS]}});
+                var docF = rlsColl.findOne({"actions.parameters": {$in: [objF]}});
+                var docs = rlsColl.find({"number": {$gt: docS["number"],$lte: docF["number"]},"actions.parameters": {$in: [objPrj]}}).toArray();
 
-            var submitter = "";
-            docs.forEach(function(doc) {
+                var submitter = "";
+                docs.forEach(function(doc) {
                 
-                submitter = submitter + findParamValue(doc, "SUBMITTER")+";";
+                    submitter = submitter + findParamValue(doc, "SUBMITTER")+";";
    
-            });
-            ciBlockInfo.submitter = submitter;
+                });
+                ciBlockInfo.submitter = submitter;
+            }
             if (preResult == "SUCCESS"){
                 var msg = "Block Reason:  DAT test failed on tag :" +ciBlockInfo.releaseTag +"\n The Submitter(s):" +ciBlockInfo.submitter+"\n Last Success Tag:"+ciBlockInfo.lastSuccessTag;
                 var subject = '[Notice!]'+prjName+' CI is blocked'
